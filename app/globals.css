@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #004d65;
+  --color-secondary: #964900;
+  --color-background: #fbf9f8;
+  --color-on-surface: #1b1c1c;
+
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+}
+
+body {
+  @apply bg-background text-on-surface;
+}
