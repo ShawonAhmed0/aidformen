@@ -5,9 +5,6 @@
   --color-secondary: #964900;
   --color-background: #fbf9f8;
   --color-on-surface: #1b1c1c;
-
-  --font-sans: var(--font-sans);
-  --font-serif: var(--font-serif);
 }
 
 body {
@@ -15,9 +12,5 @@ body {
   font-family: "Kalpurush", sans-serif;
 }
 
-@font-face {
-  font-family: "Kalpurush";
-  src: url("/fonts/Kalpurush.woff2") format("woff");
-  font-weight: normal;
-  font-style: normal;
+:root {
 }
