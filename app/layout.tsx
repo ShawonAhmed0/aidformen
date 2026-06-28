@@ -1,18 +1,17 @@
 import "./globals.css";
-import { Noto_Sans_Bengali, Noto_Serif_Bengali } from "next/font/google";
+import localFont from "next/font/local";
 
-const sans = Noto_Sans_Bengali({
-  subsets: ["bengali"],
-  weight: ["300", "400", "500", "600", "700"],
+const sans = localFont({
+  src: "../public/fonts/Kalpurush.woff2",
   variable: "--font-sans",
+  display: "swap",
 });
 
-const serif = Noto_Serif_Bengali({
-  subsets: ["bengali"],
-  weight: ["400", "700"],
+const serif = localFont({
+  src: "../public/fonts/Kalpurush.woff2",
   variable: "--font-serif",
+  display: "swap",
 });
-
 
 export default function RootLayout({
   children,
@@ -32,10 +31,9 @@ export default function RootLayout({
         />
       </head>
 
-      <body className="font-sans"><div>
-        {children}
-      </div>
+      <body className="font-sans">
+        <div>{children}</div>
       </body>
-    </html >
+    </html>
   );
 }

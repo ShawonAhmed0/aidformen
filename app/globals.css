@@ -12,4 +12,12 @@
 
 body {
   @apply bg-background text-on-surface;
+  font-family: "Kalpurush", sans-serif;
+}
+
+@font-face {
+  font-family: "Kalpurush";
+  src: url("/fonts/Kalpurush.woff2") format("woff");
+  font-weight: normal;
+  font-style: normal;
 }

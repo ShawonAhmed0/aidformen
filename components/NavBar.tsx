@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Menu, Phone } from "lucide-react";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -18,11 +19,19 @@ export default function Navbar() {
         <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
             <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
                 {/* Logo */}
+                {/* Logo */}
                 <Link
                     href="/"
-                    className="text-2xl font-bold text-sky-800 [font-family:var(--font-bengali-serif)]"
+                    className="flex items-center gap-3 text-2xl font-bold text-sky-800 [font-family:var(--font-bengali-serif)]"
                 >
-                    এইড ফর মেন
+                    <Image
+                        src="/logo (1).png"
+                        alt="এইড ফর মেন Logo"
+                        width={40}
+                        height={40}
+                        priority
+                    />
+                    <span>এইড ফর মেন</span>
                 </Link>
 
                 {/* Desktop Menu */}
