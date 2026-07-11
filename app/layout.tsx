@@ -1,4 +1,6 @@
+import Navbar from "@/components/NavBar";
 import "./globals.css";
+import Footer from "@/components/Footer";
 
 
 export default function RootLayout({
@@ -18,10 +20,12 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-
       <body className="font-sans">
+        <Navbar />
         <div>{children}</div>
+        <Footer />
       </body>
+
     </html>
   );
 }

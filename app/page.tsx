@@ -9,7 +9,6 @@ import NewsletterCTA from "@/components/Newsletter";
 export default function Home() {
   return (
     <>
-      <Navbar />
       <main>
         <Hero />
         <Announcement />
@@ -17,7 +16,7 @@ export default function Home() {
         <ArchivePreview />
         <MediaSection />
         <NewsletterCTA />
-        <Footer />
+
         {/* Your content */}
       </main>
     </>

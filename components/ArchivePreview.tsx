@@ -22,28 +22,28 @@ const items = [
         action: "পিডিএফ ডাউনলোড",
         icon: Download,
         image:
-            "https://lh3.googleusercontent.com/aida/AP1WRLv6H9bVv-ZILdsPAoBTfff7BrxC2eMsvVMCCcNBZbsxAwTVTw5_vNIMtYq4kht_6YyLiDph8UILH_LaMvEXTI15ohx98jQ6n-DqdUSAzSWdW7quDgz-gQlrDhdaydVQLpVJPY1jZZBs8WXohhOACYXrX4GQ09A7WuzLbQeNrUE4XJ8tLR89d5tpOmIFs3cY4IUH_DaGSWMKQlplw4duyLvXt1ZNtXK_4MoRsY6YqL8V87U6OYIdcaD2rONz",
+            "https://picsum.photos/200/300",
     },
     {
         title: "নারায়ণগঞ্জ জেলা মতবিনিময় সভা",
         action: "গ্যালারি দেখুন",
         icon: ImageIcon,
         image:
-            "https://lh3.googleusercontent.com/aida/AP1WRLv8Ajf0tFBDtC6oWsOkgBBrvVBocMh6E95InoVkdLZahuiZGRtNSJFgOKECV_gHDn8MzlUL5MotsKB2qRqPZy5faUBHAjJwccDyDjwmp2tWP1oDpb7zdqp61wAdHCuOsElei2mrJTC2jdobYSaR9bOCt6WIYYWzyRvTiqkBDYMHiO7cHCngFgPj6-uBvhX1CYcr-IeDpJkbd_mI0w5Yyh9hh_QqCUxLIYiuJUEv_X24G5qb5LQK8x8UV8fL",
+            "https://picsum.photos/200/300",
     },
     {
         title: "জাতীয় প্রেস ক্লাবে সংবাদ সম্মেলন",
         action: "ভিডিও দেখুন",
         icon: PlayCircle,
         image:
-            "https://lh3.googleusercontent.com/aida/AP1WRLtbqLGOw2Po6YuETTHWvaSHVJv5tS-GN7yOil1jorPbyzBvGFW-mRpM_AYZ1HDgNzeZJDXr6LJaDEexyaLepz3zyIjJ17QK7jtGUwTvANB9rDjw762Oi0C6PvuHJWBWhn8B--6LMm-pZ1fyUsa1lp0UbqySkLt4KwJrNyz-Xoc8oPbn3rosxMsxIwctU4s05w7jSf6foNZgvgDufcp_C5JMfK71yYW9mFp8sMGtmKXWQnStf4cB0OYiH0Bh",
+            "https://picsum.photos/200/300",
     },
     {
         title: "অক্টোবর ২০২৪ মাসিক নিউজলেটার",
         action: "অনলাইনে পড়ুন",
         icon: FileText,
         image:
-            "https://lh3.googleusercontent.com/aida/AP1WRLux649PvMlTunIgae5eJ-UlBIbpATBlDDun4XHWwJYqanynmAeD0ZluestqTlKct33a6OIVy9e4LcXs99OPjcJDAeaa1Q78ZtKT4FkpDEC83Qvj-f9ZiY26AJjWbR4i1wuds0yIQdQyt6OnOq_ClPi5_gZhWHBxBPamuqzM6ZZPZtt0oIKybE327JTsbFyrfd_gLzL-bF80JFX3op_l4iVnWhXqB756wY-vGyvrPh2O4PszWkvazCLZ7OtK",
+            "https://picsum.photos/200/300",
     },
 ];
 
@@ -107,7 +107,7 @@ export default function ArchivePreview() {
                                         {item.title}
                                     </h4>
 
-                                    <button className="text-primary text-sm font-bold flex items-center gap-2 group">
+                                    <button className="text-primary text-lg font-bold flex items-center gap-2 group">
                                         {item.action}
                                         <Icon className="w-4 h-4 group-hover:translate-x-1 transition" />
                                     </button>

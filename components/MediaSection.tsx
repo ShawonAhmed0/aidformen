@@ -12,7 +12,7 @@ export default function MediaSection() {
                         <h2 className="text-3xl md:text-4xl font-bold text-primary">
                             মিডিয়া ও ডকুমেন্টারি
                         </h2>
-                        <p className="text-gray-600 mt-2">
+                        <p className="text-gray-600 mt-2 text-lg">
                             আমাদের বিভিন্ন কার্যক্রমের ভিডিও চিত্র ও সংবাদ প্রতিবেদন।
                         </p>
                     </div>

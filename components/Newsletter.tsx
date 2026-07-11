@@ -19,7 +19,7 @@ export default function NewsletterCTA() {
                             আমাদের কার্যক্রমে যুক্ত হতে চান?
                         </h2>
 
-                        <p className="text-white/80 mb-8 leading-relaxed">
+                        <p className="text-white/80 mb-8 leading-relaxed text-lg">
                             পুরুষ অধিকার রক্ষা ও সচেতনতা বৃদ্ধিতে আমরা নিয়মিত ইমেইল নিউজলেটার পাঠাই।
                         </p>
 

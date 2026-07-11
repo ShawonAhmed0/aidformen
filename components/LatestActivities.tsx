@@ -78,8 +78,8 @@ export default function LatestActivities() {
                                 যৌতুক ও নারী নির্যাতন মামলার অপব্যবহার প্রতিরোধে নতুন নির্দেশিকা
                             </h3>
 
-                            <p className="text-gray-600 text-sm">
-                                সম্প্রতি সুপ্রিম কোর্টের নতুন নির্দেশনার আলোকে আমাদের আইনি প্যানেল একটি বিস্তারিত রিপোর্ট তৈরি করেছে...
+                            <p className="text-gray-600 text-lg">
+                                সম্প্রতি সুপ্রিম কোর্টের নতুন নির্দেশনার আলো কে আমাদের আইনি প্যানেল একটি বিস্তারিত রিপোর্ট তৈরি করেছে...
                             </p>
                         </div>
 
@@ -101,7 +101,7 @@ export default function LatestActivities() {
                             আপনি কি আইনি সাহায্য চান?
                         </h3>
 
-                        <p className="text-white/80 mb-6 text-sm">
+                        <p className="text-white/80 mb-6 text-lg">
                             আমাদের বিশেষজ্ঞ আইনজীবী দল আপনাকে সঠিক দিকনির্দেশনা প্রদান করবে।
                         </p>
 

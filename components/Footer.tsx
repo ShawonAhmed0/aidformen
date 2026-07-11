@@ -12,7 +12,7 @@ export default function Footer() {
                     <div className="flex flex-col gap-4">
                         <h3 className="text-xl font-bold">এইড ফর মেন</h3>
 
-                        <p className="text-white/70 text-sm leading-relaxed">
+                        <p className="text-white/70 text-lg leading-relaxed">
                             পুরুষ অধিকার ও বৈষম্যহীন সমাজ গঠনে একটি অরাজনৈতিক ও অলাভজনক প্রতিষ্ঠান।
                         </p>
 
@@ -26,7 +26,7 @@ export default function Footer() {
                     {/* Links */}
                     <div>
                         <h4 className="font-semibold mb-4">দ্রুত লিঙ্ক</h4>
-                        <div className="flex flex-col gap-2 text-white/70 text-sm">
+                        <div className="flex flex-col gap-2 text-white/70 text-lg">
                             <a className="hover:text-white transition">আমাদের সম্পর্কে</a>
                             <a className="hover:text-white transition">আইনি সহায়তা</a>
                             <a className="hover:text-white transition">সাম্প্রতিক কার্যক্রম</a>
@@ -37,7 +37,7 @@ export default function Footer() {
                     {/* Legal */}
                     <div>
                         <h4 className="font-semibold mb-4">আইনি ও শর্তাবলী</h4>
-                        <div className="flex flex-col gap-2 text-white/70 text-sm">
+                        <div className="flex flex-col gap-2 text-white/70 text-lg">
                             <a className="hover:text-white transition">গোপনীয়তা নীতি</a>
                             <a className="hover:text-white transition">শর্তাবলী</a>
                             <a className="hover:text-white transition">সচরাচর জিজ্ঞাস্য</a>
@@ -49,7 +49,7 @@ export default function Footer() {
                     <div>
                         <h4 className="font-semibold mb-4">যোগাযোগ</h4>
 
-                        <div className="flex flex-col gap-3 text-white/70 text-sm">
+                        <div className="flex flex-col gap-3 text-white/70 text-lg">
 
                             <div className="flex items-start gap-2">
                                 <MapPin className="w-4 h-4 mt-1" />
@@ -72,7 +72,7 @@ export default function Footer() {
                 </div>
 
                 {/* Bottom */}
-                <div className="border-t border-white/10 mt-12 pt-6 text-center text-white/50 text-sm">
+                <div className="border-t border-white/10 mt-12 pt-6 text-center text-white/50 text-lg">
                     © ২০২৪ এইড ফর মেন ফাউন্ডেশন। সর্বস্বত্ব সংরক্ষিত।
                 </div>
 
