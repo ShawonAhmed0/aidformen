@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { notoSerifBengali } from "@/lib/fonts";
 
 export default function Hero() {
     return (
