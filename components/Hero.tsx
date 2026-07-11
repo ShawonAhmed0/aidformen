@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Hero() {
     return (
@@ -35,19 +36,25 @@ export default function Hero() {
 
                     <div className="mt-8 flex flex-col sm:flex-row gap-4">
                         <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                            <button className="bg-white text-primary px-6 py-3 rounded-lg font-bold shadow-sm hover:shadow-md hover:bg-gray-50 transition flex items-center gap-2">
+                            <Link
+                                href="/about"
+                                className="bg-white text-primary px-6 py-3 rounded-lg font-bold shadow-sm hover:shadow-md hover:bg-gray-50 transition flex items-center gap-2"
+                            >
                                 <span className="material-symbols-outlined text-[20px]">
                                     info
                                 </span>
                                 আমাদের সম্পর্কে জানুন
-                            </button>
+                            </Link>
 
-                            <button className="border border-white/40 text-white px-6 py-3 rounded-lg font-bold hover:bg-white/10 transition flex items-center gap-2">
+                            <Link
+                                href="/login"
+                                className="border border-white/40 text-white px-6 py-3 rounded-lg font-bold hover:bg-white/10 transition flex items-center gap-2"
+                            >
                                 <span className="material-symbols-outlined text-[20px]">
                                     volunteer_activism
                                 </span>
                                 স্বেচ্ছাসেবী হিসেবে যোগ দিন
-                            </button>
+                            </Link>
 
                         </div>
 
