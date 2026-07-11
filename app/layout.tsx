@@ -1,17 +1,5 @@
 import "./globals.css";
-import localFont from "next/font/local";
 
-const sans = localFont({
-  src: "/fonts/Kalpurush.woff2",
-  variable: "--font-sans",
-  display: "swap",
-});
-
-const serif = localFont({
-  src: "/fonts/Kalpurush.woff2",
-  variable: "--font-serif",
-  display: "swap",
-});
 
 export default function RootLayout({
   children,
@@ -19,7 +7,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="bn" className={`${sans.variable} ${serif.variable}`}>
+    <html lang="bn" >
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
