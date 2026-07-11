@@ -2,13 +2,13 @@ import "./globals.css";
 import localFont from "next/font/local";
 
 const sans = localFont({
-  src: "./fonts/Kalpurush.woff2",
+  src: "/fonts/Kalpurush.woff2",
   variable: "--font-sans",
   display: "swap",
 });
 
 const serif = localFont({
-  src: "./fonts/Kalpurush.woff2",
+  src: "/fonts/Kalpurush.woff2",
   variable: "--font-serif",
   display: "swap",
 });

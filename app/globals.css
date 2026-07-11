@@ -7,6 +7,11 @@
   --color-on-surface: #1b1c1c;
 }
 
+@font-face {
+  font-family: "Kalpurush";
+  src: url("/fonts/Kalpurush.woff2") format("woff2");
+}
+
 body {
   @apply bg-background text-on-surface;
   font-family: "Kalpurush", sans-serif;
