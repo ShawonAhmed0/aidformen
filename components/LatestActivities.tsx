@@ -36,13 +36,13 @@ export default function LatestActivities() {
                     {/* Big Card */}
                     <div className="md:col-span-2 group relative overflow-hidden rounded-xl aspect-[16/9]">
                         <img
-                            src="https://lh3.googleusercontent.com/aida/AP1WRLsCfvs5OmK-gHlEML5V_G35ZFrhCW5nsbdCYT4J_z0nAVMWHQUhw_Y__47CX0Kur8OSjyixw0yy_QwV4nxgxEE40KOTu1G4AdQnwqlOVVirmxb8aBl2jSJGY_OijxfdYAHs4iFbD9MXQNvH3xrDzBlKLupWHlq45QXxcgFuEIiHPXLtsk3WDOpfJpHviT9kLsr7PbfX3fezcLqajzCLmGPGycphxkQtZF6IRkLu-eFW9v1xtleODxdcg9M"
+                            src="/Rakib_Tamima_AFM.jpg"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
 
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 md:p-8">
 
-                            <div className="bg-secondary text-white px-3 py-1 rounded text-sm font-bold w-fit mb-4">
+                            <div className="bg-secondary text-white px-3 py-1 rounded text-lg font-bold w-fit mb-4">
                                 আইনি সহায়তা
                             </div>
 
@@ -53,12 +53,12 @@ export default function LatestActivities() {
                             <div className="flex items-center gap-4 text-white/80 text-sm flex-wrap">
                                 <span className="flex items-center gap-1">
                                     <Calendar className="w-4 h-4" />
-                                    ১৫ মার্চ, ২০২৪
+                                    ০৮ জুন, ২০২৬
                                 </span>
 
                                 <span className="flex items-center gap-1">
                                     <MapPin className="w-4 h-4" />
-                                    রাজু ভাস্কর্য, ঢাকা
+                                    প্রেস ক্লাব, ঢাকা
                                 </span>
                             </div>
 
@@ -105,7 +105,7 @@ export default function LatestActivities() {
                             আমাদের বিশেষজ্ঞ আইনজীবী দল আপনাকে সঠিক দিকনির্দেশনা প্রদান করবে।
                         </p>
 
-                        <button className="bg-white text-primary px-6 py-2 rounded font-bold hover:bg-gray-100 transition">
+                        <button className="bg-white text-primary px-6 py-2 rounded font-bold hover:bg-gray-100 cursor-pointer transition">
                             আবেদন করুন
                         </button>
 
@@ -120,7 +120,7 @@ export default function LatestActivities() {
 
                         <div className="w-24 h-24 shrink-0 rounded overflow-hidden">
                             <img
-                                src="https://lh3.googleusercontent.com/aida/AP1WRLtzzpDutfOqK7-oIGGKzDRLYOvM16RS_JnvGiFM_WjO6hoeg4pxVo-gIsk-inDaip-go2ad0YHguSvqX7_82VuUdaPcjUNL94LiclPlTxhHicriwUc1Pc4MprUipILR4IHoQH08348jvYGUUP6rG5X7YdrOfFBAS18Y86bG8Kdifbx6HZFWyOgUU_XFrReQAPK4ITV6d3EAu4Ed4k-DBBHBfqN9of4WDyVGQanC1zGUwa_1AyzvtcEMUEo"
+                                src="/women-commission-cance.webp"
                                 className="w-full h-full object-cover group-hover:scale-110 transition"
                             />
                         </div>
@@ -130,10 +130,10 @@ export default function LatestActivities() {
                                 সচেতনতা
                             </span>
                             <h4 className="font-bold text-primary mt-1 mb-2 leading-snug">
-                                সাভার এলাকায় লিগ্যাল এইড সচেতনতা ক্যাম্পেইন
+                                নারী সংস্কার কমিশন বাতিলের দাবি এইড ফর মেন ফাউন্ডেশনের
                             </h4>
                             <span className="text-xs text-gray-500">
-                                ১২ ফেব্রুয়ারি, ২০২৪
+                                ০২ মে, ২০২৫
                             </span>
                         </div>
 
@@ -144,20 +144,21 @@ export default function LatestActivities() {
 
                         <div className="w-24 h-24 shrink-0 rounded overflow-hidden">
                             <img
-                                src="https://lh3.googleusercontent.com/aida/AP1WRLufsRVuBUjfiiP7u0GQdzUXhdZg4jmqroJPtCCIGavP7xa1bzIhhLX5j9FhZ4coWkWAs2T8kXsWKk7NS89LLFppl213j1gABqac6iJb5PjksokXlTIF_SpQUBzzrgBZF1KxwqJF9uSiLL_VDZD2Xi4rSBJY51HcoxVVHGSnz68SuDKT8X1IuiraFqe7j_-v5PzBhuZfZkxx9Pzowe7EF50DypZ2SENF3ajx4lDLW_cEmRdzxuHMq39EN74"
+                                src="/nasir-tamima-2.jpg"
                                 className="w-full h-full object-cover group-hover:scale-110 transition"
                             />
                         </div>
 
                         <div>
                             <span className="text-xs font-bold text-secondary uppercase">
-                                নেটওয়ার্কিং
+                                মানববন্ধন
                             </span>
                             <h4 className="font-bold text-primary mt-1 mb-2 leading-snug">
-                                বিভাগীয় পর্যায়ে নতুন স্বেচ্ছাসেবী সমন্বয়ক নিয়োগ
+                                ডিভোর্স জালিয়াতি বন্ধে এইড ফর মেন ফাউন্ডেশনের মানববন্ধন
+
                             </h4>
                             <span className="text-xs text-gray-500">
-                                ০৫ ফেব্রুয়ারি, ২০২৪
+                                ০৮ জুন, ২০২৬
                             </span>
                         </div>
 

@@ -13,8 +13,7 @@ export default function Navbar() {
         { name: "সম্পর্কে", href: "/about" },
         { name: "আর্কাইভ", href: "/archive" },
         { name: "যোগাযোগ", href: "/contact" },
-    ];
-
+        { name: "ফোরাম", href: "/forum" },]
     return (
         <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
             <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -40,7 +39,7 @@ export default function Navbar() {
                         <Link
                             key={link.name}
                             href={link.href}
-                            className={`transition-colors hover:text-sky-700 ${index === 0
+                            className={`transition-colors text-lg hover:text-sky-700 ${index === 0
                                 ? "border-b-2 border-sky-800 pb-1 font-bold text-sky-800"
                                 : "text-gray-600"
                                 }`}
@@ -52,7 +51,7 @@ export default function Navbar() {
 
                 {/* Right Side */}
                 <div className="hidden items-center gap-4 md:flex">
-                    <button className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium">
+                    <button className="rounded-full bg-gray-100 px-3 py-1 text-md font-medium">
                         EN/বাংলা
                     </button>
 
@@ -90,7 +89,7 @@ export default function Navbar() {
                         ))}
 
                         <div className="mt-4 flex flex-col gap-3">
-                            <button className="rounded-full bg-gray-100 px-3 py-2 text-sm">
+                            <button className="rounded-full bg-gray-100 px-3 py-2 text-md">
                                 EN/বাংলা
                             </button>
 

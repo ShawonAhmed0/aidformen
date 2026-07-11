@@ -8,7 +8,7 @@ export default function Hero() {
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
                 <Image
-                    src="https://lh3.googleusercontent.com/aida/AP1WRLsTPbIqSlLmuXWg7SwIg257CUrNqjWTCnKBoZhL6c1i_QE_-MOcRtS0wN5Gm5s2BH_sWUBNmPpx7urJ4-ArcW5bnLsCFK2Tcv8apG2hNmAHGMd_MsbP_9Wn1v367RqiqnOX6GURo2aSP_r5p76uDnnpArMy71VVMd24TsLt9AJBtYbKXv-KTmlDjLZ73ZGLvpRLH6_OUSPurH0JsCMnw4Qt_5dh2jHXESdbN82pZjSCp_tWlBd_QRZgR8qV"
+                    src="/19-November-Image.jpg"
                     alt="Hero"
                     fill
                     className="object-cover"
@@ -29,7 +29,7 @@ export default function Hero() {
                         </h1>
                     </div>
 
-                    <p className="mt-6 text-white/90 text-lg leading-relaxed">
+                    <p className="mt-6 text-white/90 text-xl leading-relaxed">
                         একটি ন্যায়সংগত সমাজ গঠনে পুরুষ ও নারী উভয়ের অধিকার রক্ষা করা জরুরি।
                         এইড ফর মেন ফাউন্ডেশন আইনি সহায়তা ও সামাজিক সচেতনতা বৃদ্ধিতে কাজ করে যাচ্ছে।
                     </p>
@@ -56,32 +56,7 @@ export default function Hero() {
 
                 </div>
             </div>
-            {/* Stats Overlay */}
-            <div className="absolute bottom-0 right-0 hidden lg:block bg-white p-8 w-1/3 shadow-2xl z-30">
 
-                <div className="grid grid-cols-2 gap-8">
-
-                    <div>
-                        <div className="text-[#004d65] text-3xl font-bold mb-1">
-                            ১২,০০০+
-                        </div>
-                        <div className="text-gray-600 text-sm">
-                            মানুষকে সহায়তা প্রদান
-                        </div>
-                    </div>
-
-                    <div>
-                        <div className="text-[#004d65] text-3xl font-bold mb-1">
-                            ৫০+
-                        </div>
-                        <div className="text-gray-600 text-sm">
-                            আইনজীবী প্যানেল
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
 
         </section>
     );
