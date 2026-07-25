@@ -87,7 +87,7 @@ export default function LoginPage() {
 
                     {/* Form */}
                     <form className="space-y-5" onSubmit={handleLogin} // Runs login function when button is clicked
-                        className="space-y-5">
+                    >
                         <div>
                             <label className="mb-2 block text-sm font-medium text-gray-700">
                                 ইমেইল
