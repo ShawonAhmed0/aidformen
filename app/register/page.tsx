@@ -1,7 +1,10 @@
 "use client";
-
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
+
+
 import {
     User,
     Mail,
@@ -13,6 +16,39 @@ import {
 } from "lucide-react";
 
 export default function RegisterPage() {
+    const supabase = createClient();
+
+    const [fullName, setFullName] = useState("");
+    const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
+    const [dateOfBirth, setDateOfBirth] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [avatar, setAvatar] = useState<File | null>(null);
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        // Basic validation
+        if (password !== confirmPassword) {
+            alert("Passwords do not match.");
+            return;
+        }
+
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+        });
+
+        if (error) {
+            alert(error.message);
+            return;
+        }
+
+        console.log("Signup successful:", data);
+    };
+
+
     return (
         <main className="min-h-screen bg-gradient-to-b from-sky-50 to-white">
             <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-6 py-16">
@@ -36,7 +72,7 @@ export default function RegisterPage() {
                     </div>
 
                     {/* Form */}
-                    <form className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Full Name */}
                         <div>
                             <label className="mb-2 block text-lg font-medium text-gray-700">
@@ -47,6 +83,8 @@ export default function RegisterPage() {
                                 <User className="text-gray-400" size={18} />
                                 <input
                                     type="text"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
                                     placeholder="আপনার পুরো নাম"
                                     className="w-full bg-transparent px-3 py-3 outline-none"
                                 />
@@ -65,6 +103,8 @@ export default function RegisterPage() {
                                     type="email"
                                     placeholder="example@email.com"
                                     className="w-full bg-transparent px-3 py-3 outline-none"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -81,6 +121,8 @@ export default function RegisterPage() {
                                     type="tel"
                                     placeholder="01XXXXXXXXX"
                                     className="w-full bg-transparent px-3 py-3 outline-none"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -96,6 +138,8 @@ export default function RegisterPage() {
                                 <input
                                     type="date"
                                     className="w-full bg-transparent px-3 py-3 outline-none"
+                                    value={dateOfBirth}
+                                    onChange={(e) => setDateOfBirth(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -123,6 +167,12 @@ export default function RegisterPage() {
                                     type="file"
                                     accept="image/*"
                                     className="hidden"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) {
+                                            setAvatar(e.target.files[0]);
+                                        }
+                                    }}
+
                                 />
                             </label>
                         </div>
@@ -139,6 +189,8 @@ export default function RegisterPage() {
                                     type="password"
                                     placeholder="••••••••"
                                     className="w-full bg-transparent px-3 py-3 outline-none"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -155,6 +207,8 @@ export default function RegisterPage() {
                                     type="password"
                                     placeholder="••••••••"
                                     className="w-full bg-transparent px-3 py-3 outline-none"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -204,7 +258,7 @@ export default function RegisterPage() {
                     {/* Google */}
                     <button className="mb-3 flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 py-3 font-medium transition hover:bg-gray-50">
                         <Image
-                            src="/google.svg"
+                            src="https://www.svgrepo.com/show/475656/google-color.svg"
                             alt="Google"
                             width={22}
                             height={22}
@@ -215,7 +269,7 @@ export default function RegisterPage() {
                     {/* Facebook */}
                     <button className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 py-3 font-medium transition hover:bg-gray-50">
                         <Image
-                            src="/facebook.svg"
+                            src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg"
                             alt="Facebook"
                             width={22}
                             height={22}
