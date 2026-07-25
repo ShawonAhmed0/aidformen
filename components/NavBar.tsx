@@ -5,6 +5,7 @@ import { Menu, Phone, LogIn } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import AuthButton from "./AuthButton";
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -46,8 +47,8 @@ export default function Navbar() {
                                 key={link.name}
                                 href={link.href}
                                 className={`border-b-2 pb-1 text-lg font-medium transition-colors ${isActive
-                                        ? "border-sky-800 text-sky-800"
-                                        : "border-transparent text-gray-600 hover:border-sky-800 hover:text-sky-700"
+                                    ? "border-sky-800 text-sky-800"
+                                    : "border-transparent text-gray-600 hover:border-sky-800 hover:text-sky-700"
                                     }`}
                             >
                                 {link.name}
@@ -62,13 +63,7 @@ export default function Navbar() {
                         EN/বাংলা
                     </button>
 
-                    <Link
-                        href="/login"
-                        className="flex items-center gap-2 rounded-lg border border-sky-700 px-5 py-2 font-semibold text-sky-700 transition hover:bg-sky-700 hover:text-white"
-                    >
-                        <LogIn size={18} />
-                        লগইন
-                    </Link>
+                    <AuthButton />
 
                     <a
                         href="tel:01404555999"
@@ -102,8 +97,8 @@ export default function Navbar() {
                                     href={link.href}
                                     onClick={() => setIsOpen(false)}
                                     className={`rounded-lg px-3 py-3 text-lg transition ${isActive
-                                            ? "bg-sky-100 font-semibold text-sky-800"
-                                            : "text-gray-700 hover:bg-gray-100"
+                                        ? "bg-sky-100 font-semibold text-sky-800"
+                                        : "text-gray-700 hover:bg-gray-100"
                                         }`}
                                 >
                                     {link.name}

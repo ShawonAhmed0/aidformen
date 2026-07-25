@@ -1,18 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getCarouselImages } from "@/lib/carousel";
+import HeroSlider from "@/components/HeroSlider";
+import { getHeroContent } from "@/lib/hero";
 
-export default function Hero() {
+export default async function Hero() {
+    const images = await getCarouselImages();
+    const hero = await getHeroContent();
+
+    if (!images.length) {
+        return null; // or your own loading/fallback component
+    }
+
     return (
         <section className="relative h-[85vh] flex items-center overflow-hidden">
 
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
-                <Image
-                    src="/19-November-Image.jpg"
-                    alt="Hero"
-                    fill
-                    className="object-cover"
-                />
+                <HeroSlider images={images} />
 
                 {/* 🔥 GRADIENT FIX (THIS WAS YOUR MAIN ISSUE) */}
 
@@ -25,13 +30,12 @@ export default function Hero() {
 
                     <div className="max-w-2xl">
                         <h1 className="text-white text-3xl md:text-5xl font-bold leading-tight">
-                            বৈষম্যহীন সমাজ গড়ায় আমরা আপনার পাশে
+                            {hero.heading}
                         </h1>
                     </div>
 
                     <p className="mt-6 text-white/90 text-xl leading-relaxed">
-                        একটি ন্যায়সংগত সমাজ গঠনে পুরুষ ও নারী উভয়ের অধিকার রক্ষা করা জরুরি।
-                        এইড ফর মেন ফাউন্ডেশন আইনি সহায়তা ও সামাজিক সচেতনতা বৃদ্ধিতে কাজ করে যাচ্ছে।
+                        {hero.description}
                     </p>
 
                     <div className="mt-8 flex flex-col sm:flex-row gap-4">

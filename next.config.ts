@@ -1,8 +1,6 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+const nextConfig: NextConfig = {/* config options here */};
 
 module.exports = {
   images: {
@@ -10,6 +8,11 @@ module.exports = {
       {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
+      },
+
+      {
+        protocol: "https",
+        hostname: "yhnyeiagrbudowecuaxy.supabase.co",
       },
     ],
   },

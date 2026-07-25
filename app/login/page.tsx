@@ -3,8 +3,66 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, Lock, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+
+    // Create Supabase connection
+    const supabase = createClient();
+
+    // Used for redirecting users after login
+    const router = useRouter();
+
+    // Store email input value
+    const [email, setEmail] = useState("");
+
+    // Store password input value
+    const [password, setPassword] = useState("");
+
+    // Handles login form submission
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+        // Prevent page refresh
+        e.preventDefault();
+
+
+        // Login user with Supabase Auth
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+
+        // If login fails, show error
+        if (error) {
+            alert(error.message);
+            return;
+        }
+
+
+        // Get logged-in user's ID
+        const user = data.user;
+
+
+        // Fetch user's role from profiles table
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+
+
+        // Redirect based on user role
+        if (profile?.role === "admin") {
+            // Owner/Admin dashboard
+            router.push("/admin");
+        } else {
+            // Normal member dashboard
+            router.push("/dashboard");
+        }
+    };
+
     return (
         <main className="min-h-screen bg-gradient-to-b from-sky-50 to-white">
             <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-6 py-16">
@@ -28,7 +86,8 @@ export default function LoginPage() {
                     </div>
 
                     {/* Form */}
-                    <form className="space-y-5">
+                    <form className="space-y-5" onSubmit={handleLogin} // Runs login function when button is clicked
+                        className="space-y-5">
                         <div>
                             <label className="mb-2 block text-sm font-medium text-gray-700">
                                 ইমেইল
@@ -41,6 +100,8 @@ export default function LoginPage() {
                                     type="email"
                                     placeholder="example@email.com"
                                     className="w-full bg-transparent px-3 py-3 outline-none"
+                                    value={email} // Shows current email state
+                                    onChange={(e) => setEmail(e.target.value)} // Updates email state
                                 />
                             </div>
                         </div>
@@ -57,6 +118,8 @@ export default function LoginPage() {
                                     type="password"
                                     placeholder="••••••••"
                                     className="w-full bg-transparent px-3 py-3 outline-none"
+                                    value={password} // Shows current password state
+                                    onChange={(e) => setPassword(e.target.value)} // Updates password state
                                 />
                             </div>
                         </div>

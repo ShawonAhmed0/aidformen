@@ -29,12 +29,12 @@ export default function RegisterPage() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        // Basic validation
         if (password !== confirmPassword) {
             alert("Passwords do not match.");
             return;
         }
 
+        // 1. Create auth user
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -45,7 +45,57 @@ export default function RegisterPage() {
             return;
         }
 
-        console.log("Signup successful:", data);
+        const user = data.user;
+
+        if (!user) {
+            alert("User creation failed");
+            return;
+        }
+
+
+        // 2. Upload avatar if exists
+        let avatarUrl = null;
+
+        if (avatar) {
+            const fileName = `${user.id}-${avatar.name}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from("avatar")
+                .upload(fileName, avatar);
+
+            if (uploadError) {
+                console.log(uploadError);
+            } else {
+                const { data } = supabase.storage
+                    .from("avatar")
+                    .getPublicUrl(fileName);
+
+                avatarUrl = data.publicUrl;
+            }
+        }
+
+
+        // 3. Create profile
+        const { error: profileError } = await supabase
+            .from("profiles")
+            .insert({
+                id: user.id,
+                full_name: fullName,
+                phone,
+                date_of_birth: dateOfBirth,
+                avatar_url: avatarUrl,
+                role: "member",
+            });
+
+
+        if (profileError) {
+            console.log(profileError);
+            alert(profileError.message);
+            return;
+        }
+
+
+        alert("Registration successful!");
     };
 
 
