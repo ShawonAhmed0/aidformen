@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { UserPlus, ImagePlus, FileEdit, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -12,7 +12,7 @@ const activities = [
         description: 'Rahim Ahmed joined the foundation',
         time: '2 hours ago',
         icon: UserPlus,
-        color: 'bg-emerald-500',
+        color: 'bg-success',
     },
     {
         id: 2,
@@ -21,7 +21,7 @@ const activities = [
         description: 'Title and description were modified',
         time: '5 hours ago',
         icon: FileEdit,
-        color: 'bg-[#0EA5E9]',
+        color: 'bg-brand-600',
     },
     {
         id: 3,
@@ -30,7 +30,7 @@ const activities = [
         description: 'Slide “Community Outreach” added',
         time: '1 day ago',
         icon: ImagePlus,
-        color: 'bg-violet-500',
+        color: 'bg-ochre-600',
     },
     {
         id: 4,
@@ -39,60 +39,65 @@ const activities = [
         description: '“Mental Health Awareness” started by Admin',
         time: '2 days ago',
         icon: MessageSquare,
-        color: 'bg-amber-500',
+        color: 'bg-ink-500',
     },
 ]
 
 export function ActivityTimeline() {
     return (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
-            <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-lg font-semibold tracking-tight text-slate-900">
+        <div className="rounded-xl border border-ink-200 bg-surface p-6 shadow-xs">
+            <div className="mb-6 flex items-center justify-between gap-4">
+                <h2 className="text-base font-semibold tracking-tight text-ink-900">
                     Recent Activity
                 </h2>
-                <button className="text-sm font-medium text-[#0EA5E9] hover:underline">
+                <button
+                    type="button"
+                    className="rounded-sm text-sm font-medium text-brand-700 transition-ui hover:text-brand-800 hover:underline"
+                >
                     View all
                 </button>
             </div>
 
-            <div className="space-y-6">
+            <ol className="space-y-6">
                 {activities.map((activity, index) => (
-                    <motion.div
+                    <motion.li
                         key={activity.id}
-                        initial={{ opacity: 0, x: -10 }}
+                        initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.08 }}
+                        transition={{ duration: 0.25, delay: index * 0.05, ease: [0.2, 0, 0, 1] }}
                         className="relative flex gap-4"
                     >
-                        {/* Timeline line */}
                         {index !== activities.length - 1 && (
-                            <div className="absolute left-5 top-10 h-full w-px bg-slate-200" />
+                            <span
+                                aria-hidden="true"
+                                className="absolute left-5 top-11 h-full w-px bg-ink-200"
+                            />
                         )}
 
-                        {/* Icon */}
-                        <div
+                        <span
                             className={cn(
-                                'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
-                                activity.color,
-                                'shadow-sm'
+                                'relative z-10 flex size-10 shrink-0 items-center justify-center rounded-full shadow-xs',
+                                activity.color
                             )}
                         >
-                            <activity.icon className="h-4 w-4 text-white" />
-                        </div>
+                            <activity.icon
+                                className="size-4 text-white"
+                                aria-hidden="true"
+                            />
+                        </span>
 
-                        {/* Content */}
-                        <div className="flex-1 pt-0.5">
-                            <p className="text-sm font-medium text-slate-900">
+                        <div className="min-w-0 flex-1 pt-0.5">
+                            <p className="text-sm font-medium text-ink-900">
                                 {activity.title}
                             </p>
-                            <p className="mt-0.5 text-sm text-slate-500">
+                            <p className="mt-0.5 text-sm text-ink-500">
                                 {activity.description}
                             </p>
-                            <p className="mt-1 text-xs text-slate-400">{activity.time}</p>
+                            <p className="mt-1 text-xs text-ink-400">{activity.time}</p>
                         </div>
-                    </motion.div>
+                    </motion.li>
                 ))}
-            </div>
+            </ol>
         </div>
     )
 }

@@ -1,8 +1,6 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {/* config options here */};
-
-module.exports = {
+const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
@@ -14,6 +12,20 @@ module.exports = {
         protocol: "https",
         hostname: "yhnyeiagrbudowecuaxy.supabase.co",
       },
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
+      {
+        protocol: "https",
+        hostname: "www.svgrepo.com",
+      },
+      {
+        protocol: "https",
+        hostname: "upload.wikimedia.org",
+      },
     ],
   },
 };
+
+export default nextConfig;

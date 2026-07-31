@@ -1,0 +1,137 @@
+import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+/** Uniform result shape for every server action. */
+export type ActionResult<T = undefined> =
+  | { ok: true; data?: T }
+  | { ok: false; error: string };
+
+export const fail = (error: string): ActionResult<never> => ({ ok: false, error });
+export const ok = <T>(data?: T): ActionResult<T> => ({ ok: true, data });
+
+/**
+ * Gate for every mutating action.
+ *
+ * Row level security already blocks non-admin writes at the database, so this
+ * is defence in depth rather than the only check — but it turns a confusing
+ * RLS rejection into a clear message, and stops us doing storage work for a
+ * request that will be refused anyway.
+ */
+export async function requireAdmin(): Promise<
+  { ok: true; supabase: SupabaseClient } | { ok: false; error: string }
+> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { ok: false, error: "আপনি লগইন করা নেই।" };
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (error) return { ok: false, error: "প্রোফাইল যাচাই করা যায়নি।" };
+  if (profile?.role !== "admin") return { ok: false, error: "আপনার অনুমতি নেই।" };
+
+  return { ok: true, supabase };
+}
+
+// ---------------------------------------------------------------------------
+// Field readers. Hand-rolled rather than pulling in a schema library, since
+// these forms need only trimming, length limits and a couple of enums.
+// ---------------------------------------------------------------------------
+
+/** Required text. Throws FieldError, which the action wrappers convert. */
+export class FieldError extends Error {}
+
+export function requiredText(
+  form: FormData,
+  key: string,
+  label: string,
+  max = 500
+): string {
+  const value = (form.get(key) as string | null)?.trim() ?? "";
+  if (!value) throw new FieldError(`${label} লিখুন।`);
+  if (value.length > max)
+    throw new FieldError(`${label} সর্বোচ্চ ${max} অক্ষরের হতে পারে।`);
+  return value;
+}
+
+/** Optional text. Empty string becomes null so "not translated" stays null. */
+export function optionalText(
+  form: FormData,
+  key: string,
+  max = 2000
+): string | null {
+  const value = (form.get(key) as string | null)?.trim() ?? "";
+  if (!value) return null;
+  return value.slice(0, max);
+}
+
+export function boolField(form: FormData, key: string): boolean {
+  const value = form.get(key);
+  return value === "true" || value === "on" || value === "1";
+}
+
+export function intField(form: FormData, key: string, fallback = 0): number {
+  const parsed = Number.parseInt((form.get(key) as string | null) ?? "", 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+/** Optional ISO date (yyyy-mm-dd) or null. */
+export function dateField(form: FormData, key: string): string | null {
+  const value = (form.get(key) as string | null)?.trim() ?? "";
+  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value))
+    throw new FieldError("তারিখ সঠিক নয়।");
+  return value;
+}
+
+/**
+ * Only allow internal paths or absolute http(s) URLs, so a stored link cannot
+ * become a `javascript:` payload rendered into an href.
+ */
+export function hrefField(form: FormData, key: string): string | null {
+  const value = (form.get(key) as string | null)?.trim() ?? "";
+  if (!value) return null;
+
+  if (value.startsWith("/")) return value;
+
+  try {
+    const url = new URL(value);
+    if (url.protocol === "http:" || url.protocol === "https:") return url.toString();
+  } catch {
+    /* falls through */
+  }
+
+  throw new FieldError("লিঙ্কটি সঠিক নয়। '/' দিয়ে শুরু করুন অথবা সম্পূর্ণ URL দিন।");
+}
+
+export function enumField<T extends readonly string[]>(
+  form: FormData,
+  key: string,
+  allowed: T,
+  fallback: T[number]
+): T[number] {
+  const value = (form.get(key) as string | null) ?? "";
+  return (allowed as readonly string[]).includes(value)
+    ? (value as T[number])
+    : fallback;
+}
+
+/** Wraps an action body so FieldError becomes a clean result instead of a crash. */
+export async function guarded<T>(
+  run: () => Promise<ActionResult<T>>
+): Promise<ActionResult<T>> {
+  try {
+    return await run();
+  } catch (error) {
+    if (error instanceof FieldError) return fail(error.message);
+    console.error("[action]", error);
+    return fail("অপ্রত্যাশিত সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+  }
+}

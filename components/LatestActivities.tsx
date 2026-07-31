@@ -1,172 +1,235 @@
+import Link from "next/link";
+import Image from "next/image";
 import {
-    ArrowRight,
+    ArrowLeft,
     Calendar,
     MapPin,
-    ChevronRight,
+    ChevronLeft,
     HeartHandshake,
     AlertTriangle,
 } from "lucide-react";
 
-export default function LatestActivities() {
+import { getActivities } from "@/lib/content/queries";
+import { pick, type Locale } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/dictionary";
+import type { Activity } from "@/lib/types/content";
+import { Section } from "./ui/section";
+import { SectionHeading } from "./ui/section-heading";
+import { Card } from "./ui/card";
+import { Badge } from "./ui/badge";
+import { buttonVariants } from "./ui/button";
+
+/** Formats an ISO date in the locale's own numerals and month names. */
+function formatDate(iso: string | null, locale: Locale) {
+    if (!iso) return null;
+    const date = new Date(`${iso}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return null;
+
+    return new Intl.DateTimeFormat(locale === "bn" ? "bn-BD" : "en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+    }).format(date);
+}
+
+export default async function LatestActivities({
+    locale,
+    t,
+}: {
+    locale: Locale;
+    t: Dictionary;
+}) {
+    const [feature, advisory, secondary] = await Promise.all([
+        getActivities("feature"),
+        getActivities("advisory"),
+        getActivities("secondary"),
+    ]);
+
+    const lead: Activity | undefined = feature[0];
+    const note: Activity | undefined = advisory[0];
+
+    // Nothing published in any slot — hide the whole section rather than
+    // rendering an empty grid.
+    if (!lead && !note && secondary.length === 0) return null;
+
     return (
-        <section className="py-20">
-            {/* Container */}
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Section space="lg">
+            <SectionHeading
+                eyebrow={t.home.activitiesEyebrow}
+                title={t.home.activitiesTitle}
+                action={
+                    <Link
+                        href={`/${locale}/archive`}
+                        className={buttonVariants({ variant: "outline" })}
+                    >
+                        {t.home.viewAllActivities}
+                        <ArrowLeft aria-hidden="true" className="rotate-180" />
+                    </Link>
+                }
+            />
 
-                {/* Header */}
-                <div className="flex justify-between items-end mb-12 flex-wrap gap-4">
+            <div className="grid gap-5 lg:grid-cols-3">
+                {lead && (
+                    <Link
+                        href={lead.href || `/${locale}/archive`}
+                        className="group relative col-span-full overflow-hidden rounded-xl lg:col-span-2"
+                    >
+                        <div className="relative aspect-16/10 bg-ink-200 sm:aspect-16/9">
+                            {lead.image_url && (
+                                <Image
+                                    src={lead.image_url}
+                                    alt=""
+                                    fill
+                                    sizes="(min-width: 1024px) 66vw, 100vw"
+                                    className="object-cover transition-transform duration-700 ease-out-soft group-hover:scale-[1.03]"
+                                />
+                            )}
+                        </div>
 
-                    <div>
-                        <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
-                            আমাদের সাম্প্রতিক কার্যক্রম
-                        </h2>
-                        <div className="h-1.5 w-24 bg-secondary" />
-                    </div>
-
-                    <button className="text-primary flex items-center gap-2 font-bold group">
-                        সব কার্যক্রম দেখুন
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </button>
-
-                </div>
-
-                {/* MAIN GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                    {/* Big Card */}
-                    <div className="md:col-span-2 group relative overflow-hidden rounded-xl aspect-[16/9]">
-                        <img
-                            src="/Rakib_Tamima_AFM.jpg"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/30 to-transparent"
                         />
 
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 md:p-8">
+                        <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
+                            {pick(locale, lead.category, lead.category_en) && (
+                                <Badge tone="solid" size="sm">
+                                    {pick(locale, lead.category, lead.category_en)}
+                                </Badge>
+                            )}
 
-                            <div className="bg-secondary text-white px-3 py-1 rounded text-lg font-bold w-fit mb-4">
-                                আইনি সহায়তা
-                            </div>
-
-                            <h3 className="text-white text-xl md:text-2xl font-bold mb-2">
-                                মিথ্যা মামলা প্রতিরোধ ও পুরুষ অধিকার রক্ষায় মানববন্ধন
+                            <h3 className="mt-4 max-w-xl text-xl text-white sm:text-2xl">
+                                {pick(locale, lead.title, lead.title_en)}
                             </h3>
 
-                            <div className="flex items-center gap-4 text-white/80 text-sm flex-wrap">
-                                <span className="flex items-center gap-1">
-                                    <Calendar className="w-4 h-4" />
-                                    ০৮ জুন, ২০২৬
-                                </span>
-
-                                <span className="flex items-center gap-1">
-                                    <MapPin className="w-4 h-4" />
-                                    প্রেস ক্লাব, ঢাকা
-                                </span>
+                            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/85">
+                                {lead.event_date && (
+                                    <span className="flex items-center gap-1.5">
+                                        <Calendar className="size-4" aria-hidden="true" />
+                                        <time dateTime={lead.event_date}>
+                                            {formatDate(lead.event_date, locale)}
+                                        </time>
+                                    </span>
+                                )}
+                                {pick(locale, lead.location, lead.location_en) && (
+                                    <span className="flex items-center gap-1.5">
+                                        <MapPin className="size-4" aria-hidden="true" />
+                                        {pick(locale, lead.location, lead.location_en)}
+                                    </span>
+                                )}
                             </div>
-
                         </div>
-                    </div>
+                    </Link>
+                )}
 
-                    {/* Small Card */}
-                    <div className="bg-white border border-gray-200 p-6 rounded-xl flex flex-col justify-between hover:shadow-md transition">
-
+                {note && (
+                    <Card className="flex flex-col justify-between" padded="lg">
                         <div>
-                            <div className="text-red-500 font-bold text-sm mb-4 flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4" />
-                                বিশেষ সচেতনতা
-                            </div>
+                            {pick(locale, note.category, note.category_en) && (
+                                <Badge tone="danger" size="sm">
+                                    <AlertTriangle aria-hidden="true" />
+                                    {pick(locale, note.category, note.category_en)}
+                                </Badge>
+                            )}
 
-                            <h3 className="text-lg font-bold text-primary mb-4 leading-snug">
-                                যৌতুক ও নারী নির্যাতন মামলার অপব্যবহার প্রতিরোধে নতুন নির্দেশিকা
+                            <h3 className="mt-4 text-lg text-brand-800">
+                                {pick(locale, note.title, note.title_en)}
                             </h3>
 
-                            <p className="text-gray-600 text-lg">
-                                সম্প্রতি সুপ্রিম কোর্টের নতুন নির্দেশনার আলো কে আমাদের আইনি প্যানেল একটি বিস্তারিত রিপোর্ট তৈরি করেছে...
-                            </p>
+                            {pick(locale, note.excerpt, note.excerpt_en) && (
+                                <p className="mt-3 text-sm text-ink-600">
+                                    {pick(locale, note.excerpt, note.excerpt_en)}
+                                </p>
+                            )}
                         </div>
 
-                        <button className="mt-6 text-primary flex items-center gap-2 font-bold group">
-                            বিস্তারিত পড়ুন
-                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </button>
-
-                    </div>
-
-                    {/* CTA Card */}
-                    <div className="bg-primary text-white p-6 rounded-xl flex flex-col justify-center items-center text-center">
-
-                        <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center mb-6">
-                            <HeartHandshake className="w-7 h-7" />
-                        </div>
-
-                        <h3 className="text-xl font-bold mb-2">
-                            আপনি কি আইনি সাহায্য চান?
-                        </h3>
-
-                        <p className="text-white/80 mb-6 text-lg">
-                            আমাদের বিশেষজ্ঞ আইনজীবী দল আপনাকে সঠিক দিকনির্দেশনা প্রদান করবে।
-                        </p>
-
-                        <button className="bg-white text-primary px-6 py-2 rounded font-bold hover:bg-gray-100 cursor-pointer transition">
-                            আবেদন করুন
-                        </button>
-
-                    </div>
-                </div>
-
-                {/* SECOND ROW (FIXED SEPARATE GRID) */}
-                <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                    {/* Item 1 */}
-                    <div className="flex gap-4 p-4 hover:bg-gray-50 transition rounded-lg group">
-
-                        <div className="w-24 h-24 shrink-0 rounded overflow-hidden">
-                            <img
-                                src="/women-commission-cance.webp"
-                                className="w-full h-full object-cover group-hover:scale-110 transition"
+                        <Link
+                            href={note.href || `/${locale}/archive`}
+                            className="group mt-6 inline-flex items-center gap-1.5 self-start rounded-sm text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
+                        >
+                            {pick(locale, note.action_label, note.action_label_en) ||
+                                t.home.readMore}
+                            <ChevronLeft
+                                aria-hidden="true"
+                                className="size-4 rotate-180 transition-transform duration-200 group-hover:translate-x-0.5"
                             />
-                        </div>
+                        </Link>
+                    </Card>
+                )}
 
-                        <div>
-                            <span className="text-xs font-bold text-secondary uppercase">
-                                সচেতনতা
-                            </span>
-                            <h4 className="font-bold text-primary mt-1 mb-2 leading-snug">
-                                নারী সংস্কার কমিশন বাতিলের দাবি এইড ফর মেন ফাউন্ডেশনের
-                            </h4>
-                            <span className="text-xs text-gray-500">
-                                ০২ মে, ২০২৫
-                            </span>
-                        </div>
-
+                <Card
+                    tone="brand"
+                    elevation="flat"
+                    padded="lg"
+                    className="flex flex-col items-center justify-center text-center"
+                >
+                    <div className="flex size-14 items-center justify-center rounded-full bg-white/10">
+                        <HeartHandshake className="size-7" aria-hidden="true" />
                     </div>
 
-                    {/* Item 2 */}
-                    <div className="flex gap-4 p-4 hover:bg-gray-50 transition rounded-lg group">
+                    <h3 className="mt-5 text-xl text-white">{t.home.legalHelpTitle}</h3>
 
-                        <div className="w-24 h-24 shrink-0 rounded overflow-hidden">
-                            <img
-                                src="/nasir-tamima-2.jpg"
-                                className="w-full h-full object-cover group-hover:scale-110 transition"
-                            />
-                        </div>
+                    <p className="mt-2.5 text-sm text-brand-100">
+                        {t.home.legalHelpBody}
+                    </p>
 
-                        <div>
-                            <span className="text-xs font-bold text-secondary uppercase">
-                                মানববন্ধন
-                            </span>
-                            <h4 className="font-bold text-primary mt-1 mb-2 leading-snug">
-                                ডিভোর্স জালিয়াতি বন্ধে এইড ফর মেন ফাউন্ডেশনের মানববন্ধন
-
-                            </h4>
-                            <span className="text-xs text-gray-500">
-                                ০৮ জুন, ২০২৬
-                            </span>
-                        </div>
-
-                    </div>
-
-                </div>
-
+                    <Link
+                        href={`/${locale}/contact`}
+                        className={buttonVariants({
+                            variant: "onDark",
+                            className: "mt-6",
+                        })}
+                    >
+                        {t.home.legalHelpCta}
+                    </Link>
+                </Card>
             </div>
-        </section>
+
+            {secondary.length > 0 && (
+                <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+                    {secondary.map((item) => (
+                        <li key={item.id}>
+                            <Link
+                                href={item.href || `/${locale}/archive`}
+                                className="group flex gap-4 rounded-xl p-4 transition-ui hover:bg-surface-sunken"
+                            >
+                                <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-ink-200">
+                                    {item.image_url && (
+                                        <Image
+                                            src={item.image_url}
+                                            alt=""
+                                            fill
+                                            sizes="96px"
+                                            className="object-cover transition-transform duration-500 ease-out-soft group-hover:scale-105"
+                                        />
+                                    )}
+                                </div>
+
+                                <div className="min-w-0">
+                                    {pick(locale, item.category, item.category_en) && (
+                                        <span className="text-2xs font-semibold uppercase text-ochre-700">
+                                            {pick(locale, item.category, item.category_en)}
+                                        </span>
+                                    )}
+
+                                    <h3 className="mt-1.5 text-base text-brand-800">
+                                        {pick(locale, item.title, item.title_en)}
+                                    </h3>
+
+                                    {item.event_date && (
+                                        <time
+                                            dateTime={item.event_date}
+                                            className="mt-2 block text-xs text-ink-500"
+                                        >
+                                            {formatDate(item.event_date, locale)}
+                                        </time>
+                                    )}
+                                </div>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </Section>
     );
 }

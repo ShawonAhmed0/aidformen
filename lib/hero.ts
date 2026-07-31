@@ -6,9 +6,9 @@ export async function getHeroContent() {
   const { data, error } = await supabase
     .from("hero_content")
     .select("*")
-    .single();
+    .maybeSingle();
 
-  if (error) {
+  if (error && error.code !== "PGRST116") {
     throw error;
   }
 

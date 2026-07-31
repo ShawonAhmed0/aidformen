@@ -1,18 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LogIn, LogOut, LayoutDashboard } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 
-export default function AuthButton() {
+import { buttonVariants } from "./ui/button";
+import type { Locale } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/dictionary";
+import { cn } from "@/lib/utils";
+
+export default function AuthButton({
+    locale,
+    t,
+    className,
+}: {
+    locale: Locale;
+    t: Dictionary;
+    className?: string;
+}) {
     const pathname = usePathname();
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [role, setRole] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [signingOut, setSigningOut] = useState(false);
 
     useEffect(() => {
         async function checkUser() {
@@ -59,50 +74,64 @@ export default function AuthButton() {
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+    }, [supabase]);
 
     // Hide on admin pages (after all hooks)
     if (pathname?.startsWith("/admin")) {
         return null;
     }
 
+    // Skeleton matches the real control's 44px height so the header does not
+    // reflow when auth resolves.
     if (loading) {
         return (
-            <div className="h-10 w-32 animate-pulse rounded-lg bg-slate-200" />
+            <div
+                className={cn("flex items-center gap-2.5", className)}
+                aria-hidden="true"
+            >
+                <div className="h-11 w-32 animate-pulse rounded-lg bg-ink-100" />
+            </div>
         );
     }
 
-    const dashboardLink = role === "admin" ? "/admin" : "/dashboard";
+    // Admin lives outside the locale prefix; member routes stay inside it.
+    const dashboardLink = role === "admin" ? "/admin" : `/${locale}/dashboard`;
 
     return (
-        <div className="flex items-center gap-2.5">
+        <div className={cn("flex items-center gap-2.5", className)}>
             <Link
-                href={user ? dashboardLink : "/login"}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-[13.5px] font-medium text-slate-700 transition-all hover:border-slate-400 hover:bg-slate-50"
+                href={user ? dashboardLink : `/${locale}/login`}
+                className={buttonVariants({ variant: "outline" })}
             >
                 {user ? (
                     <>
-                        <LayoutDashboard className="h-4 w-4" />
-                        {role === "admin" ? "অ্যাডমিন ড্যাশবোর্ড" : "ড্যাশবোর্ড"}
+                        <LayoutDashboard aria-hidden="true" />
+                        {role === "admin" ? t.nav.adminDashboard : t.nav.dashboard}
                     </>
                 ) : (
                     <>
-                        <LogIn className="h-4 w-4" />
-                        লগইন
+                        <LogIn aria-hidden="true" />
+                        {t.nav.login}
                     </>
                 )}
             </Link>
 
             {user && (
                 <button
+                    type="button"
+                    disabled={signingOut}
                     onClick={async () => {
+                        setSigningOut(true);
                         await supabase.auth.signOut();
                         window.location.href = "/";
                     }}
-                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-[13.5px] font-medium text-red-600 transition-all hover:border-red-300 hover:bg-red-50"
+                    className={cn(
+                        buttonVariants({ variant: "ghost" }),
+                        "text-danger hover:bg-danger-soft hover:text-danger"
+                    )}
                 >
-                    <LogOut className="h-4 w-4" />
-                    লগআউট
+                    <LogOut aria-hidden="true" />
+                    {signingOut ? t.nav.loggingOut : t.nav.logout}
                 </button>
             )}
         </div>

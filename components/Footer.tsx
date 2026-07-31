@@ -1,82 +1,200 @@
+import Link from "next/link";
+import Image from "next/image";
 import { Globe, Mail, MapPin, Phone } from "lucide-react";
+import { FaFacebookF, FaYoutube } from "react-icons/fa6";
 
-export default function Footer() {
+import { Container } from "./ui/container";
+import { pick, type Locale } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/dictionary";
+import type { SiteSettings } from "@/lib/types/content";
+
+const linkClass =
+    "inline-flex rounded-sm text-brand-100/80 transition-ui hover:text-white";
+
+const socialClass =
+    "flex size-10 items-center justify-center rounded-lg bg-white/8 text-brand-100 transition-ui hover:bg-white/15 hover:text-white";
+
+export default function Footer({
+    locale,
+    t,
+    settings,
+}: {
+    locale: Locale;
+    t: Dictionary;
+    settings: SiteSettings | null;
+}) {
+    const orgName =
+        pick(locale, settings?.organisation_name, settings?.organisation_name_en) ||
+        "এইড ফর মেন";
+    const tagline = pick(locale, settings?.tagline, settings?.tagline_en);
+    const address = pick(locale, settings?.address, settings?.address_en);
+    const phone = settings?.contact_phone?.trim();
+    const email = settings?.contact_email?.trim();
+
+    const quickLinks = [
+        { label: t.nav.about, href: `/${locale}/about` },
+        { label: t.nav.team, href: `/${locale}/team` },
+        { label: t.nav.archive, href: `/${locale}/archive` },
+        { label: t.nav.forum, href: `/${locale}/forum` },
+    ];
+
+    const legalLinks = [
+        { label: t.footer.privacy, href: `/${locale}/privacy` },
+        { label: t.footer.terms, href: `/${locale}/terms` },
+        { label: t.footer.faq, href: `/${locale}/faq` },
+        { label: t.nav.contact, href: `/${locale}/contact` },
+    ];
+
     return (
-        <footer className="bg-[#0b1f2a] text-white">
-            <div className="max-w-6xl mx-auto px-6 md:px-12 py-16">
-
-                {/* Top Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-
+        <footer className="bg-brand-950 text-brand-50">
+            <Container>
+                <div className="grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-4 lg:py-20">
                     {/* Brand */}
-                    <div className="flex flex-col gap-4">
-                        <h3 className="text-xl font-bold">এইড ফর মেন</h3>
+                    <div className="sm:col-span-2 lg:col-span-1">
+                        <div className="flex items-center gap-3">
+                            <Image
+                                src="/logo (1).png"
+                                alt=""
+                                width={36}
+                                height={36}
+                                className="size-9 object-contain"
+                            />
+                            <span className="font-display text-lg font-semibold">
+                                {orgName}
+                            </span>
+                        </div>
 
-                        <p className="text-white/70 text-lg leading-relaxed">
-                            পুরুষ অধিকার ও বৈষম্যহীন সমাজ গঠনে একটি অরাজনৈতিক ও অলাভজনক প্রতিষ্ঠান।
-                        </p>
+                        {tagline && (
+                            <p className="mt-5 max-w-sm text-sm leading-relaxed text-brand-100/75">
+                                {tagline}
+                            </p>
+                        )}
 
-                        <div className="flex gap-4 mt-2">
-
-                            <Globe className="w-5 h-5 text-white/60 hover:text-white transition" />
-                            <Mail className="w-5 h-5 text-white/60 hover:text-white transition" />
+                        <div className="mt-6 flex gap-2">
+                            {settings?.website_url && (
+                                <a
+                                    href={settings.website_url}
+                                    className={socialClass}
+                                    aria-label={t.footer.website}
+                                >
+                                    <Globe className="size-[18px]" aria-hidden="true" />
+                                </a>
+                            )}
+                            {settings?.facebook_url && (
+                                <a
+                                    href={settings.facebook_url}
+                                    className={socialClass}
+                                    aria-label="Facebook"
+                                >
+                                    <FaFacebookF className="size-[18px]" aria-hidden="true" />
+                                </a>
+                            )}
+                            {settings?.youtube_url && (
+                                <a
+                                    href={settings.youtube_url}
+                                    className={socialClass}
+                                    aria-label="YouTube"
+                                >
+                                    <FaYoutube className="size-[18px]" aria-hidden="true" />
+                                </a>
+                            )}
+                            {email && (
+                                <a
+                                    href={`mailto:${email}`}
+                                    className={socialClass}
+                                    aria-label={t.footer.email}
+                                >
+                                    <Mail className="size-[18px]" aria-hidden="true" />
+                                </a>
+                            )}
                         </div>
                     </div>
 
-                    {/* Links */}
+                    <nav aria-labelledby="footer-quick">
+                        <h2
+                            id="footer-quick"
+                            className="text-2xs font-semibold uppercase text-brand-300"
+                        >
+                            {t.footer.quickLinks}
+                        </h2>
+                        <ul className="mt-5 flex flex-col gap-3 text-sm">
+                            {quickLinks.map((link) => (
+                                <li key={link.href}>
+                                    <Link href={link.href} className={linkClass}>
+                                        {link.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+
+                    <nav aria-labelledby="footer-legal">
+                        <h2
+                            id="footer-legal"
+                            className="text-2xs font-semibold uppercase text-brand-300"
+                        >
+                            {t.footer.legal}
+                        </h2>
+                        <ul className="mt-5 flex flex-col gap-3 text-sm">
+                            {legalLinks.map((link) => (
+                                <li key={link.href}>
+                                    <Link href={link.href} className={linkClass}>
+                                        {link.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+
                     <div>
-                        <h4 className="font-semibold mb-4">দ্রুত লিঙ্ক</h4>
-                        <div className="flex flex-col gap-2 text-white/70 text-lg">
-                            <a className="hover:text-white transition">আমাদের সম্পর্কে</a>
-                            <a className="hover:text-white transition">আইনি সহায়তা</a>
-                            <a className="hover:text-white transition">সাম্প্রতিক কার্যক্রম</a>
-                            <a className="hover:text-white transition">গ্যালারি</a>
-                        </div>
+                        <h2 className="text-2xs font-semibold uppercase text-brand-300">
+                            {t.footer.contact}
+                        </h2>
+
+                        <address className="mt-5 flex flex-col gap-4 text-sm not-italic text-brand-100/80">
+                            {address && (
+                                <span className="flex items-start gap-3">
+                                    <MapPin
+                                        className="mt-0.5 size-[18px] shrink-0 text-brand-300"
+                                        aria-hidden="true"
+                                    />
+                                    {address}
+                                </span>
+                            )}
+
+                            {phone && (
+                                <a
+                                    href={`tel:${phone}`}
+                                    className="flex items-start gap-3 rounded-sm transition-ui hover:text-white"
+                                >
+                                    <Phone
+                                        className="mt-0.5 size-[18px] shrink-0 text-brand-300"
+                                        aria-hidden="true"
+                                    />
+                                    {phone}
+                                </a>
+                            )}
+
+                            {email && (
+                                <a
+                                    href={`mailto:${email}`}
+                                    className="flex items-start gap-3 rounded-sm transition-ui hover:text-white"
+                                >
+                                    <Mail
+                                        className="mt-0.5 size-[18px] shrink-0 text-brand-300"
+                                        aria-hidden="true"
+                                    />
+                                    {email}
+                                </a>
+                            )}
+                        </address>
                     </div>
-
-                    {/* Legal */}
-                    <div>
-                        <h4 className="font-semibold mb-4">আইনি ও শর্তাবলী</h4>
-                        <div className="flex flex-col gap-2 text-white/70 text-lg">
-                            <a className="hover:text-white transition">গোপনীয়তা নীতি</a>
-                            <a className="hover:text-white transition">শর্তাবলী</a>
-                            <a className="hover:text-white transition">সচরাচর জিজ্ঞাস্য</a>
-                            <a className="hover:text-white transition">নিবন্ধন তথ্য</a>
-                        </div>
-                    </div>
-
-                    {/* Contact */}
-                    <div>
-                        <h4 className="font-semibold mb-4">যোগাযোগ</h4>
-
-                        <div className="flex flex-col gap-3 text-white/70 text-lg">
-
-                            <div className="flex items-start gap-2">
-                                <MapPin className="w-4 h-4 mt-1" />
-                                <span>১৯৩, মতিঝিল, ঢাকা-১০০০</span>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <Phone className="w-4 h-4" />
-                                <span>+৮৮ ০১৪০৪৫৫৫৯৯৯</span>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <Mail className="w-4 h-4" />
-                                <span>info@aidformen.com</span>
-                            </div>
-
-                        </div>
-                    </div>
-
                 </div>
 
-                {/* Bottom */}
-                <div className="border-t border-white/10 mt-12 pt-6 text-center text-white/50 text-lg">
-                    © ২০২৪ এইড ফর মেন ফাউন্ডেশন। সর্বস্বত্ব সংরক্ষিত।
+                <div className="border-t border-white/10 py-7 text-center text-xs text-brand-100/60">
+                    © {new Date().getFullYear()} {orgName}। {t.footer.rights}
                 </div>
-
-            </div>
+            </Container>
         </footer>
     );
 }

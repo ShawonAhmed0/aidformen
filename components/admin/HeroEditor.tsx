@@ -1,196 +1,175 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2, Save } from "lucide-react";
+import { toast } from "sonner";
+
 import { updateHeroContent } from "@/lib/actions/hero";
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Upload, Save, ImageIcon, Loader2 } from "lucide-react";
-import { toast } from "sonner"; // or your preferred toast
+import { BilingualField } from "./BilingualField";
+import type { HeroContent } from "@/lib/types/content";
 
-interface HeroEditorProps {
-    initialData: {
-        title: string;
-        description: string;
-        image_url: string | null;
-    };
-}
+const s = (v: string | null | undefined) => v ?? "";
 
-export function HeroEditor({ initialData }: HeroEditorProps) {
+export function HeroEditor({ hero }: { hero: HeroContent | null }) {
     const router = useRouter();
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [pending, startTransition] = useTransition();
 
-    const [title, setTitle] = useState(initialData.title || "");
-    const [description, setDescription] = useState(initialData.description || "");
-    const [previewImage, setPreviewImage] = useState<string | null>(
-        initialData.image_url
-    );
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [form, setForm] = useState({
+        title: s(hero?.title),
+        title_en: s(hero?.title_en),
+        description: s(hero?.description),
+        description_en: s(hero?.description_en),
+        eyebrow: s(hero?.eyebrow),
+        eyebrow_en: s(hero?.eyebrow_en),
+        primary_cta_label: s(hero?.primary_cta_label),
+        primary_cta_label_en: s(hero?.primary_cta_label_en),
+        primary_cta_href: s(hero?.primary_cta_href),
+        secondary_cta_label: s(hero?.secondary_cta_label),
+        secondary_cta_label_en: s(hero?.secondary_cta_label_en),
+        secondary_cta_href: s(hero?.secondary_cta_href),
+    });
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const set = (key: keyof typeof form) => (value: string) =>
+        setForm((prev) => ({ ...prev, [key]: value }));
 
-        setSelectedFile(file);
-        const objectUrl = URL.createObjectURL(file);
-        setPreviewImage(objectUrl);
-    };
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
+        const body = new FormData();
+        if (hero?.id) body.append("id", hero.id);
+        for (const [key, value] of Object.entries(form)) body.append(key, value);
 
-        const formData = new FormData();
-        formData.append("title", title);
-        formData.append("description", description);
-        if (selectedFile) {
-            formData.append("image", selectedFile);
-        }
+        startTransition(async () => {
+            const result = await updateHeroContent(body);
 
-        const result = await updateHeroContent(formData);
+            if (!result.ok) {
+                toast.error(result.error);
+                return;
+            }
 
-        setLoading(false);
-
-        if (result?.error) {
-            toast.error(result.error);
-            return;
-        }
-
-        toast.success("হিরো সেকশন সফলভাবে আপডেট হয়েছে!");
-        router.refresh();
+            toast.success("হিরো সেকশন সংরক্ষণ হয়েছে।");
+            router.refresh();
+        });
     };
 
     return (
-        <div className="grid gap-8 lg:grid-cols-2">
-            {/* Editor Form */}
-            <div className="space-y-6">
-                <div className="rounded-xl border border-slate-200/80 bg-white p-6">
-                    <h2 className="text-[16px] font-semibold text-slate-900 mb-6">
-                        হিরো সেকশন এডিট করুন
-                    </h2>
+        <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="rounded-xl border border-ink-200 bg-surface p-6 shadow-xs">
+                <h2 className="text-base font-semibold text-ink-900">লেখা</h2>
+                <p className="mt-1 text-sm text-ink-500">
+                    হোমপেজের একদম উপরের অংশে যা দেখা যায়।
+                </p>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Image Upload */}
-                        <div className="space-y-2">
-                            <Label className="text-[13.5px]">হিরো ইমেজ</Label>
-                            <div
-                                onClick={() => fileInputRef.current?.click()}
-                                className="relative flex h-48 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 transition-colors hover:border-teal-400 hover:bg-teal-50/30"
-                            >
-                                {previewImage ? (
-                                    <img
-                                        src={previewImage}
-                                        alt="Hero preview"
-                                        className="h-full w-full rounded-xl object-cover"
-                                    />
-                                ) : (
-                                    <>
-                                        <ImageIcon className="h-8 w-8 text-slate-400 mb-2" />
-                                        <p className="text-[13px] text-slate-500">
-                                            নতুন ছবি আপলোড করতে ক্লিক করুন
-                                        </p>
-                                    </>
-                                )}
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={handleImageChange}
-                                />
-                            </div>
-                        </div>
+                <div className="mt-6 space-y-5">
+                    <BilingualField
+                        label="ছোট শিরোনাম (eyebrow)"
+                        value={form.eyebrow}
+                        onChange={set("eyebrow")}
+                        valueEn={form.eyebrow_en}
+                        onChangeEn={set("eyebrow_en")}
+                        placeholder="যেমন: আমাদের লক্ষ্য"
+                        helper="ঐচ্ছিক। মূল শিরোনামের ঠিক উপরে ছোট করে দেখাবে।"
+                    />
 
-                        {/* Title */}
-                        <div className="space-y-2">
-                            <Label htmlFor="title" className="text-[13.5px]">
-                                শিরোনাম
-                            </Label>
-                            <Input
-                                id="title"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="হিরো সেকশনের শিরোনাম লিখুন"
-                                className="h-11 rounded-lg"
-                                required
-                            />
-                        </div>
+                    <BilingualField
+                        label="মূল শিরোনাম"
+                        required
+                        value={form.title}
+                        onChange={set("title")}
+                        valueEn={form.title_en}
+                        onChangeEn={set("title_en")}
+                        placeholder="হিরো সেকশনের শিরোনাম"
+                    />
 
-                        {/* Description */}
-                        <div className="space-y-2">
-                            <Label htmlFor="description" className="text-[13.5px]">
-                                বিবরণ
-                            </Label>
-                            <Textarea
-                                id="description"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="হিরো সেকশনের বিবরণ লিখুন"
-                                className="min-h-[120px] rounded-lg resize-none"
-                                required
-                            />
-                        </div>
-
-                        <Button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full h-11 rounded-lg bg-teal-600 hover:bg-teal-700 text-white"
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    সংরক্ষণ করা হচ্ছে...
-                                </>
-                            ) : (
-                                <>
-                                    <Save className="mr-2 h-4 w-4" />
-                                    পরিবর্তন সংরক্ষণ করুন
-                                </>
-                            )}
-                        </Button>
-                    </form>
+                    <BilingualField
+                        label="বিবরণ"
+                        multiline
+                        rows={4}
+                        value={form.description}
+                        onChange={set("description")}
+                        valueEn={form.description_en}
+                        onChangeEn={set("description_en")}
+                        placeholder="সংক্ষেপে সংগঠনের পরিচয়"
+                    />
                 </div>
             </div>
 
-            {/* Live Preview */}
-            <div className="space-y-4">
-                <h2 className="text-[16px] font-semibold text-slate-900">
-                    লাইভ প্রিভিউ
-                </h2>
+            <div className="rounded-xl border border-ink-200 bg-surface p-6 shadow-xs">
+                <h2 className="text-base font-semibold text-ink-900">বোতাম</h2>
+                <p className="mt-1 text-sm text-ink-500">
+                    লিঙ্ক হিসেবে <code className="text-xs">/about</code> এর মতো
+                    ভেতরের ঠিকানা অথবা সম্পূর্ণ URL দিন।
+                </p>
 
-                <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm">
-                    {/* Preview Image */}
-                    <div className="relative h-56 w-full bg-slate-100">
-                        {previewImage ? (
-                            <img
-                                src={previewImage}
-                                alt="Preview"
-                                className="h-full w-full object-cover"
-                            />
-                        ) : (
-                            <div className="flex h-full items-center justify-center text-slate-400">
-                                <ImageIcon className="h-12 w-12" />
-                            </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                            <h3 className="text-xl font-bold leading-snug line-clamp-2">
-                                {title || "শিরোনাম এখানে দেখাবে"}
-                            </h3>
-                            <p className="mt-2 text-[14px] text-white/85 line-clamp-2">
-                                {description || "বিবরণ এখানে দেখাবে"}
-                            </p>
-                        </div>
+                <div className="mt-6 grid gap-5 lg:grid-cols-2">
+                    <div className="space-y-5">
+                        <BilingualField
+                            label="প্রথম বোতামের লেখা"
+                            value={form.primary_cta_label}
+                            onChange={set("primary_cta_label")}
+                            valueEn={form.primary_cta_label_en}
+                            onChangeEn={set("primary_cta_label_en")}
+                        />
+
+                        <Field label="প্রথম বোতামের লিঙ্ক">
+                            {(props) => (
+                                <Input
+                                    {...props}
+                                    value={form.primary_cta_href}
+                                    onChange={(e) =>
+                                        set("primary_cta_href")(e.target.value)
+                                    }
+                                    placeholder="/about"
+                                />
+                            )}
+                        </Field>
+                    </div>
+
+                    <div className="space-y-5">
+                        <BilingualField
+                            label="দ্বিতীয় বোতামের লেখা"
+                            value={form.secondary_cta_label}
+                            onChange={set("secondary_cta_label")}
+                            valueEn={form.secondary_cta_label_en}
+                            onChangeEn={set("secondary_cta_label_en")}
+                        />
+
+                        <Field label="দ্বিতীয় বোতামের লিঙ্ক">
+                            {(props) => (
+                                <Input
+                                    {...props}
+                                    value={form.secondary_cta_href}
+                                    onChange={(e) =>
+                                        set("secondary_cta_href")(e.target.value)
+                                    }
+                                    placeholder="/register"
+                                />
+                            )}
+                        </Field>
                     </div>
                 </div>
-
-                <p className="text-[12.5px] text-slate-500">
-                    এই প্রিভিউটি আপনার ওয়েবসাইটের হিরো সেকশনের মতো দেখাবে।
-                </p>
             </div>
-        </div>
+
+            {/* Sticky so the save control stays reachable on a long form. */}
+            <div className="sticky bottom-4 flex justify-end">
+                <Button type="submit" size="lg" disabled={pending} className="shadow-lg">
+                    {pending ? (
+                        <>
+                            <Loader2 className="animate-spin" aria-hidden="true" />
+                            সংরক্ষণ হচ্ছে…
+                        </>
+                    ) : (
+                        <>
+                            <Save aria-hidden="true" />
+                            পরিবর্তন সংরক্ষণ করুন
+                        </>
+                    )}
+                </Button>
+            </div>
+        </form>
     );
 }

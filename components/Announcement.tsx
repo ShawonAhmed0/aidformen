@@ -1,55 +1,77 @@
+import Link from "next/link";
 import { Megaphone } from "lucide-react";
 
-export default function Announcement() {
+import { pick, type Locale } from "@/lib/i18n/config";
+import type { SiteSettings } from "@/lib/types/content";
+import { Container } from "./ui/container";
+import { Badge } from "./ui/badge";
+import { buttonVariants } from "./ui/button";
+
+export default function Announcement({
+    locale,
+    settings,
+}: {
+    locale: Locale;
+    settings: SiteSettings | null;
+}) {
+    if (!settings?.announcement_enabled) return null;
+
+    const title = pick(
+        locale,
+        settings.announcement_title,
+        settings.announcement_title_en
+    );
+    if (!title) return null;
+
+    const badge = pick(
+        locale,
+        settings.announcement_badge,
+        settings.announcement_badge_en
+    );
+    const body = pick(
+        locale,
+        settings.announcement_body,
+        settings.announcement_body_en
+    );
+    const ctaLabel = pick(
+        locale,
+        settings.announcement_cta_label,
+        settings.announcement_cta_label_en
+    );
+    const ctaHref = settings.announcement_cta_href?.trim();
+    const href = ctaHref?.startsWith("/") ? `/${locale}${ctaHref}` : ctaHref;
+
     return (
-        <section className="px-6 md:px-12 -mt-8 relative z-30">
-            <div className="max-w-6xl mx-auto">
-
-                <div className="
-                    bg-white/60
-                    backdrop-blur-xl
-                    border border-white/30
-                    shadow-xl
-                    rounded-xl
-                    p-6 md:p-8
-                    flex flex-col md:flex-row items-center gap-6
-                ">
-
-                    {/* Badge */}
-                    <div className="flex items-center gap-2 bg-red-50/70 text-red-600 px-4 py-2 rounded-full font-semibold text-lg shrink-0 backdrop-blur-md border border-red-100/40">
-                        <Megaphone size={18} />
-                        জরুরি আপডেট
-                    </div>
-
-                    {/* Content */}
+        // Pulled up to overlap the hero, which ties the two together instead of
+        // leaving the hero as a detached banner.
+        <section className="relative z-20 -mt-12 sm:-mt-14">
+            <Container>
+                <div className="flex flex-col gap-6 rounded-2xl border border-ink-200 bg-surface p-6 shadow-lg sm:p-8 lg:flex-row lg:items-center lg:gap-8">
                     <div className="flex-1">
-                        <h3 className="text-xl md:text-2xl font-bold text-[#004d65] mb-1">
-                            আন্তর্জাতিক পুরুষ দিবস ২০২৫-এর প্রস্তুতি সভা
-                        </h3>
-                        <p className="text-gray-600 text-xl md:text-xl">
-                            আগামী ১৯শে নভেম্বর উপলক্ষে আয়োজিত বিশেষ সেমিনারে অংশগ্রহণের জন্য নিবন্ধন চলছে।
-                            দ্রুত আসন নিশ্চিত করুন।
-                        </p>
+                        {badge && (
+                            <Badge tone="danger" size="md">
+                                <Megaphone aria-hidden="true" />
+                                {badge}
+                            </Badge>
+                        )}
+
+                        <h2 className="mt-4 text-xl text-brand-800 sm:text-2xl">
+                            {title}
+                        </h2>
+
+                        {body && <p className="mt-2 text-base text-ink-600">{body}</p>}
                     </div>
 
-                    {/* Button */}
-                    <button className="
-                    text-lg
-                        bg-[#004d65]
-                        text-white
-                        px-6 py-3
-                        rounded-lg
-                        font-bold
-                        hover:bg-[#003a4d]
-                        transition
-                        shadow-md
-                    ">
-                        নিবন্ধন করুন
-                    </button>
-
+                    {ctaLabel && href && (
+                        <Link
+                            href={href}
+                            className={buttonVariants({ className: "shrink-0" })}
+                        >
+                            {ctaLabel}
+                        </Link>
+                    )}
                 </div>
-
-            </div>
+            </Container>
         </section>
     );
 }
