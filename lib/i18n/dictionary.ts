@@ -6,6 +6,10 @@ import type { Locale } from "./config";
  * Only chrome lives here — navigation, buttons, form labels, empty states.
  * Editorial content comes from the database, where each field has an optional
  * `_en` counterpart resolved by `pick()`.
+ *
+ * Deliberately not `as const`: literal types would make the `satisfies` check
+ * on `en` demand the English strings equal the Bengali ones. Widened to
+ * `string`, it still enforces an identical key shape, which is the point.
  */
 const bn = {
   meta: {
@@ -170,7 +174,7 @@ const bn = {
     loading: "লোড হচ্ছে…",
     openInNewTab: "(নতুন ট্যাবে খুলবে)",
   },
-} as const;
+};
 
 /** English mirrors the Bengali shape exactly; `satisfies` enforces that. */
 const en = {

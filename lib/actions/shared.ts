@@ -111,6 +111,25 @@ export function hrefField(form: FormData, key: string): string | null {
   throw new FieldError("লিঙ্কটি সঠিক নয়। '/' দিয়ে শুরু করুন অথবা সম্পূর্ণ URL দিন।");
 }
 
+/**
+ * Absolute http(s) URL or null. Unlike `hrefField` this rejects internal paths —
+ * a social profile or external website is never a path on this site, and
+ * storing one would render a link that goes nowhere.
+ */
+export function urlField(form: FormData, key: string, label: string): string | null {
+  const value = (form.get(key) as string | null)?.trim() ?? "";
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    if (url.protocol === "http:" || url.protocol === "https:") return url.toString();
+  } catch {
+    /* falls through */
+  }
+
+  throw new FieldError(`${label} একটি সম্পূর্ণ ঠিকানা হতে হবে, যেমন https://…`);
+}
+
 export function enumField<T extends readonly string[]>(
   form: FormData,
   key: string,
