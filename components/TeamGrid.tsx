@@ -74,54 +74,67 @@ export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary })
       <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {members.map((member) => (
           <li key={member.id}>
-            <Card padded="lg" interactive className="flex h-full flex-col text-center">
-              <span className="relative mx-auto flex size-24 items-center justify-center overflow-hidden rounded-full bg-brand-50 ring-4 ring-brand-50/70">
+            <Card
+              padded="none"
+              interactive
+              className="flex h-full flex-col overflow-hidden text-center"
+            >
+              {/* Top half of the card, full bleed. basis-1/2 resolves against
+                  the card's height, which the grid row makes definite, so every
+                  card splits at the same line however long its quote runs.
+                  object-top keeps faces in frame when a portrait is cropped. */}
+              <span className="relative flex min-h-56 shrink-0 basis-1/2 items-center justify-center overflow-hidden bg-brand-50">
                 {member.photo_url ? (
                   <Image
                     src={member.photo_url}
                     alt=""
                     fill
-                    sizes="96px"
-                    className="object-cover"
+                    sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover object-top"
                   />
                 ) : (
-                  <User className="size-10 text-brand-600" aria-hidden="true" />
+                  <User className="size-12 text-brand-600" aria-hidden="true" />
                 )}
               </span>
 
-              <h2 className="mt-5 text-xl text-ink-900">{member.name}</h2>
+              <div className="flex flex-1 flex-col p-6 sm:p-7">
+                <h2 className="text-xl text-ink-900">{member.name}</h2>
 
-              <p className="mt-1.5 text-sm font-semibold text-brand-700">
-                {member.role}
-              </p>
+                <p className="mt-1.5 text-sm font-semibold text-brand-700">
+                  {member.role}
+                </p>
 
-              {member.quote && (
-                <>
-                  <hr className="my-5 border-ink-200" />
-                  <Quote className="mx-auto size-5 text-ochre-600" aria-hidden="true" />
-                  <blockquote className="mt-3 flex-1 text-base text-ink-600">
-                    “{member.quote}”
-                  </blockquote>
-                </>
-              )}
+                {member.quote && (
+                  <>
+                    <hr className="my-5 border-ink-200" />
+                    <Quote
+                      className="mx-auto size-5 text-ochre-600"
+                      aria-hidden="true"
+                    />
+                    <blockquote className="mt-3 flex-1 text-base text-ink-600">
+                      “{member.quote}”
+                    </blockquote>
+                  </>
+                )}
 
-              {(member.statement || member.bio) && (
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    triggerRef.current = event.currentTarget;
-                    setSelected(member);
-                  }}
-                  className="group mx-auto mt-6 inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
-                >
-                  {t.home.readMore}
-                  <span className="sr-only">— {member.name}</span>
-                  <ArrowLeft
-                    aria-hidden="true"
-                    className="size-4 rotate-180 transition-transform duration-200 group-hover:translate-x-0.5"
-                  />
-                </button>
-              )}
+                {(member.statement || member.bio) && (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      triggerRef.current = event.currentTarget;
+                      setSelected(member);
+                    }}
+                    className="group mx-auto mt-6 inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
+                  >
+                    {t.home.readMore}
+                    <span className="sr-only">— {member.name}</span>
+                    <ArrowLeft
+                      aria-hidden="true"
+                      className="size-4 rotate-180 transition-transform duration-200 group-hover:translate-x-0.5"
+                    />
+                  </button>
+                )}
+              </div>
             </Card>
           </li>
         ))}
