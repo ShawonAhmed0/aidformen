@@ -35,6 +35,9 @@ export type CarouselImage = {
   sort_order: number;
   is_published: boolean;
   created_at: string | null;
+  /** Point that must survive the crop, as percentages. See migration 0004. */
+  focal_x: number;
+  focal_y: number;
 };
 
 export type TeamMember = {
@@ -52,7 +55,20 @@ export type TeamMember = {
   bio_en: string | null;
   sort_order: number;
   is_published: boolean;
+  focal_x: number;
+  focal_y: number;
 };
+
+/**
+ * `object-position` for a focal point, safe when the columns are missing —
+ * a database that has not run migration 0004 yields the CSS default.
+ */
+export function focalPosition(
+  x: number | null | undefined,
+  y: number | null | undefined
+): string {
+  return `${x ?? 50}% ${y ?? 50}%`;
+}
 
 export type SiteSettings = {
   id: boolean;

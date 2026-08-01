@@ -120,6 +120,11 @@ export function intField(form: FormData, key: string, fallback = 0): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+/** Keeps a percentage inside 0–100 so it can never trip the CHECK constraint. */
+export function clampPercent(value: number): number {
+  return Math.min(100, Math.max(0, Math.round(value)));
+}
+
 /** Optional ISO date (yyyy-mm-dd) or null. */
 export function dateField(form: FormData, key: string): string | null {
   const value = (form.get(key) as string | null)?.trim() ?? "";

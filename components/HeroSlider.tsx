@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 
 import { pick, type Locale } from "@/lib/i18n/config";
-import type { CarouselImage } from "@/lib/types/content";
+import { focalPosition, type CarouselImage } from "@/lib/types/content";
 
 export default function HeroSlider({
     images,
@@ -60,6 +60,8 @@ export default function HeroSlider({
                     priority={index === 0}
                     sizes="100vw"
                     className="object-cover"
+                    // Framing chosen per slide in the admin; see migration 0004.
+                    style={{ objectPosition: focalPosition(slide.focal_x, slide.focal_y) }}
                 />
             </motion.div>
         </AnimatePresence>

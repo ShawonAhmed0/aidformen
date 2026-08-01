@@ -5,8 +5,10 @@ import { revalidatePath } from "next/cache";
 import { deleteImageByUrl } from "./media";
 import {
   boolField,
+  clampPercent,
   fail,
   guarded,
+  intField,
   ok,
   optionalText,
   requiredText,
@@ -21,6 +23,8 @@ function fieldsFrom(formData: FormData) {
     statement: optionalText(formData, "statement", 1200),
     bio: optionalText(formData, "bio", 2000),
     photo_url: optionalText(formData, "photo_url", 500),
+    focal_x: clampPercent(intField(formData, "focal_x", 50)),
+    focal_y: clampPercent(intField(formData, "focal_y", 50)),
     name_en: optionalText(formData, "name_en", 160),
     role_en: optionalText(formData, "role_en", 160),
     quote_en: optionalText(formData, "quote_en", 400),

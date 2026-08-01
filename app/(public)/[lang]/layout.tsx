@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 
 import Navbar from "@/components/NavBar";
 import Footer from "@/components/Footer";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import { Document } from "@/app/document";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getSiteSettings } from "@/lib/content/queries";
+import { getChatbotSettings } from "@/lib/content/chatbot";
 import { isLocale, locales, localeHtmlLang, pick } from "@/lib/i18n/config";
 import "@/app/globals.css";
 
@@ -63,9 +65,10 @@ export default async function PublicLayout({
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
 
-  const [t, settings] = await Promise.all([
+  const [t, settings, chatbot] = await Promise.all([
     getDictionary(lang),
     getSiteSettings(),
+    getChatbotSettings(),
   ]);
 
   return (
@@ -85,6 +88,18 @@ export default async function PublicLayout({
         </div>
 
         <Footer locale={lang} t={t} settings={settings} />
+
+        {/* Only mounts once an admin has turned it on and written a brief —
+            an assistant with nothing to ground it would answer from thin air. */}
+        {chatbot?.is_enabled && (chatbot.brief?.trim() || chatbot.brief_en?.trim()) && (
+          <ChatWidget
+            locale={lang}
+            botName={pick(lang, chatbot.bot_name, chatbot.bot_name_en)}
+            greeting={pick(lang, chatbot.greeting, chatbot.greeting_en)}
+            disclaimer={pick(lang, chatbot.disclaimer, chatbot.disclaimer_en)}
+            labels={t.chat}
+          />
+        )}
       </div>
     </Document>
   );

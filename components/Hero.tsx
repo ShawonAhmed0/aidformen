@@ -35,68 +35,49 @@ export default async function Hero({ locale }: { locale: Locale }) {
     };
 
     return (
-        <section className="relative flex min-h-[38rem] items-center overflow-hidden bg-brand-900 lg:min-h-[min(85dvh,44rem)]">
+        // items-end, not items-center: the panel sits low so the top of the
+        // section is uninterrupted photo. Taller than before because the copy no
+        // longer occupies the middle — the extra height is all image.
+        <section className="relative flex min-h-[42rem] items-end overflow-hidden bg-brand-900 lg:min-h-[min(90dvh,48rem)]">
             <div className="absolute inset-0">
                 {/* With no slides configured the brand background shows through
-                    rather than the section collapsing entirely.
+                    rather than the section collapsing entirely. Rendered at full
+                    brightness — nothing is laid over the photo any more. */}
+                <HeroSlider images={images} locale={locale} />
 
-                    brightness-90 darkens the photo itself rather than washing it
-                    with more overlay. It reads as more visible, not less: lowering
-                    luminance keeps the contrast *within* the image, where a heavier
-                    flat scrim flattens everything toward one grey. */}
-                <div className="absolute inset-0 brightness-90">
-                    <HeroSlider images={images} locale={locale} />
-                </div>
-
-                {/* Two scrims, because the text occupies a different shape at each
-                    size. Stops are positioned so the alpha under the last text
-                    pixel stays high enough for white to clear 4.5:1 against a
-                    worst-case blown-out photo, then falls away fast beyond it. */}
-
-                {/* Below lg the copy spans nearly the full width and ~13-87% of the
-                    height, so there is no room for a side-lit gradient — only the
-                    band above the text can open up. */}
-                <div
-                    aria-hidden="true"
-                    className="absolute inset-0 bg-gradient-to-b from-brand-950/35 from-0% via-brand-950/76 via-[18%] to-brand-950/88 to-100% lg:hidden"
-                />
-
-                {/* From lg the copy stops around 60% across, so the right-hand
-                    third of the photo can be left almost clear. */}
-                <div
-                    aria-hidden="true"
-                    className="absolute inset-0 hidden bg-gradient-to-r from-brand-950/80 from-0% via-brand-950/62 via-[62%] to-brand-950/12 to-100% lg:block"
-                />
-
-                {/* Depth under the sticky navbar. Desktop only — on mobile it would
-                    darken exactly the band the vertical scrim leaves open. */}
-                <div
-                    aria-hidden="true"
-                    className="absolute inset-x-0 top-0 hidden h-32 bg-gradient-to-b from-brand-950/45 to-transparent lg:block"
-                />
+                {/* No scrim. Legibility is carried entirely by the frosted panel
+                    the copy sits on, so the photo stays sharp and unmasked across
+                    the whole section. */}
             </div>
-            <Container className="relative py-20 sm:py-24">
-                <div className="max-w-2xl">
+            {/* From sm up the section's min-height wins and items-end does the
+                positioning, so the top padding is only a floor. On phones the
+                panel is tall enough that height becomes content-driven — there
+                this padding *is* the band of photo above the card, which is why
+                it is generous rather than tidy. */}
+            <Container className="relative pb-14 pt-40 sm:pb-16">
+                {/* The frosted panel is the only thing making this text legible,
+                    so the tint is sized from the contrast maths rather than by
+                    eye: at 70% over brand-950 a worst-case blown-out photo still
+                    composites dark enough for white to clear 6:1. The blur is
+                    what makes it read as glass; where backdrop-filter is
+                    unsupported it degrades to the same flat tint, which is why
+                    the tint alone has to carry the ratio. */}
+                <div className="max-w-2xl rounded-3xl border border-white/15 bg-brand-950/70 p-7 shadow-2xl ring-1 ring-white/5 backdrop-blur-xl sm:p-9">
                     {eyebrow && (
-                        <p className="mb-4 text-2xs font-semibold uppercase text-brand-200">
+                        <p className="mb-4 text-2xs font-semibold uppercase text-brand-100">
                             {eyebrow}
                         </p>
                     )}
 
-                    <h1 className="text-on-photo text-4xl text-white sm:text-5xl">
-                        {title}
-                    </h1>
+                    <h1 className="text-4xl text-white sm:text-5xl">{title}</h1>
 
                     {description && (
-                        // Opaque rather than /85: the description is the smallest
-                        // text on the photo, so it needs the full contrast the
-                        // scrim was sized for.
-                        <p className="text-on-photo mt-6 text-lg text-brand-50 sm:text-xl">
+                        <p className="mt-5 text-lg text-brand-50 sm:text-xl">
                             {description}
                         </p>
                     )}
 
-                    <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:gap-4">
+                    <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
                         <Link
                             href={localise(hero?.primary_cta_href, "/about")}
                             className={buttonVariants({ variant: "onDark", size: "lg" })}

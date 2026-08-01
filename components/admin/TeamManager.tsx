@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ImagePicker } from "./ImagePicker";
+import { FocalPointPicker } from "./FocalPointPicker";
 import { BilingualField } from "./BilingualField";
 import type { TeamMember } from "@/lib/types/content";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,8 @@ type Draft = {
     bio: string;
     bio_en: string;
     photo_url: string | null;
+    focal_x: number;
+    focal_y: number;
     is_published: boolean;
 };
 
@@ -59,6 +62,8 @@ const emptyDraft: Draft = {
     bio: "",
     bio_en: "",
     photo_url: null,
+    focal_x: 50,
+    focal_y: 25,
     is_published: true,
 };
 
@@ -75,6 +80,8 @@ const toDraft = (m: TeamMember): Draft => ({
     bio: s(m.bio),
     bio_en: s(m.bio_en),
     photo_url: m.photo_url,
+    focal_x: m.focal_x ?? 50,
+    focal_y: m.focal_y ?? 50,
     is_published: m.is_published,
 });
 
@@ -130,6 +137,8 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
         body.append("bio", draft.bio);
         body.append("bio_en", draft.bio_en);
         if (draft.photo_url) body.append("photo_url", draft.photo_url);
+        body.append("focal_x", String(draft.focal_x));
+        body.append("focal_y", String(draft.focal_y));
         body.append("is_published", String(draft.is_published));
 
         startTransition(async () => {
@@ -341,6 +350,20 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                     setDraft((d) => (d ? { ...d, photo_url: url } : d))
                                 }
                             />
+
+                            {/* Only meaningful once there is a photo to frame. */}
+                            {draft.photo_url && (
+                                <FocalPointPicker
+                                    url={draft.photo_url}
+                                    x={draft.focal_x}
+                                    y={draft.focal_y}
+                                    aspect="card"
+                                    onChange={(focal_x, focal_y) =>
+                                        setDraft((d) => (d ? { ...d, focal_x, focal_y } : d))
+                                    }
+                                    helper="দলের কার্ডে ছবির উপরের অংশ দেখায়। মুখ যেখানে, সেখানে টেনে আনুন।"
+                                />
+                            )}
 
                             <BilingualField
                                 label="নাম"

@@ -26,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ImagePicker } from "./ImagePicker";
+import { FocalPointPicker } from "./FocalPointPicker";
 import { BilingualField } from "./BilingualField";
 import type { CarouselImage } from "@/lib/types/content";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,8 @@ type Draft = {
     subtitle_en: string;
     alt_text: string;
     alt_text_en: string;
+    focal_x: number;
+    focal_y: number;
     is_published: boolean;
 };
 
@@ -53,6 +56,8 @@ const emptyDraft: Draft = {
     subtitle_en: "",
     alt_text: "",
     alt_text_en: "",
+    focal_x: 50,
+    focal_y: 50,
     is_published: true,
 };
 
@@ -65,6 +70,8 @@ const toDraft = (slide: CarouselImage): Draft => ({
     subtitle_en: s(slide.subtitle_en),
     alt_text: s(slide.alt_text),
     alt_text_en: s(slide.alt_text_en),
+    focal_x: slide.focal_x ?? 50,
+    focal_y: slide.focal_y ?? 50,
     is_published: slide.is_published,
 });
 
@@ -124,6 +131,8 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
         body.append("subtitle_en", draft.subtitle_en);
         body.append("alt_text", draft.alt_text);
         body.append("alt_text_en", draft.alt_text_en);
+        body.append("focal_x", String(draft.focal_x));
+        body.append("focal_y", String(draft.focal_y));
         body.append("is_published", String(draft.is_published));
 
         startTransition(async () => {
@@ -364,6 +373,19 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                     setDraft((d) => (d ? { ...d, image_url: url } : d))
                                 }
                             />
+
+                            {draft.image_url && (
+                                <FocalPointPicker
+                                    url={draft.image_url}
+                                    x={draft.focal_x}
+                                    y={draft.focal_y}
+                                    aspect="wide"
+                                    onChange={(focal_x, focal_y) =>
+                                        setDraft((d) => (d ? { ...d, focal_x, focal_y } : d))
+                                    }
+                                    helper="হিরো সেকশন পর্দার আকার অনুযায়ী ছবি কেটে নেয়। যে অংশটি সব সময় দেখাতে চান, সেখানে টেনে আনুন।"
+                                />
+                            )}
 
                             <BilingualField
                                 label="শিরোনাম"

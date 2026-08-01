@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
+    Bot,
     LayoutDashboard,
     Users,
     HeartHandshake,
@@ -40,7 +41,10 @@ const navGroups = [
     },
     {
         label: 'Configuration',
-        items: [{ title: 'Site Settings', href: '/admin/settings', icon: Settings }],
+        items: [
+            { title: 'Site Settings', href: '/admin/settings', icon: Settings },
+            { title: 'Chatbot', href: '/admin/chatbot', icon: Bot },
+        ],
     },
     {
         label: 'Coming soon',

@@ -5,9 +5,11 @@ import { revalidatePath } from "next/cache";
 import { deleteImageByUrl } from "./media";
 import {
   boolField,
+  clampPercent,
   fail,
   guarded,
   hrefField,
+  intField,
   ok,
   optionalText,
   requiredText,
@@ -95,6 +97,8 @@ export async function createCarouselImage(formData: FormData) {
       subtitle_en: optionalText(formData, "subtitle_en", 300),
       alt_text_en: optionalText(formData, "alt_text_en", 300),
       is_published: boolField(formData, "is_published"),
+      focal_x: clampPercent(intField(formData, "focal_x", 50)),
+      focal_y: clampPercent(intField(formData, "focal_y", 50)),
       sort_order: (last?.sort_order ?? 0) + 10,
     });
 
@@ -125,6 +129,8 @@ export async function updateCarouselImage(formData: FormData) {
         subtitle_en: optionalText(formData, "subtitle_en", 300),
         alt_text_en: optionalText(formData, "alt_text_en", 300),
         is_published: boolField(formData, "is_published"),
+        focal_x: clampPercent(intField(formData, "focal_x", 50)),
+        focal_y: clampPercent(intField(formData, "focal_y", 50)),
       })
       .eq("id", id);
 

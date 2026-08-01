@@ -42,9 +42,10 @@ export default function Announcement({
     const href = ctaHref?.startsWith("/") ? `/${locale}${ctaHref}` : ctaHref;
 
     return (
-        // Pulled up to overlap the hero, which ties the two together instead of
-        // leaving the hero as a detached banner.
-        <section className="relative z-20 -mt-12 sm:-mt-14">
+        // Sits below the hero rather than overlapping it. The hero's copy now
+        // occupies the bottom of that section, so pulling this up on top of it
+        // would stack two cards on the same edge.
+        <section className="relative z-20 mt-10 sm:mt-14">
             <Container>
                 <div className="flex flex-col gap-6 rounded-2xl border border-ink-200 bg-surface p-6 shadow-lg sm:p-8 lg:flex-row lg:items-center lg:gap-8">
                     <div className="flex-1">

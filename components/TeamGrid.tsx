@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Quote, X, ArrowLeft, User } from "lucide-react";
 
 import { Card } from "./ui/card";
+import { focalPosition } from "@/lib/types/content";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
 /** Locale already resolved by the page — these are plain display strings. */
@@ -16,6 +17,8 @@ export type TeamCard = {
   statement: string;
   bio: string;
   photo_url: string | null;
+  focal_x: number;
+  focal_y: number;
 };
 
 export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary }) {
@@ -84,8 +87,8 @@ export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary })
                   is circular: the grid derives the row height from the content,
                   then half of that leaves the text less room than it needs, and
                   min-height:auto makes it overflow instead of shrink — which
-                  clipped the "read more" button. object-top keeps faces in frame
-                  when a portrait is cropped. */}
+                  clipped the "read more" button. Which part of the portrait
+                  survives the crop is set per member in the admin. */}
               <span className="relative flex aspect-4/3 w-full shrink-0 items-center justify-center overflow-hidden bg-brand-50">
                 {member.photo_url ? (
                   <Image
@@ -93,7 +96,10 @@ export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary })
                     alt=""
                     fill
                     sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-cover object-top"
+                    className="object-cover"
+                    style={{
+                      objectPosition: focalPosition(member.focal_x, member.focal_y),
+                    }}
                   />
                 ) : (
                   <User className="size-12 text-brand-600" aria-hidden="true" />

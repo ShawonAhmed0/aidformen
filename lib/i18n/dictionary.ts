@@ -206,6 +206,15 @@ const bn = {
     removedComment: "এই মন্তব্যটি সরিয়ে ফেলা হয়েছে।",
     anonymous: "নাম নেই",
   },
+  chat: {
+    open: "চ্যাট খুলুন",
+    close: "চ্যাট বন্ধ করুন",
+    placeholder: "আপনার প্রশ্ন লিখুন…",
+    send: "পাঠান",
+    restart: "নতুন করে শুরু করুন",
+    thinking: "উত্তর তৈরি হচ্ছে…",
+    error: "উত্তর আনা যায়নি। আবার চেষ্টা করুন।",
+  },
   common: {
     required: "(আবশ্যক)",
     optional: "ঐচ্ছিক",
@@ -409,6 +418,15 @@ const en = {
     removedPost: "This post has been removed.",
     removedComment: "This comment has been removed.",
     anonymous: "No name",
+  },
+  chat: {
+    open: "Open chat",
+    close: "Close chat",
+    placeholder: "Type your question…",
+    send: "Send",
+    restart: "Start again",
+    thinking: "Thinking…",
+    error: "Could not get a reply. Please try again.",
   },
   common: {
     required: "(required)",
