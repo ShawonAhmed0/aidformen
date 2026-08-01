@@ -35,20 +35,24 @@ const navGroups = [
         ],
     },
     {
+        label: 'Community',
+        items: [{ title: 'Members', href: '/admin/users', icon: HeartHandshake }],
+    },
+    {
         label: 'Configuration',
         items: [{ title: 'Site Settings', href: '/admin/settings', icon: Settings }],
     },
     {
         label: 'Coming soon',
         items: [
-            { title: 'Members', href: '/admin/users', icon: HeartHandshake },
-            { title: 'Forum', href: '/admin/forum', icon: MessagesSquare },
+            { title: 'Forum moderation', href: '/admin/forum', icon: MessagesSquare },
             { title: 'Media Library', href: '/admin/media', icon: ImageIcon },
         ],
     },
 ]
 
 type AdminSidebarProps = {
+    orgName: string
     collapsed: boolean
     onToggleCollapse: () => void
     mobileOpen: boolean
@@ -63,6 +67,7 @@ type AdminSidebarProps = {
  * reduced-motion rule.
  */
 export function AdminSidebar({
+    orgName,
     collapsed,
     onToggleCollapse,
     mobileOpen,
@@ -90,10 +95,10 @@ export function AdminSidebar({
                 {!collapsed && (
                     <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold tracking-tight">
-                            NGO Admin
+                            {orgName}
                         </p>
                         <p className="truncate text-xs text-sidebar-foreground/50">
-                            Management Platform
+                            অ্যাডমিন প্যানেল
                         </p>
                     </div>
                 )}

@@ -12,6 +12,8 @@ type AdminShellProps = {
         email?: string | null;
         avatar_url?: string | null;
     };
+    /** Organisation name from site_settings, shown as the sidebar brand. */
+    orgName: string;
     children: React.ReactNode;
 };
 
@@ -23,7 +25,7 @@ type AdminShellProps = {
  * collapsing the sidebar to 72px left a 188px gap, and on phones the fixed
  * 260px rail pushed all content off-screen with no way to reach it.
  */
-export function AdminShell({ user, children }: AdminShellProps) {
+export function AdminShell({ user, orgName, children }: AdminShellProps) {
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const pathname = usePathname();
@@ -63,6 +65,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
             }
         >
             <AdminSidebar
+                orgName={orgName}
                 collapsed={collapsed}
                 onToggleCollapse={() => setCollapsed((v) => !v)}
                 mobileOpen={mobileOpen}

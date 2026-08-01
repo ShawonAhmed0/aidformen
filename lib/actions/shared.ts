@@ -40,6 +40,44 @@ export async function requireAdmin(): Promise<
   return { ok: true, supabase };
 }
 
+/**
+ * Gate for member-level actions: posting, commenting, reacting.
+ *
+ * Same defence-in-depth role as requireAdmin — RLS already refuses an
+ * unapproved member's writes, but this turns that into a message they can act
+ * on, and returns the user id the actions need for author_id.
+ */
+export async function requireApprovedMember(): Promise<
+  | { ok: true; supabase: SupabaseClient; userId: string; isAdmin: boolean }
+  | { ok: false; error: string }
+> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { ok: false, error: "আপনি লগইন করা নেই।" };
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role, status")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) return { ok: false, error: "প্রোফাইল যাচাই করা যায়নি।" };
+
+  const isAdmin = profile?.role === "admin";
+  if (!isAdmin && profile?.status !== "approved") {
+    return {
+      ok: false,
+      error: "আপনার সদস্যপদ এখনো অনুমোদিত হয়নি। অনুমোদনের পর ফোরামে অংশ নিতে পারবেন।",
+    };
+  }
+
+  return { ok: true, supabase, userId: user.id, isAdmin };
+}
+
 // ---------------------------------------------------------------------------
 // Field readers. Hand-rolled rather than pulling in a schema library, since
 // these forms need only trimming, length limits and a couple of enums.

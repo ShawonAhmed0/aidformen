@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MessagesSquare } from "lucide-react";
 
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { isLocale } from "@/lib/i18n/config";
+import { getForumFeed, getViewerStatus } from "@/lib/content/forum";
 import { PageHero } from "@/components/PageHero";
 import { Section } from "@/components/ui/section";
-import { buttonVariants } from "@/components/ui/button";
+import { ForumGate } from "@/components/forum/ForumGate";
+import { PostComposer } from "@/components/forum/PostComposer";
+import { PostCard } from "@/components/forum/PostCard";
 
 export async function generateMetadata({
     params,
@@ -17,7 +18,7 @@ export async function generateMetadata({
     const { lang } = await params;
     if (!isLocale(lang)) return {};
     const t = await getDictionary(lang);
-    return { title: t.nav.forum, description: t.empty.forumDescription };
+    return { title: t.nav.forum, description: t.forum.description };
 }
 
 export default async function ForumPage({
@@ -28,42 +29,45 @@ export default async function ForumPage({
     const { lang } = await params;
     if (!isLocale(lang)) notFound();
 
-    const t = await getDictionary(lang);
+    const [t, viewer] = await Promise.all([getDictionary(lang), getViewerStatus()]);
+
+    // Skip the feed query entirely when RLS would return nothing anyway.
+    const posts = viewer.canParticipate ? await getForumFeed() : [];
 
     return (
         <main>
             <PageHero
                 eyebrow={t.empty.community}
-                title={t.nav.forum}
-                description={t.empty.forumDescription}
+                title={t.forum.title}
+                description={t.forum.description}
             />
 
             <Section space="lg" containerWidth="prose">
-                <div className="rounded-2xl border border-dashed border-ink-300 bg-surface px-6 py-16 text-center">
-                    <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
-                        <MessagesSquare className="size-7" aria-hidden="true" />
-                    </span>
+                <ForumGate viewer={viewer} t={t} locale={lang} />
 
-                    <h2 className="mt-6 text-2xl text-brand-800">
-                        {t.empty.forumTitle}
-                    </h2>
+                {viewer.canParticipate && (
+                    <div className="space-y-5">
+                        <PostComposer t={t} />
 
-                    <p className="mx-auto mt-3 max-w-md text-base text-ink-600">
-                        {t.empty.forumBody}
-                    </p>
-
-                    <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-                        <Link href={`/${lang}/register`} className={buttonVariants()}>
-                            {t.auth.registerCta}
-                        </Link>
-                        <Link
-                            href={`/${lang}/contact`}
-                            className={buttonVariants({ variant: "outline" })}
-                        >
-                            {t.nav.contact}
-                        </Link>
+                        {posts.length === 0 ? (
+                            <p className="rounded-2xl border border-dashed border-ink-300 bg-surface px-6 py-14 text-center text-base text-ink-600">
+                                {t.forum.empty}
+                            </p>
+                        ) : (
+                            posts.map((post) => (
+                                <PostCard
+                                    key={post.id}
+                                    post={post}
+                                    locale={lang}
+                                    t={t}
+                                    canParticipate={viewer.canParticipate}
+                                    viewerId={viewer.userId}
+                                    isAdmin={viewer.isAdmin}
+                                />
+                            ))
+                        )}
                     </div>
-                </div>
+                )}
             </Section>
         </main>
     );

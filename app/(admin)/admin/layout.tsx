@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AdminShell } from '@/components/admin/AdminShell'
+import { getSiteSettings } from '@/lib/content/queries'
 
 export default async function AdminLayout({
     children,
@@ -20,6 +21,10 @@ export default async function AdminLayout({
 
     if (!profile || profile.role !== 'admin') redirect('/')
 
+    // Sidebar branding comes from site_settings so renaming the organisation in
+    // /admin/settings updates the admin chrome too.
+    const settings = await getSiteSettings()
+
     return (
         <AdminShell
             user={{
@@ -27,6 +32,7 @@ export default async function AdminLayout({
                 email: user.email,
                 avatar_url: profile.avatar_url,
             }}
+            orgName={settings?.organisation_name?.trim() || 'এইড ফর মেন'}
         >
             {children}
         </AdminShell>
