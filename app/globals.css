@@ -331,6 +331,16 @@
     transition-duration: var(--duration-base);
     transition-timing-function: var(--ease-standard);
   }
+
+  /* Local dark halo for text sitting directly on photography.
+     Insurance, not the fix: a shadow tracks the glyphs so text stays legible
+     over an unexpectedly bright photo, but it contributes nothing to a WCAG
+     contrast score — that is the scrim's job. */
+  .text-on-photo {
+    text-shadow:
+      0 1px 2px rgb(0 0 0 / 0.35),
+      0 2px 14px rgb(0 0 0 / 0.3);
+  }
 }
 
 /* Honour the OS setting. Applies to Motion/Framer components too, since they
