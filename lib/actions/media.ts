@@ -1,14 +1,11 @@
 "use server";
 
+import { mediaFolders, type MediaFolder } from "@/lib/types/media";
 import { fail, guarded, ok, requireAdmin } from "./shared";
 
 const BUCKET = "media";
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"];
-
-/** Folders keep the bucket browsable in the Supabase dashboard. */
-export const mediaFolders = ["hero", "carousel", "team", "activities", "videos"] as const;
-export type MediaFolder = (typeof mediaFolders)[number];
 
 function extensionFor(type: string, name: string) {
   const fromName = name.includes(".") ? name.split(".").pop()! .toLowerCase() : "";

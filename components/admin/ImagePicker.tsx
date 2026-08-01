@@ -4,7 +4,8 @@ import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { ImagePlus, Loader2, Trash2, UploadCloud } from "lucide-react";
 
-import { uploadImage, type MediaFolder } from "@/lib/actions/media";
+import { uploadImage } from "@/lib/actions/media";
+import type { MediaFolder } from "@/lib/types/media";
 import { cn } from "@/lib/utils";
 
 type ImagePickerProps = {

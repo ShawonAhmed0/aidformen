@@ -69,10 +69,13 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
     return (
         <header className="sticky top-0 z-50 border-b border-ink-200 bg-surface/85 backdrop-blur-md">
             <Container width="wide">
-                <div className="flex h-18 items-center justify-between gap-6">
+                {/* gap-4 rather than gap-6: at the xl breakpoint the English
+                    labels need every pixel, and 24px gaps pushed the row into
+                    horizontal overflow. */}
+                <div className="flex h-18 items-center justify-between gap-4">
                     <Link
                         href={`/${locale}`}
-                        className="flex items-center gap-3 rounded-md transition-ui hover:opacity-85"
+                        className="flex shrink-0 items-center gap-3 rounded-md transition-ui hover:opacity-85"
                     >
                         <Image
                             src="/logo (1).png"
@@ -82,7 +85,9 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                             priority
                             className="size-10 object-contain"
                         />
-                        <span className="font-display text-xl font-semibold tracking-tight text-brand-800">
+                        {/* nowrap: the name is a single label, and letting flex
+                            wrap it broke the 72px header row onto two lines. */}
+                        <span className="font-display text-xl font-semibold tracking-tight whitespace-nowrap text-brand-800">
                             {orgName}
                         </span>
                     </Link>
@@ -98,7 +103,7 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                                             href={link.href}
                                             aria-current={isActive ? "page" : undefined}
                                             className={cn(
-                                                "relative flex h-11 items-center rounded-md px-3.5 text-base font-medium transition-ui",
+                                                "relative flex h-11 items-center whitespace-nowrap rounded-md px-3 text-base font-medium transition-ui",
                                                 isActive
                                                     ? "text-brand-800"
                                                     : "text-ink-600 hover:bg-ink-100 hover:text-brand-800"
@@ -108,7 +113,7 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                                             {isActive && (
                                                 <span
                                                     aria-hidden="true"
-                                                    className="absolute inset-x-3.5 -bottom-px h-0.5 rounded-full bg-ochre-600"
+                                                    className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-ochre-600"
                                                 />
                                             )}
                                         </Link>
