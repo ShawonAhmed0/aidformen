@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { createClient } from "@/lib/supabase/server";
 import type {
   Activity,
@@ -16,13 +18,17 @@ import type {
  * public site must not 500 because a table is missing, a policy is wrong, or
  * the migration has not been run yet — callers render their fallback instead.
  * Errors are logged so problems stay visible in the server console.
+ *
+ * Each fetcher is wrapped in React `cache()` so it runs once per request no
+ * matter how many components ask for it. The layout, its metadata and the page
+ * all call getSiteSettings(), which was three identical queries per render.
  */
 
 function warn(scope: string, error: { message: string } | null) {
   if (error) console.warn(`[content] ${scope}: ${error.message}`);
 }
 
-export async function getHeroContent(): Promise<HeroContent | null> {
+export const getHeroContent = cache(async (): Promise<HeroContent | null> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -34,9 +40,9 @@ export async function getHeroContent(): Promise<HeroContent | null> {
 
   warn("hero_content", error);
   return (data as HeroContent | null) ?? null;
-}
+});
 
-export async function getCarouselImages(): Promise<CarouselImage[]> {
+export const getCarouselImages = cache(async (): Promise<CarouselImage[]> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -48,9 +54,9 @@ export async function getCarouselImages(): Promise<CarouselImage[]> {
 
   warn("carousel_images", error);
   return (data as CarouselImage[] | null) ?? [];
-}
+});
 
-export async function getTeamMembers(): Promise<TeamMember[]> {
+export const getTeamMembers = cache(async (): Promise<TeamMember[]> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -61,9 +67,9 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
 
   warn("team_members", error);
   return (data as TeamMember[] | null) ?? [];
-}
+});
 
-export async function getSiteSettings(): Promise<SiteSettings | null> {
+export const getSiteSettings = cache(async (): Promise<SiteSettings | null> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -74,28 +80,28 @@ export async function getSiteSettings(): Promise<SiteSettings | null> {
 
   warn("site_settings", error);
   return (data as SiteSettings | null) ?? null;
-}
+});
 
-export async function getActivities(
-  placement?: ActivityPlacement
-): Promise<Activity[]> {
-  const supabase = await createClient();
+export const getActivities = cache(
+  async (placement?: ActivityPlacement): Promise<Activity[]> => {
+    const supabase = await createClient();
 
-  let query = supabase
-    .from("activities")
-    .select("*")
-    .eq("is_published", true)
-    .order("sort_order", { ascending: true });
+    let query = supabase
+      .from("activities")
+      .select("*")
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true });
 
-  if (placement) query = query.eq("placement", placement);
+    if (placement) query = query.eq("placement", placement);
 
-  const { data, error } = await query;
+    const { data, error } = await query;
 
-  warn(`activities${placement ? `:${placement}` : ""}`, error);
-  return (data as Activity[] | null) ?? [];
-}
+    warn(`activities${placement ? `:${placement}` : ""}`, error);
+    return (data as Activity[] | null) ?? [];
+  }
+);
 
-export async function getVideos(): Promise<Video[]> {
+export const getVideos = cache(async (): Promise<Video[]> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -106,14 +112,14 @@ export async function getVideos(): Promise<Video[]> {
 
   warn("videos", error);
   return (data as Video[] | null) ?? [];
-}
+});
 
 // ---------------------------------------------------------------------------
 // Admin reads — include unpublished rows. RLS still enforces the admin check;
 // these differ only in not filtering by is_published.
 // ---------------------------------------------------------------------------
 
-export async function getAllCarouselImages(): Promise<CarouselImage[]> {
+export const getAllCarouselImages = cache(async (): Promise<CarouselImage[]> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -124,9 +130,9 @@ export async function getAllCarouselImages(): Promise<CarouselImage[]> {
 
   warn("admin:carousel_images", error);
   return (data as CarouselImage[] | null) ?? [];
-}
+});
 
-export async function getAllTeamMembers(): Promise<TeamMember[]> {
+export const getAllTeamMembers = cache(async (): Promise<TeamMember[]> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -136,9 +142,9 @@ export async function getAllTeamMembers(): Promise<TeamMember[]> {
 
   warn("admin:team_members", error);
   return (data as TeamMember[] | null) ?? [];
-}
+});
 
-export async function getAllActivities(): Promise<Activity[]> {
+export const getAllActivities = cache(async (): Promise<Activity[]> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -149,9 +155,9 @@ export async function getAllActivities(): Promise<Activity[]> {
 
   warn("admin:activities", error);
   return (data as Activity[] | null) ?? [];
-}
+});
 
-export async function getAllVideos(): Promise<Video[]> {
+export const getAllVideos = cache(async (): Promise<Video[]> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -161,4 +167,4 @@ export async function getAllVideos(): Promise<Video[]> {
 
   warn("admin:videos", error);
   return (data as Video[] | null) ?? [];
-}
+});
