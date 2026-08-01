@@ -79,11 +79,14 @@ export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary })
               interactive
               className="flex h-full flex-col overflow-hidden text-center"
             >
-              {/* Top half of the card, full bleed. basis-1/2 resolves against
-                  the card's height, which the grid row makes definite, so every
-                  card splits at the same line however long its quote runs.
-                  object-top keeps faces in frame when a portrait is cropped. */}
-              <span className="relative flex min-h-56 shrink-0 basis-1/2 items-center justify-center overflow-hidden bg-brand-50">
+              {/* Full-bleed photo across the top, sized by its own aspect ratio
+                  rather than a share of the card. basis-1/2 looks equivalent but
+                  is circular: the grid derives the row height from the content,
+                  then half of that leaves the text less room than it needs, and
+                  min-height:auto makes it overflow instead of shrink — which
+                  clipped the "read more" button. object-top keeps faces in frame
+                  when a portrait is cropped. */}
+              <span className="relative flex aspect-4/3 w-full shrink-0 items-center justify-center overflow-hidden bg-brand-50">
                 {member.photo_url ? (
                   <Image
                     src={member.photo_url}
