@@ -4,7 +4,7 @@ import { Globe, Mail, MapPin, Phone } from "lucide-react";
 import { FaFacebookF, FaYoutube } from "react-icons/fa6";
 
 import { Container } from "./ui/container";
-import { pick, type Locale } from "@/lib/i18n/config";
+import { pick, pickBrand, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { SiteSettings } from "@/lib/types/content";
 
@@ -23,9 +23,12 @@ export default function Footer({
     t: Dictionary;
     settings: SiteSettings | null;
 }) {
-    const orgName =
-        pick(locale, settings?.organisation_name, settings?.organisation_name_en) ||
-        "এইড ফর মেন";
+    const orgName = pickBrand(
+        locale,
+        settings?.organisation_name,
+        settings?.organisation_name_en,
+        { bn: "এইড ফর মেন", en: "Aid For Men" }
+    );
     const tagline = pick(locale, settings?.tagline, settings?.tagline_en);
     const address = pick(locale, settings?.address, settings?.address_en);
     const phone = settings?.contact_phone?.trim();
@@ -192,7 +195,9 @@ export default function Footer({
                 </div>
 
                 <div className="border-t border-white/10 py-7 text-center text-xs text-brand-100/60">
-                    © {new Date().getFullYear()} {orgName}। {t.footer.rights}
+                    {/* Danda is Bengali punctuation; a full stop in the English line. */}
+                    © {new Date().getFullYear()} {orgName}
+                    {locale === "en" ? "." : "।"} {t.footer.rights}
                 </div>
             </Container>
         </footer>

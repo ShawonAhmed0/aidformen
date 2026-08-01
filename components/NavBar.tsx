@@ -10,7 +10,7 @@ import AuthButton from "./AuthButton";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { Container } from "./ui/container";
 import { buttonVariants } from "./ui/button";
-import { pick, type Locale } from "@/lib/i18n/config";
+import { pickBrand, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { SiteSettings } from "@/lib/types/content";
 import { cn } from "@/lib/utils";
@@ -61,9 +61,12 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
         { name: t.nav.team, href: `/${locale}/team` },
     ];
 
-    const orgName =
-        pick(locale, settings?.organisation_name, settings?.organisation_name_en) ||
-        "এইড ফর মেন";
+    const orgName = pickBrand(
+        locale,
+        settings?.organisation_name,
+        settings?.organisation_name_en,
+        { bn: "এইড ফর মেন", en: "Aid For Men" }
+    );
     const emergency = settings?.emergency_phone?.trim() || "01404555999";
 
     return (
