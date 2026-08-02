@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Loader2, MessageSquare, Send, Trash2, User } from "lucide-react";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { createForumComment, deleteForumComment } from "@/lib/actions/forum";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import type { ViewerStatus } from "@/lib/content/forum";
 import type { ForumComment } from "@/lib/types/forum";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { Locale } from "@/lib/i18n/config";
@@ -17,9 +18,7 @@ type Shared = {
     postId: string;
     t: Dictionary;
     locale: Locale;
-    canParticipate: boolean;
-    viewerId: string | null;
-    isAdmin: boolean;
+    viewer: ViewerStatus;
 };
 
 function formatWhen(iso: string, locale: Locale) {
@@ -115,9 +114,11 @@ function CommentNode({
     const router = useRouter();
     const [pending, startTransition] = useTransition();
     const [replying, setReplying] = useState(false);
-    const { t, locale, canParticipate, viewerId, isAdmin, postId } = shared;
+    const { t, locale, viewer, postId } = shared;
 
-    const canDelete = isAdmin || (viewerId !== null && viewerId === comment.author_id);
+    const canDelete =
+        viewer.isAdmin ||
+        (viewer.userId !== null && viewer.userId === comment.author_id);
 
     const remove = () => {
         if (!window.confirm(t.forum.deleteConfirm)) return;
@@ -176,7 +177,7 @@ function CommentNode({
                         {/* Replies are capped at one level: deeper nesting turns
                             unreadable on a phone, so a reply to a reply joins
                             the same thread. */}
-                        {canParticipate && depth === 0 && (
+                        {viewer.canParticipate && depth === 0 && (
                             <button
                                 type="button"
                                 onClick={() => setReplying((v) => !v)}
@@ -237,9 +238,14 @@ function CommentNode({
 
 export function CommentThread({
     comments,
+    prompt,
     ...shared
-}: Shared & { comments: ForumComment[] }) {
-    const { t, canParticipate, postId } = shared;
+}: Shared & {
+    comments: ForumComment[];
+    /** Stands in for the composer when the viewer may read but not comment. */
+    prompt?: ReactNode;
+}) {
+    const { t, viewer, postId } = shared;
 
     return (
         <section className="rounded-2xl border border-ink-200 bg-surface p-5 shadow-xs sm:p-6">
@@ -252,7 +258,7 @@ export function CommentThread({
                 )}
             </h2>
 
-            {canParticipate && (
+            {viewer.canParticipate ? (
                 <div className="mt-4">
                     <CommentForm
                         postId={postId}
@@ -260,6 +266,8 @@ export function CommentThread({
                         placeholder={t.forum.commentPlaceholder}
                     />
                 </div>
+            ) : (
+                prompt && <div className="mt-4">{prompt}</div>
             )}
 
             {comments.length === 0 ? (

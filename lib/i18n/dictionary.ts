@@ -195,6 +195,8 @@ const bn = {
     backToForum: "ফোরামে ফিরুন",
     react: "রিঅ্যাক্ট করুন",
     loginRequired: "ফোরামে অংশ নিতে লগইন করুন।",
+    guestBody:
+      "ফোরাম সবার জন্য উন্মুক্ত। পোস্ট, মন্তব্য বা রিঅ্যাকশন দিতে অ্যাকাউন্ট প্রয়োজন।",
     loginCta: "লগইন করুন",
     pendingTitle: "আপনার সদস্যপদ অনুমোদনের অপেক্ষায়",
     pendingBody:
@@ -409,6 +411,8 @@ const en = {
     backToForum: "Back to the forum",
     react: "React",
     loginRequired: "Log in to take part in the forum.",
+    guestBody:
+      "Reading is open to everyone. Posting, commenting and reacting need an account.",
     loginCta: "Log in",
     pendingTitle: "Your membership is awaiting approval",
     pendingBody:

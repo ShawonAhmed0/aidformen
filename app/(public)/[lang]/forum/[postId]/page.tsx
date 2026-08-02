@@ -24,30 +24,19 @@ export async function generateMetadata({
     const post = await getForumPost(postId);
     if (!post) return {};
 
-    return {
-        title: post.title,
-        // The forum is members-only; keep threads out of search results.
-        robots: { index: false, follow: false },
-    };
+    return { title: post.title };
 }
 
 export default async function ForumPostPage({ params }: { params: Params }) {
     const { lang, postId } = await params;
     if (!isLocale(lang)) notFound();
 
-    const [t, viewer] = await Promise.all([getDictionary(lang), getViewerStatus()]);
+    const [t, viewer, post] = await Promise.all([
+        getDictionary(lang),
+        getViewerStatus(),
+        getForumPost(postId),
+    ]);
 
-    if (!viewer.canParticipate) {
-        return (
-            <main>
-                <Section space="lg" containerWidth="prose">
-                    <ForumGate viewer={viewer} t={t} locale={lang} />
-                </Section>
-            </main>
-        );
-    }
-
-    const post = await getForumPost(postId);
     if (!post || post.is_removed) notFound();
 
     const comments = await getPostComments(postId);
@@ -68,9 +57,7 @@ export default async function ForumPostPage({ params }: { params: Params }) {
                         post={post}
                         locale={lang}
                         t={t}
-                        canParticipate={viewer.canParticipate}
-                        viewerId={viewer.userId}
-                        isAdmin={viewer.isAdmin}
+                        viewer={viewer}
                         detail
                     />
 
@@ -79,9 +66,10 @@ export default async function ForumPostPage({ params }: { params: Params }) {
                         postId={post.id}
                         t={t}
                         locale={lang}
-                        canParticipate={viewer.canParticipate}
-                        viewerId={viewer.userId}
-                        isAdmin={viewer.isAdmin}
+                        viewer={viewer}
+                        // Sits where the comment box would be, so the reason
+                        // lands next to the thing it explains.
+                        prompt={<ForumGate viewer={viewer} t={t} locale={lang} />}
                     />
                 </div>
             </Section>

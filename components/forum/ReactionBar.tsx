@@ -18,6 +18,11 @@ type ReactionBarProps = {
     myReaction: ReactionKind | null;
     canParticipate: boolean;
     reactLabel: string;
+    /** Why a tap did nothing, for a viewer who may read but not react. */
+    blockedMessage: string;
+    /** Offered alongside that message; null once the viewer is signed in. */
+    loginHref: string | null;
+    loginLabel: string;
 };
 
 /**
@@ -27,6 +32,9 @@ type ReactionBarProps = {
  * replaces it and picking the current one again clears it. Counts update
  * optimistically — waiting for the server round trip made every tap feel
  * broken on a slow connection.
+ *
+ * The counts are public, so a visitor sees the tally and gets an explanation
+ * on tap. Disabling the buttons instead just looked broken.
  */
 export function ReactionBar({
     postId,
@@ -34,6 +42,9 @@ export function ReactionBar({
     myReaction,
     canParticipate,
     reactLabel,
+    blockedMessage,
+    loginHref,
+    loginLabel,
 }: ReactionBarProps) {
     const router = useRouter();
     const [, startTransition] = useTransition();
@@ -42,7 +53,20 @@ export function ReactionBar({
         useState<Partial<Record<ReactionKind, number>>>(reactions);
 
     const choose = (kind: ReactionKind) => {
-        if (!canParticipate) return;
+        if (!canParticipate) {
+            toast.info(
+                blockedMessage,
+                loginHref
+                    ? {
+                          action: {
+                              label: loginLabel,
+                              onClick: () => router.push(loginHref),
+                          },
+                      }
+                    : undefined
+            );
+            return;
+        }
 
         const clearing = mine === kind;
         const previous = mine;
@@ -89,7 +113,6 @@ export function ReactionBar({
                         key={kind}
                         type="button"
                         onClick={() => choose(kind)}
-                        disabled={!canParticipate}
                         aria-pressed={active}
                         aria-label={`${label}${count ? ` (${count})` : ""}`}
                         title={label}
@@ -97,8 +120,7 @@ export function ReactionBar({
                             "flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm transition-ui",
                             active
                                 ? "border-brand-600 bg-brand-50 font-semibold text-brand-800"
-                                : "border-ink-200 text-ink-600 hover:border-ink-400 hover:bg-ink-50",
-                            !canParticipate && "cursor-default opacity-60 hover:border-ink-200 hover:bg-transparent"
+                                : "border-ink-200 text-ink-600 hover:border-ink-400 hover:bg-ink-50"
                         )}
                     >
                         <span aria-hidden="true" className="text-base leading-none">

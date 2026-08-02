@@ -2,6 +2,7 @@ import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
 import type {
+  ForumAuthor,
   ForumComment,
   ForumMedia,
   ForumPost,
@@ -13,10 +14,10 @@ import type {
 /**
  * Read side of the forum.
  *
- * Row level security does the access control: an unapproved member's queries
- * come back empty rather than forbidden, so these helpers only need to render
- * that as "nothing to show". `getViewerStatus` is what the pages use to tell
- * "no posts yet" apart from "you are not approved yet".
+ * Reading is open to everyone (0008); writing still needs an approved member.
+ * So these helpers never gate anything themselves — `getViewerStatus` is what
+ * the pages use to decide whether to offer a composer, a comment box and a
+ * live reaction picker, or an invitation to log in.
  */
 
 function warn(scope: string, error: { message: string } | null) {
@@ -27,7 +28,7 @@ export type ViewerStatus = {
   userId: string | null;
   status: MemberStatus | null;
   isAdmin: boolean;
-  /** Approved members and admins may read and write the forum. */
+  /** Approved members and admins may post, comment and react. */
   canParticipate: boolean;
 };
 
@@ -61,11 +62,40 @@ export const getViewerStatus = cache(async (): Promise<ViewerStatus> => {
   };
 });
 
-const POST_SELECT = `
+/**
+ * Bylines come from the `forum_authors` view, never from profiles directly.
+ *
+ * profiles keeps phone numbers next to the name, so it stays closed to anyone
+ * who is not an approved member — embedding it in the feed query would leave a
+ * visitor, or a member awaiting approval, staring at a wall of "No name". The
+ * view exposes the name and avatar and nothing else, which makes one lookup
+ * work for every reader.
+ */
+async function fetchAuthors(ids: string[]): Promise<Map<string, ForumAuthor>> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Map();
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("forum_authors")
+    .select("id, full_name, avatar_url")
+    .in("id", unique);
+
+  warn("authors", error);
+
+  return new Map(((data ?? []) as ForumAuthor[]).map((a) => [a.id, a]));
+}
+
+/**
+ * `user_id` is only readable by a signed-in member — an anonymous visitor is
+ * granted the tally columns alone, so asking for it would fail the whole
+ * query. Nobody signed in means nobody's own reaction to look up either.
+ */
+const postSelect = (signedIn: boolean) => `
   id, author_id, title, body, is_removed, created_at, updated_at,
-  author:profiles!forum_posts_author_id_fkey (id, full_name, avatar_url),
   media:forum_post_media (id, post_id, url, kind, sort_order),
-  reactions:forum_reactions (user_id, kind),
+  reactions:forum_reactions (${signedIn ? "user_id, " : ""}kind),
   comments:forum_comments (id)
 `;
 
@@ -77,9 +107,8 @@ type RawPost = {
   is_removed: boolean;
   created_at: string;
   updated_at: string | null;
-  author: { id: string; full_name: string | null; avatar_url: string | null } | null;
   media: ForumMedia[] | null;
-  reactions: { user_id: string; kind: ReactionKind }[] | null;
+  reactions: { user_id?: string; kind: ReactionKind }[] | null;
   comments: { id: string }[] | null;
 };
 
@@ -89,7 +118,11 @@ type RawPost = {
  * Done here rather than in SQL because the row set per post is small and a
  * view would need a second query to work out `myReaction` anyway.
  */
-function shapePost(row: RawPost, viewerId: string | null): ForumPost {
+function shapePost(
+  row: RawPost,
+  viewerId: string | null,
+  authors: Map<string, ForumAuthor>
+): ForumPost {
   const reactions: Partial<Record<ReactionKind, number>> = {};
   let myReaction: ReactionKind | null = null;
 
@@ -106,7 +139,7 @@ function shapePost(row: RawPost, viewerId: string | null): ForumPost {
     is_removed: row.is_removed,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    author: row.author,
+    author: authors.get(row.author_id) ?? null,
     media: [...(row.media ?? [])].sort((a, b) => a.sort_order - b.sort_order),
     reactions,
     myReaction,
@@ -120,16 +153,17 @@ export const getForumFeed = cache(async (limit = 30): Promise<ForumPost[]> => {
 
   const { data, error } = await supabase
     .from("forum_posts")
-    .select(POST_SELECT)
+    .select(postSelect(viewer.userId !== null))
     .eq("is_removed", false)
     .order("created_at", { ascending: false })
     .limit(limit);
 
   warn("feed", error);
 
-  return ((data ?? []) as unknown as RawPost[]).map((row) =>
-    shapePost(row, viewer.userId)
-  );
+  const rows = (data ?? []) as unknown as RawPost[];
+  const authors = await fetchAuthors(rows.map((row) => row.author_id));
+
+  return rows.map((row) => shapePost(row, viewer.userId, authors));
 });
 
 export const getForumPost = cache(async (id: string): Promise<ForumPost | null> => {
@@ -138,14 +172,17 @@ export const getForumPost = cache(async (id: string): Promise<ForumPost | null> 
 
   const { data, error } = await supabase
     .from("forum_posts")
-    .select(POST_SELECT)
+    .select(postSelect(viewer.userId !== null))
     .eq("id", id)
     .maybeSingle();
 
   warn("post", error);
   if (!data) return null;
 
-  return shapePost(data as unknown as RawPost, viewer.userId);
+  const row = data as unknown as RawPost;
+  const authors = await fetchAuthors([row.author_id]);
+
+  return shapePost(row, viewer.userId, authors);
 });
 
 type RawComment = {
@@ -156,7 +193,6 @@ type RawComment = {
   body: string;
   is_removed: boolean;
   created_at: string;
-  author: { id: string; full_name: string | null; avatar_url: string | null } | null;
 };
 
 /** Flat rows in, one level of nesting out. */
@@ -166,21 +202,24 @@ export const getPostComments = cache(
 
     const { data, error } = await supabase
       .from("forum_comments")
-      .select(
-        `id, post_id, parent_id, author_id, body, is_removed, created_at,
-         author:profiles!forum_comments_author_id_fkey (id, full_name, avatar_url)`
-      )
+      .select("id, post_id, parent_id, author_id, body, is_removed, created_at")
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
 
     warn("comments", error);
 
     const rows = (data ?? []) as unknown as RawComment[];
+    const authors = await fetchAuthors(rows.map((row) => row.author_id));
+
     const byId = new Map<string, ForumComment>();
     const roots: ForumComment[] = [];
 
     for (const row of rows) {
-      byId.set(row.id, { ...row, author: row.author, replies: [] });
+      byId.set(row.id, {
+        ...row,
+        author: authors.get(row.author_id) ?? null,
+        replies: [],
+      });
     }
 
     for (const row of rows) {

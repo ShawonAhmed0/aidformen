@@ -5,6 +5,8 @@ import { MessageSquare, User } from "lucide-react";
 import { PostMedia } from "./PostMedia";
 import { ReactionBar } from "./ReactionBar";
 import { DeletePostButton } from "./DeletePostButton";
+import { participationNotice } from "./ForumGate";
+import type { ViewerStatus } from "@/lib/content/forum";
 import type { ForumPost } from "@/lib/types/forum";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { Locale } from "@/lib/i18n/config";
@@ -25,9 +27,7 @@ type PostCardProps = {
     post: ForumPost;
     locale: Locale;
     t: Dictionary;
-    canParticipate: boolean;
-    viewerId: string | null;
-    isAdmin: boolean;
+    viewer: ViewerStatus;
     /** Detail view renders the body in full and drops the "open" affordance. */
     detail?: boolean;
 };
@@ -36,13 +36,13 @@ export function PostCard({
     post,
     locale,
     t,
-    canParticipate,
-    viewerId,
-    isAdmin,
+    viewer,
     detail = false,
 }: PostCardProps) {
     const author = post.author;
-    const canDelete = isAdmin || (viewerId !== null && viewerId === post.author_id);
+    const canDelete =
+        viewer.isAdmin ||
+        (viewer.userId !== null && viewer.userId === post.author_id);
 
     return (
         <article className="rounded-2xl border border-ink-200 bg-surface p-5 shadow-xs sm:p-6">
@@ -108,8 +108,11 @@ export function PostCard({
                     postId={post.id}
                     reactions={post.reactions}
                     myReaction={post.myReaction}
-                    canParticipate={canParticipate}
+                    canParticipate={viewer.canParticipate}
                     reactLabel={t.forum.react}
+                    blockedMessage={participationNotice(viewer, t)}
+                    loginHref={viewer.userId ? null : `/${locale}/login`}
+                    loginLabel={t.forum.loginCta}
                 />
 
                 {!detail && (
