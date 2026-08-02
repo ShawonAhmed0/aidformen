@@ -99,15 +99,29 @@ export function requiredText(
   return value;
 }
 
-/** Optional text. Empty string becomes null so "not translated" stays null. */
+/**
+ * Optional text. Empty string becomes null so "not translated" stays null.
+ *
+ * Over-long input is refused, not sliced. Slicing lost the tail of a long
+ * paragraph silently — the save reported success and the editor only found out
+ * when the public page rendered a sentence that stopped mid-word.
+ */
 export function optionalText(
   form: FormData,
   key: string,
-  max = 2000
+  max = 2000,
+  label?: string
 ): string | null {
   const value = (form.get(key) as string | null)?.trim() ?? "";
   if (!value) return null;
-  return value.slice(0, max);
+
+  if (value.length > max) {
+    throw new FieldError(
+      `${label ?? "লেখাটি"} সর্বোচ্চ ${max} অক্ষরের হতে পারে। এখন ${value.length} অক্ষর আছে।`
+    );
+  }
+
+  return value;
 }
 
 export function boolField(form: FormData, key: string): boolean {

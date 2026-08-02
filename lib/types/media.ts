@@ -11,6 +11,8 @@ export const mediaFolders = [
   "hero",
   "carousel",
   "team",
+  "signatures",
+  "documents",
   "activities",
   "videos",
 ] as const;

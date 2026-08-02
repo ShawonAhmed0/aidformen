@@ -48,6 +48,8 @@ export type TeamMember = {
   statement: string | null;
   bio: string | null;
   photo_url: string | null;
+  signature_url: string | null;
+  profile_pdf_url: string | null;
   name_en: string | null;
   role_en: string | null;
   quote_en: string | null;

@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ImagePicker } from "./ImagePicker";
+import { DocumentPicker } from "./DocumentPicker";
 import { FocalPointPicker } from "./FocalPointPicker";
 import { BilingualField } from "./BilingualField";
 import type { TeamMember } from "@/lib/types/content";
@@ -44,6 +45,8 @@ type Draft = {
     bio: string;
     bio_en: string;
     photo_url: string | null;
+    signature_url: string | null;
+    profile_pdf_url: string | null;
     focal_x: number;
     focal_y: number;
     is_published: boolean;
@@ -62,6 +65,8 @@ const emptyDraft: Draft = {
     bio: "",
     bio_en: "",
     photo_url: null,
+    signature_url: null,
+    profile_pdf_url: null,
     focal_x: 50,
     focal_y: 25,
     is_published: true,
@@ -80,6 +85,8 @@ const toDraft = (m: TeamMember): Draft => ({
     bio: s(m.bio),
     bio_en: s(m.bio_en),
     photo_url: m.photo_url,
+    signature_url: m.signature_url,
+    profile_pdf_url: m.profile_pdf_url,
     focal_x: m.focal_x ?? 50,
     focal_y: m.focal_y ?? 50,
     is_published: m.is_published,
@@ -137,6 +144,9 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
         body.append("bio", draft.bio);
         body.append("bio_en", draft.bio_en);
         if (draft.photo_url) body.append("photo_url", draft.photo_url);
+        if (draft.signature_url) body.append("signature_url", draft.signature_url);
+        if (draft.profile_pdf_url)
+            body.append("profile_pdf_url", draft.profile_pdf_url);
         body.append("focal_x", String(draft.focal_x));
         body.append("focal_y", String(draft.focal_y));
         body.append("is_published", String(draft.is_published));
@@ -425,6 +435,29 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                 onChangeEn={(v) =>
                                     setDraft((d) => (d ? { ...d, bio_en: v } : d))
                                 }
+                            />
+
+                            <ImagePicker
+                                label="স্বাক্ষর"
+                                folder="signatures"
+                                aspect="wide"
+                                fit="contain"
+                                className="max-w-72"
+                                value={draft.signature_url}
+                                onChange={(url) =>
+                                    setDraft((d) => (d ? { ...d, signature_url: url } : d))
+                                }
+                                helper="সাদা পটভূমি ছাড়া (স্বচ্ছ) PNG হলে সবচেয়ে ভালো দেখায়। প্রোফাইলের নিচে ডানদিকে দেখাবে।"
+                            />
+
+                            <DocumentPicker
+                                label="প্রোফাইল PDF"
+                                folder="documents"
+                                value={draft.profile_pdf_url}
+                                onChange={(url) =>
+                                    setDraft((d) => (d ? { ...d, profile_pdf_url: url } : d))
+                                }
+                                helper="“বিস্তারিত পড়ুন” খুললে ডাউনলোড বোতাম হিসেবে দেখাবে।"
                             />
 
                             <label className="flex items-center gap-2.5 text-sm text-ink-700">

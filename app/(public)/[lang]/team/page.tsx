@@ -44,6 +44,8 @@ export default async function TeamPage({
     statement: pick(lang, m.statement, m.statement_en),
     bio: pick(lang, m.bio, m.bio_en),
     photo_url: m.photo_url,
+    signature_url: m.signature_url,
+    profile_pdf_url: m.profile_pdf_url,
     focal_x: m.focal_x,
     focal_y: m.focal_y,
   }));

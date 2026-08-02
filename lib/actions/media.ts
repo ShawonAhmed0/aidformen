@@ -5,7 +5,8 @@ import { fail, guarded, ok, requireAdmin } from "./shared";
 
 const BUCKET = "media";
 const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"];
+const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+const ALLOWED =["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"];
 
 function extensionFor(type: string, name: string) {
   const fromName = name.includes(".") ? name.split(".").pop()! .toLowerCase() : "";
@@ -60,6 +61,61 @@ export async function uploadImage(formData: FormData) {
     } = auth.supabase.storage.from(BUCKET).getPublicUrl(path);
 
     return ok({ url: publicUrl, path });
+  });
+}
+
+/**
+ * Uploads one PDF and returns its public URL.
+ *
+ * Separate from `uploadImage` rather than a parameter on it: the two differ in
+ * accepted type and size ceiling, and keeping the image path unable to accept
+ * a document means a widened document rule can never loosen image uploads.
+ */
+export async function uploadDocument(formData: FormData) {
+  return guarded(async () => {
+    const auth = await requireAdmin();
+    if (!auth.ok) return fail(auth.error);
+
+    const file = formData.get("file");
+    const folderRaw = (formData.get("folder") as string | null) ?? "documents";
+    const folder: MediaFolder = (mediaFolders as readonly string[]).includes(folderRaw)
+      ? (folderRaw as MediaFolder)
+      : "documents";
+
+    if (!(file instanceof File) || file.size === 0) {
+      return fail("কোনো ফাইল নির্বাচন করা হয়নি।");
+    }
+
+    // Some browsers send an empty type for a drag-and-dropped file, so the
+    // extension is accepted as a fallback rather than rejecting a valid PDF.
+    const looksLikePdf =
+      file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    if (!looksLikePdf) return fail("শুধু PDF ফাইল আপলোড করা যাবে।");
+
+    if (file.size > MAX_DOCUMENT_BYTES) {
+      return fail("PDF ফাইলের আকার ১০ মেগাবাইটের কম হতে হবে।");
+    }
+
+    const unique = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+    const path = `${folder}/${unique}.pdf`;
+
+    const { error: uploadError } = await auth.supabase.storage
+      .from(BUCKET)
+      .upload(path, file, {
+        cacheControl: "31536000",
+        upsert: false,
+        contentType: "application/pdf",
+      });
+
+    if (uploadError) {
+      return fail(`আপলোড ব্যর্থ: ${uploadError.message}`);
+    }
+
+    const {
+      data: { publicUrl },
+    } = auth.supabase.storage.from(BUCKET).getPublicUrl(path);
+
+    return ok({ url: publicUrl, path, name: file.name });
   });
 }
 

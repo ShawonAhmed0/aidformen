@@ -85,6 +85,8 @@ const bn = {
     empty: "সদস্যদের তথ্য শীঘ্রই যুক্ত করা হবে।",
     profile: "পরিচিতি",
     close: "বন্ধ করুন",
+    downloadPdf: "PDF ডাউনলোড করুন",
+    signature: "স্বাক্ষর",
   },
   contact: {
     title: "যোগাযোগ",
@@ -301,6 +303,8 @@ const en = {
     empty: "Member details will be added shortly.",
     profile: "Profile",
     close: "Close",
+    downloadPdf: "Download PDF",
+    signature: "Signature",
   },
   contact: {
     title: "Contact",

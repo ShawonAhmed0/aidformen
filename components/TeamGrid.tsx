@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Quote, X, ArrowLeft, User } from "lucide-react";
+import { Quote, X, ArrowLeft, Download, User } from "lucide-react";
 
 import { Card } from "./ui/card";
+import { buttonVariants } from "./ui/button";
 import { focalPosition } from "@/lib/types/content";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
@@ -17,9 +18,12 @@ export type TeamCard = {
   statement: string;
   bio: string;
   photo_url: string | null;
+  signature_url: string | null;
+  profile_pdf_url: string | null;
   focal_x: number;
   focal_y: number;
 };
+
 
 export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary }) {
   const [selected, setSelected] = useState<TeamCard | null>(null);
@@ -120,13 +124,19 @@ export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary })
                       className="mx-auto size-5 text-ochre-600"
                       aria-hidden="true"
                     />
+                    {/* No `whitespace-pre-line` here on purpose: the card quote
+                        is one short line, and honouring stray breaks would make
+                        the cards in a row different heights. */}
                     <blockquote className="mt-3 flex-1 text-base text-ink-600">
                       “{member.quote}”
                     </blockquote>
                   </>
                 )}
 
-                {(member.statement || member.bio) && (
+                {(member.statement ||
+                  member.bio ||
+                  member.profile_pdf_url ||
+                  member.signature_url) && (
                   <button
                     type="button"
                     onClick={(event) => {
@@ -162,7 +172,7 @@ export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary })
             role="dialog"
             aria-modal="true"
             aria-labelledby="team-member-name"
-            className="relative max-h-[90dvh] w-full max-w-xl overflow-y-auto rounded-2xl bg-surface p-7 shadow-xl sm:p-9"
+            className="relative max-h-[90dvh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-surface p-7 shadow-xl sm:p-9"
           >
             <button
               type="button"
@@ -174,21 +184,28 @@ export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary })
             </button>
 
             <div className="flex flex-col items-center text-center">
-              <span className="relative flex size-20 items-center justify-center overflow-hidden rounded-full bg-brand-50">
+              {/* A portrait rather than an avatar: this dialog is the only place
+                  the member is seen at any size, and the card above already
+                  gives the small version. Same focal point as the card so the
+                  face stays framed. */}
+              <span className="relative flex aspect-4/5 w-44 items-center justify-center overflow-hidden rounded-2xl bg-brand-50 sm:w-52">
                 {selected.photo_url ? (
                   <Image
                     src={selected.photo_url}
                     alt=""
                     fill
-                    sizes="80px"
+                    sizes="(min-width: 640px) 208px, 176px"
                     className="object-cover"
+                    style={{
+                      objectPosition: focalPosition(selected.focal_x, selected.focal_y),
+                    }}
                   />
                 ) : (
-                  <User className="size-9 text-brand-600" aria-hidden="true" />
+                  <User className="size-16 text-brand-600" aria-hidden="true" />
                 )}
               </span>
 
-              <h2 id="team-member-name" className="mt-4 text-2xl text-ink-900">
+              <h2 id="team-member-name" className="mt-5 text-2xl text-ink-900">
                 {selected.name}
               </h2>
 
@@ -197,8 +214,11 @@ export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary })
               </p>
             </div>
 
+            {/* `whitespace-pre-line` keeps the paragraph breaks the editor typed
+                in the admin textarea. HTML collapses them by default, which ran
+                a multi-paragraph statement together as one wall of text. */}
             {selected.statement && (
-              <blockquote className="mt-7 rounded-xl border-l-4 border-ochre-600 bg-ochre-50 p-5 text-base text-ink-700">
+              <blockquote className="mt-7 whitespace-pre-line rounded-xl border-l-4 border-ochre-600 bg-ochre-50 p-5 text-base text-ink-700">
                 “{selected.statement}”
               </blockquote>
             )}
@@ -206,7 +226,42 @@ export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary })
             {selected.bio && (
               <div className="mt-6">
                 <h3 className="text-base text-ink-900">{t.team.profile}</h3>
-                <p className="mt-2 text-base text-ink-600">{selected.bio}</p>
+                <p className="mt-2 whitespace-pre-line text-base text-ink-600">
+                  {selected.bio}
+                </p>
+              </div>
+            )}
+
+            {(selected.profile_pdf_url || selected.signature_url) && (
+              <div className="mt-8 flex flex-wrap items-end justify-between gap-6 border-t border-ink-200 pt-6">
+                {/* Routed through our own origin: the browser ignores `download`
+                    on a cross-origin link and silently does nothing. */}
+                {selected.profile_pdf_url && (
+                  <a
+                    href={`/api/team/${selected.id}/pdf`}
+                    download
+                    className={buttonVariants({ variant: "outline" })}
+                  >
+                    <Download aria-hidden="true" />
+                    {t.team.downloadPdf}
+                  </a>
+                )}
+
+                {selected.signature_url && (
+                  <figure className="ml-auto text-right">
+                    <Image
+                      src={selected.signature_url}
+                      alt={`${selected.name} — ${t.team.signature}`}
+                      width={320}
+                      height={120}
+                      sizes="200px"
+                      className="ml-auto h-14 w-auto object-contain object-right sm:h-16"
+                    />
+                    <figcaption className="mt-1 border-t border-ink-300 pt-1.5 text-xs text-ink-500">
+                      {selected.name}
+                    </figcaption>
+                  </figure>
+                )}
               </div>
             )}
           </div>

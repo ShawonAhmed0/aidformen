@@ -19,17 +19,21 @@ function fieldsFrom(formData: FormData) {
   return {
     name: requiredText(formData, "name", "নাম", 160),
     role: requiredText(formData, "role", "পদবি", 160),
-    quote: optionalText(formData, "quote", 400),
-    statement: optionalText(formData, "statement", 1200),
-    bio: optionalText(formData, "bio", 2000),
+    // Generous ceilings: a member's statement and profile are full prose, and
+    // these exist only to stop a runaway paste, not to shape the writing.
+    quote: optionalText(formData, "quote", 800, "সংক্ষিপ্ত উক্তি"),
+    statement: optionalText(formData, "statement", 8000, "বিবৃতি"),
+    bio: optionalText(formData, "bio", 12000, "পরিচিতি"),
     photo_url: optionalText(formData, "photo_url", 500),
+    signature_url: optionalText(formData, "signature_url", 500),
+    profile_pdf_url: optionalText(formData, "profile_pdf_url", 500),
     focal_x: clampPercent(intField(formData, "focal_x", 50)),
     focal_y: clampPercent(intField(formData, "focal_y", 50)),
     name_en: optionalText(formData, "name_en", 160),
     role_en: optionalText(formData, "role_en", 160),
-    quote_en: optionalText(formData, "quote_en", 400),
-    statement_en: optionalText(formData, "statement_en", 1200),
-    bio_en: optionalText(formData, "bio_en", 2000),
+    quote_en: optionalText(formData, "quote_en", 800, "সংক্ষিপ্ত উক্তি (English)"),
+    statement_en: optionalText(formData, "statement_en", 8000, "বিবৃতি (English)"),
+    bio_en: optionalText(formData, "bio_en", 12000, "পরিচিতি (English)"),
     is_published: boolField(formData, "is_published"),
   };
 }
@@ -66,10 +70,10 @@ export async function updateTeamMember(formData: FormData) {
     const id = requiredText(formData, "id", "আইডি", 64);
     const next = fieldsFrom(formData);
 
-    // If the photo changed, clear the old file once the row is updated.
+    // If an uploaded file was replaced, clear the old one once the row is saved.
     const { data: existing } = await auth.supabase
       .from("team_members")
-      .select("photo_url")
+      .select("photo_url, signature_url, profile_pdf_url")
       .eq("id", id)
       .maybeSingle();
 
@@ -80,8 +84,14 @@ export async function updateTeamMember(formData: FormData) {
 
     if (error) return fail(error.message);
 
-    if (existing?.photo_url && existing.photo_url !== next.photo_url) {
-      await deleteImageByUrl(existing.photo_url);
+    const replaced = [
+      [existing?.photo_url, next.photo_url],
+      [existing?.signature_url, next.signature_url],
+      [existing?.profile_pdf_url, next.profile_pdf_url],
+    ] as const;
+
+    for (const [before, after] of replaced) {
+      if (before && before !== after) await deleteImageByUrl(before);
     }
 
     revalidatePath("/", "layout");
@@ -98,7 +108,7 @@ export async function deleteTeamMember(formData: FormData) {
 
     const { data: row } = await auth.supabase
       .from("team_members")
-      .select("photo_url")
+      .select("photo_url, signature_url, profile_pdf_url")
       .eq("id", id)
       .maybeSingle();
 
@@ -106,6 +116,8 @@ export async function deleteTeamMember(formData: FormData) {
     if (error) return fail(error.message);
 
     await deleteImageByUrl(row?.photo_url);
+    await deleteImageByUrl(row?.signature_url);
+    await deleteImageByUrl(row?.profile_pdf_url);
 
     revalidatePath("/", "layout");
     return ok();

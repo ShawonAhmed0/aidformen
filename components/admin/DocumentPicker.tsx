@@ -1,69 +1,65 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import Image from "next/image";
-import { ImagePlus, Loader2, Trash2, UploadCloud } from "lucide-react";
+import { FileText, Loader2, Trash2, UploadCloud } from "lucide-react";
 
-import { uploadImage } from "@/lib/actions/media";
+import { uploadDocument } from "@/lib/actions/media";
 import type { MediaFolder } from "@/lib/types/media";
 import { cn } from "@/lib/utils";
 
-type ImagePickerProps = {
-    /** Current image URL, or null for empty. */
+type DocumentPickerProps = {
+    /** Current PDF URL, or null for empty. */
     value: string | null;
     onChange: (url: string | null) => void;
-    /** Storage folder, keeps the bucket organised. */
     folder: MediaFolder;
     label?: string;
-    /** Aspect of the preview box. */
-    aspect?: "video" | "square" | "wide";
-    /** `contain` for artwork that must not be cropped, e.g. a signature. */
-    fit?: "cover" | "contain";
-    className?: string;
     helper?: string;
+    className?: string;
 };
 
-const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"];
+const MAX_BYTES = 10 * 1024 * 1024;
 
-const aspects = {
-    video: "aspect-video",
-    square: "aspect-square",
-    wide: "aspect-3/1",
-} as const;
+/** Stored names are generated, so show the tail of the object key, not a guess. */
+function fileNameFrom(url: string) {
+    try {
+        return decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "") || "PDF";
+    } catch {
+        return "PDF";
+    }
+}
 
 /**
- * Drag-and-drop image field used by every admin editor.
- *
- * Validates type and size on the client before spending an upload round trip,
- * then hands the file to the `uploadImage` action which re-checks both — the
- * client check is for speed and feedback, not for trust.
+ * Drag-and-drop PDF field, mirroring ImagePicker so the two read the same in a
+ * form. Client-side type and size checks are for feedback only — `uploadDocument`
+ * re-checks both.
  */
-export function ImagePicker({
+export function DocumentPicker({
     value,
     onChange,
     folder,
-    label = "ছবি",
-    aspect = "video",
-    fit = "cover",
-    className,
+    label = "PDF",
     helper,
-}: ImagePickerProps) {
+    className,
+}: DocumentPickerProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [pending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
     const [dragging, setDragging] = useState(false);
+    // Only known for a file picked this session; a saved URL falls back to its key.
+    const [uploadedName, setUploadedName] = useState<string | null>(null);
 
     const handleFile = (file: File | undefined | null) => {
         setError(null);
         if (!file) return;
 
-        if (!ALLOWED.includes(file.type)) {
-            setError("শুধু JPG, PNG, WEBP, AVIF বা GIF ফাইল দেওয়া যাবে।");
+        const looksLikePdf =
+            file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+        if (!looksLikePdf) {
+            setError("শুধু PDF ফাইল দেওয়া যাবে।");
             return;
         }
         if (file.size > MAX_BYTES) {
-            setError("ছবির আকার ৫ মেগাবাইটের কম হতে হবে।");
+            setError("ফাইলের আকার ১০ মেগাবাইটের কম হতে হবে।");
             return;
         }
 
@@ -72,8 +68,9 @@ export function ImagePicker({
         body.append("folder", folder);
 
         startTransition(async () => {
-            const result = await uploadImage(body);
+            const result = await uploadDocument(body);
             if (result.ok) {
+                setUploadedName(result.data?.name ?? null);
                 onChange(result.data?.url ?? null);
             } else {
                 setError(result.error);
@@ -97,8 +94,7 @@ export function ImagePicker({
                     handleFile(e.dataTransfer.files?.[0]);
                 }}
                 className={cn(
-                    "relative overflow-hidden rounded-xl border-2 border-dashed transition-ui",
-                    aspects[aspect],
+                    "relative rounded-xl border-2 border-dashed transition-ui",
                     dragging
                         ? "border-brand-600 bg-brand-50"
                         : "border-ink-300 bg-surface-sunken",
@@ -106,23 +102,26 @@ export function ImagePicker({
                 )}
             >
                 {value ? (
-                    <>
-                        <Image
-                            src={value}
-                            alt=""
-                            fill
-                            unoptimized
-                            sizes="(min-width: 1024px) 33vw, 100vw"
-                            className={fit === "contain" ? "object-contain p-3" : "object-cover"}
-                        />
+                    <div className="flex flex-wrap items-center gap-3 p-3">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
+                            <FileText className="size-5" aria-hidden="true" />
+                        </span>
 
-                        {/* Controls sit on a scrim so they stay legible on any image. */}
-                        <div className="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-ink-950/80 to-transparent p-3">
+                        <a
+                            href={value}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="min-w-0 flex-1 truncate text-sm font-medium text-brand-700 underline-offset-4 hover:underline"
+                        >
+                            {uploadedName ?? fileNameFrom(value)}
+                        </a>
+
+                        <div className="flex items-center gap-2">
                             <button
                                 type="button"
                                 onClick={() => inputRef.current?.click()}
                                 disabled={pending}
-                                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white/95 px-3 text-sm font-medium text-ink-900 transition-ui hover:bg-white disabled:opacity-60"
+                                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-ink-300 bg-surface px-3 text-sm font-medium text-ink-800 transition-ui hover:bg-ink-50 disabled:opacity-60"
                             >
                                 <UploadCloud className="size-4" aria-hidden="true" />
                                 পরিবর্তন
@@ -131,38 +130,39 @@ export function ImagePicker({
                             <button
                                 type="button"
                                 onClick={() => {
+                                    setUploadedName(null);
                                     onChange(null);
                                     setError(null);
                                 }}
                                 disabled={pending}
-                                className="inline-flex size-9 items-center justify-center rounded-lg bg-white/95 text-danger transition-ui hover:bg-white disabled:opacity-60"
-                                aria-label="ছবি সরান"
+                                className="inline-flex size-9 items-center justify-center rounded-lg border border-ink-300 bg-surface text-danger transition-ui hover:bg-danger-soft disabled:opacity-60"
+                                aria-label="ফাইল সরান"
                             >
                                 <Trash2 className="size-4" />
                             </button>
                         </div>
-                    </>
+                    </div>
                 ) : (
                     <button
                         type="button"
                         onClick={() => inputRef.current?.click()}
                         disabled={pending}
-                        className="flex size-full flex-col items-center justify-center gap-2 px-4 text-center transition-ui hover:bg-brand-50/50 disabled:opacity-60"
+                        className="flex w-full flex-col items-center justify-center gap-2 px-4 py-7 text-center transition-ui hover:bg-brand-50/50 disabled:opacity-60"
                     >
                         <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
-                            <ImagePlus className="size-5" aria-hidden="true" />
+                            <FileText className="size-5" aria-hidden="true" />
                         </span>
                         <span className="text-sm font-medium text-ink-700">
-                            ছবি টেনে আনুন বা ক্লিক করুন
+                            PDF টেনে আনুন বা ক্লিক করুন
                         </span>
                         <span className="text-xs text-ink-500">
-                            JPG, PNG, WEBP · সর্বোচ্চ ৫ MB
+                            শুধু PDF · সর্বোচ্চ ১০ MB
                         </span>
                     </button>
                 )}
 
                 {pending && (
-                    <div className="absolute inset-0 flex items-center justify-center gap-2 bg-surface/80 text-sm font-medium text-ink-700 backdrop-blur-sm">
+                    <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-xl bg-surface/80 text-sm font-medium text-ink-700 backdrop-blur-sm">
                         <Loader2 className="size-4 animate-spin" aria-hidden="true" />
                         আপলোড হচ্ছে…
                     </div>
@@ -172,7 +172,7 @@ export function ImagePicker({
             <input
                 ref={inputRef}
                 type="file"
-                accept={ALLOWED.join(",")}
+                accept="application/pdf,.pdf"
                 className="sr-only"
                 aria-label={label}
                 onChange={(e) => {
