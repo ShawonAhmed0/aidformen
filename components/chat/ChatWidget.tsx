@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MessageCircle, RotateCcw, Send, X } from "lucide-react";
 
+import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 import { MAX_MESSAGE_CHARS, type ChatMessage } from "@/lib/types/chatbot";
 import type { Locale } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
@@ -212,16 +213,26 @@ export function ChatWidget({
                                     m.role === "user" ? "justify-end" : "justify-start"
                                 )}
                             >
-                                <p
+                                <div
                                     className={cn(
-                                        "max-w-[85%] whitespace-pre-wrap px-3.5 py-2.5 text-sm",
+                                        "max-w-[85%] px-3.5 py-2.5 text-sm",
                                         m.role === "user"
-                                            ? "rounded-2xl rounded-tr-sm bg-brand-800 text-white"
+                                            ? "whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-brand-800 text-white"
                                             : "rounded-2xl rounded-tl-sm bg-surface-sunken text-ink-700"
                                     )}
                                 >
-                                    {m.content ||
-                                        (streaming && i === messages.length - 1 ? (
+                                    {/* Only the assistant's text goes through the
+                                        renderer — what the visitor typed is shown
+                                        back verbatim. */}
+                                    {m.role === "assistant" ? (
+                                        <ChatMarkdown content={m.content} />
+                                    ) : (
+                                        m.content
+                                    )}
+
+                                    {!m.content &&
+                                        streaming &&
+                                        i === messages.length - 1 && (
                                             <span className="flex items-center gap-1.5 text-ink-500">
                                                 <Loader2
                                                     className="size-3.5 animate-spin"
@@ -229,8 +240,8 @@ export function ChatWidget({
                                                 />
                                                 {labels.thinking}
                                             </span>
-                                        ) : null)}
-                                </p>
+                                        )}
+                                </div>
                             </div>
                         ))}
 
