@@ -49,7 +49,12 @@ export default function HeroSlider({
                     opacity: { duration: 1 },
                     scale: { duration: 7, ease: "linear" },
                 }}
-                className="absolute inset-0"
+                // The zoom is suppressed on phones rather than conditioned in
+                // JS: an effect-driven flag would still render the first frame
+                // at 1.04 before hydration, and the point on a phone is that the
+                // whole photo is visible — a 4% scale would crop it again.
+                // !important is what lets a class beat motion's inline style.
+                className="absolute inset-0 max-sm:transform-none!"
             >
                 <Image
                     src={slide.image_url}
@@ -59,7 +64,10 @@ export default function HeroSlider({
                     fill
                     priority={index === 0}
                     sizes="100vw"
-                    className="object-cover"
+                    // contain on phones so a slide whose ratio is not the 3:2 the
+                    // section assumes is letterboxed against the brand background
+                    // rather than cropped.
+                    className="object-contain sm:object-cover"
                     // Framing chosen per slide in the admin; see migration 0004.
                     style={{ objectPosition: focalPosition(slide.focal_x, slide.focal_y) }}
                 />
