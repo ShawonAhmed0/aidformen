@@ -36,7 +36,7 @@ npm run dev
 ```
 app/
   (public)/[lang]/…     locale-prefixed public site: /bn/…, /en/…
-  (admin)/admin/…       CMS, no locale prefix, admin-only
+  (admin)/admin/…       CMS, no locale prefix, admin-only (…/archive, …/team, …)
   api/chat/route.ts     chatbot endpoint (streams text/plain)
   globals.css           the entire design system
   fonts.ts              next/font — Inter (Latin) + Kalpurush/Noto Serif Bengali
@@ -76,14 +76,41 @@ proxy.ts                locale detection/redirect + admin auth gate
 - Cookie writes from Server Components are swallowed on purpose; the proxy is
   what persists sessions, and this client only reads.
 - **RLS is the real access control.** Tables: `hero_content`, `carousel_images`,
-  `site_settings`, `team_members`, `activities`, `videos`,
-  `newsletter_subscribers`, `forum_posts` / `_comments` / `_reactions` /
-  `_post_media`, `profiles`, `chatbot_settings`. Public read, admin write;
-  forum writes require an approved member.
+  `site_settings`, `team_members`, `activities`, `videos`, `archive_entries` /
+  `archive_media`, `newsletter_subscribers`, `forum_posts` / `_comments` /
+  `_reactions` / `_post_media`, `profiles`, `chatbot_settings`. Public read,
+  admin write; forum writes require an approved member. `archive_media` is the
+  exception to "public read published rows": it has no `is_published` of its own
+  and tests its parent entry's instead.
 - **Schema changes ship as a new numbered `.sql` file** in
   `supabase/migrations/` for the user to paste into the SQL editor. Only the
-  anon key exists locally, so DDL cannot run from code. Migrations 0001–0007 are
+  anon key exists locally, so DDL cannot run from code. Migrations 0001–0009 are
   applied; write them to be safe to re-run.
+
+## Archive
+
+`archive_entries` is one row per item, `kind` either `photo` (a gallery in
+`archive_media`) or `video` (an external link **or** an uploaded file). Both
+kinds carry a bilingual heading and paragraph; `/[lang]/archive` filters them by
+kind, category, year and free text, all client-side over the published set.
+
+- `resolveArchiveEntry()` in `lib/types/archive.ts` applies the locale on the
+  server so the filter component only ever sees display strings.
+- An external video link is framed **only** if `toEmbedUrl` (`lib/embed.ts`,
+  shared with the forum) recognises the host — YouTube and Facebook. Anything
+  else is offered as a link out instead of an iframe.
+- `activities` no longer has an `archive` placement. Migration 0010 moved those
+  rows into `archive_entries` and dropped it from the CHECK constraint; two
+  screens both filing "archive" content was the whole problem.
+
+### Uploads have a 1MB ceiling through Server Actions
+
+A Server Action request body is capped at **1MB** by default, so `ImagePicker` →
+`uploadImage` silently fails on any real photograph. The archive editors upload
+**browser-direct to Supabase Storage** instead (`lib/supabase/upload.ts`), which
+has no such limit; the `media_admin_insert` storage policy is still what
+authorises the write. `next.config.ts` sets no `serverActions.bodySizeLimit`, so
+the forum's 50MB video path and `ImagePicker` remain limited to 1MB.
 
 ## Server actions
 

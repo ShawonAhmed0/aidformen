@@ -7,7 +7,8 @@ import { ImagePlus, Link2, Loader2, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { createForumPost, uploadForumMedia } from "@/lib/actions/forum";
-import { toEmbedUrl, type MediaKind } from "@/lib/types/forum";
+import { toEmbedUrl } from "@/lib/embed";
+import type { MediaKind } from "@/lib/types/forum";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

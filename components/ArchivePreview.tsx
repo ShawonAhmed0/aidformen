@@ -1,9 +1,16 @@
-import { getActivities } from "@/lib/content/queries";
-import { pick, type Locale } from "@/lib/i18n/config";
+import Link from "next/link";
+
+import { getArchiveEntries } from "@/lib/content/archive";
+import { resolveArchiveEntry } from "@/lib/types/archive";
+import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { ArchiveGrid } from "./archive/ArchiveGrid";
 import { Section } from "./ui/section";
 import { SectionHeading } from "./ui/section-heading";
-import { ArchiveFilterGrid } from "./ArchiveFilterGrid";
+import { buttonVariants } from "./ui/button";
+
+/** How many entries the homepage shows before sending the reader to /archive. */
+const PREVIEW_COUNT = 3;
 
 export default async function ArchivePreview({
     locale,
@@ -12,42 +19,34 @@ export default async function ArchivePreview({
     locale: Locale;
     t: Dictionary;
 }) {
-    const items = await getActivities("archive");
+    const entries = await getArchiveEntries();
 
-    if (items.length === 0) return null;
+    if (entries.length === 0) return null;
 
-    // Resolve the locale on the server so the client filter component only
-    // deals with plain display strings.
-    const resolved = items.map((item) => ({
-        id: item.id,
-        title: pick(locale, item.title, item.title_en),
-        category: pick(locale, item.category, item.category_en),
-        action: pick(locale, item.action_label, item.action_label_en),
-        image: item.image_url,
-        href: item.href || `/${locale}/archive`,
-    }));
-
-    const categories = [
-        t.home.allActivities,
-        ...Array.from(new Set(resolved.map((i) => i.category).filter(Boolean))),
-    ];
+    // The first few in the admin's own order rather than by date: which entries
+    // deserve the homepage is an editorial decision, and reordering them in
+    // /admin/archive is how it gets made.
+    const items = entries
+        .slice(0, PREVIEW_COUNT)
+        .map((entry) => resolveArchiveEntry(locale, entry));
 
     return (
         <Section tone="sunken" space="lg">
             <SectionHeading
-                align="center"
                 eyebrow={t.home.archiveEyebrow}
                 title={t.home.archiveTitle}
                 description={t.home.archiveBody}
+                action={
+                    <Link
+                        href={`/${locale}/archive`}
+                        className={buttonVariants({ variant: "outline" })}
+                    >
+                        {t.home.viewArchive}
+                    </Link>
+                }
             />
 
-            <ArchiveFilterGrid
-                items={resolved}
-                categories={categories}
-                allLabel={t.home.allActivities}
-                filterLabel={t.home.filterLabel}
-                emptyLabel={t.home.noItems}
-            />
+            <ArchiveGrid items={items} t={t.archive} locale={locale} />
         </Section>
     );
 }

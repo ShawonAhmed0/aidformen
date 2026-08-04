@@ -100,12 +100,14 @@ export type SiteSettings = {
   announcement_cta_label_en: string | null;
 };
 
-export const activityPlacements = [
-  "feature",
-  "advisory",
-  "secondary",
-  "archive",
-] as const;
+/**
+ * Where a homepage activity card surfaces.
+ *
+ * 'archive' was a fourth placement here until migration 0010. The archive is now
+ * its own table with its own kinds, galleries and filters — leaving the
+ * placement in place meant two unrelated screens both filed "archive" content.
+ */
+export const activityPlacements = ["feature", "advisory", "secondary"] as const;
 
 export type ActivityPlacement = (typeof activityPlacements)[number];
 

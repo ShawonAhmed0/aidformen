@@ -1,6 +1,7 @@
 import Image from "next/image";
 
-import { toEmbedUrl, type ForumMedia } from "@/lib/types/forum";
+import { toEmbedUrl } from "@/lib/embed";
+import type { ForumMedia } from "@/lib/types/forum";
 
 /**
  * Renders a post's attachments.

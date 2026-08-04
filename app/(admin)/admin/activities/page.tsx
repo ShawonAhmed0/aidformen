@@ -9,8 +9,8 @@ export default async function AdminActivitiesPage() {
             <div>
                 <h1 className="text-2xl tracking-tight text-ink-900">কার্যক্রম</h1>
                 <p className="mt-1.5 text-sm text-ink-500">
-                    হোমপেজের কার্ড ও আর্কাইভ পাতার তালিকা — কোথায় দেখাবে তা
-                    “কোথায় দেখাবে” অপশন দিয়ে ঠিক করুন।
+                    হোমপেজের কার্ডগুলো — কোথায় দেখাবে তা “কোথায় দেখাবে” অপশন দিয়ে
+                    ঠিক করুন। ছবি ও ভিডিওর সংগ্রহ এখন আলাদা “আর্কাইভ” পাতায়।
                 </p>
             </div>
 

@@ -60,6 +60,53 @@ export function pickBrand(
   return source?.trim() || defaults.bn;
 }
 
+/** BCP 47 tags for Intl, which does not accept our bare locale keys. */
+const intlLocales: Record<Locale, string> = { bn: "bn-BD", en: "en-GB" };
+
+/**
+ * A count in the reader's own numerals.
+ *
+ * Bengali content is written with Bengali digits throughout the site, so a
+ * count rendered as "3 photos" beside "১৯শে নভেম্বর" reads as a bug.
+ */
+export function formatCount(locale: Locale, value: number): string {
+  return new Intl.NumberFormat(intlLocales[locale]).format(value);
+}
+
+/**
+ * A year in the reader's numerals.
+ *
+ * Separate from `formatCount` because grouping is right for a count and wrong
+ * for a year: the same call rendered 2025 as "২,০২৫" in the archive's year
+ * filter.
+ */
+export function formatYear(locale: Locale, year: string): string {
+  const parsed = Number(year);
+  if (!Number.isFinite(parsed)) return year;
+
+  return new Intl.NumberFormat(intlLocales[locale], {
+    useGrouping: false,
+  }).format(parsed);
+}
+
+/**
+ * Formats a stored `date` column for display, or returns null if it is absent
+ * or unparseable — a malformed date should drop out of the layout, not render
+ * "Invalid Date" on a public page.
+ */
+export function formatDate(locale: Locale, iso: string | null | undefined): string | null {
+  if (!iso) return null;
+
+  const date = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return new Intl.DateTimeFormat(intlLocales[locale], {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 /** Swaps the locale segment of a path, e.g. /bn/about -> /en/about. */
 export function switchLocalePath(pathname: string, next: Locale): string {
   const segments = pathname.split("/").filter(Boolean);

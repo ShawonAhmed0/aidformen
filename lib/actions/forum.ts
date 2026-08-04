@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { reactionKinds, toEmbedUrl, type MediaKind } from "@/lib/types/forum";
+import { toEmbedUrl } from "@/lib/embed";
+import { reactionKinds, type MediaKind } from "@/lib/types/forum";
 import {
   enumField,
   fail,

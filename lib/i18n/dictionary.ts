@@ -46,12 +46,10 @@ const bn = {
       "আমাদের বিশেষজ্ঞ আইনজীবী দল আপনাকে সঠিক দিকনির্দেশনা প্রদান করবে।",
     legalHelpCta: "আবেদন করুন",
     archiveEyebrow: "আর্কাইভ",
-    archiveTitle: "আর্কাইভ প্রিভিউ",
+    archiveTitle: "আর্কাইভ থেকে",
     archiveBody:
-      "আমাদের গত কয়েক বছরের কার্যক্রমের একটি সংক্ষিপ্ত চিত্র। বিভাগ অনুযায়ী ফিল্টার করে দেখতে পারেন।",
-    allActivities: "সব কার্যক্রম",
-    filterLabel: "বিভাগ অনুযায়ী ফিল্টার",
-    noItems: "এই বিভাগে এখনো কোনো কার্যক্রম যুক্ত হয়নি।",
+      "আমাদের কার্যক্রমের আলোকচিত্র ও ভিডিও সংগ্রহের সাম্প্রতিক কয়েকটি।",
+    viewArchive: "সম্পূর্ণ আর্কাইভ দেখুন",
     mediaEyebrow: "মিডিয়া",
     mediaTitle: "মিডিয়া ও ডকুমেন্টারি",
     mediaBody: "আমাদের বিভিন্ন কার্যক্রমের ভিডিও চিত্র ও সংবাদ প্রতিবেদন।",
@@ -117,14 +115,43 @@ const bn = {
       "আমরা কমিউনিটি ফোরামটি প্রস্তুত করছি। নিবন্ধন করে রাখলে চালু হওয়ার সঙ্গে সঙ্গে আপনি অংশ নিতে পারবেন।",
     forumDescription:
       "সদস্যরা নিরাপদে নিজেদের অভিজ্ঞতা ভাগ করে নিতে এবং একে অপরকে সহায়তা করতে পারবেন।",
-    archiveTitle: "আর্কাইভ প্রস্তুত করা হচ্ছে",
-    archiveBody:
-      "পুরনো কার্যক্রম ও প্রকাশনাগুলো গুছিয়ে তোলা হচ্ছে। ইতিমধ্যে হোমপেজে সাম্প্রতিক কার্যক্রমের একটি সংক্ষিপ্ত চিত্র দেখতে পারেন।",
-    archiveDescription:
-      "আমাদের কার্যক্রম, প্রকাশনা, মিডিয়া কভারেজ ও বার্ষিক প্রতিবেদনের সংগ্রহ।",
-    viewRecent: "সাম্প্রতিক কার্যক্রম দেখুন",
     community: "কমিউনিটি",
-    archiveEyebrow: "সংরক্ষণাগার",
+  },
+  archive: {
+    eyebrow: "সংরক্ষণাগার",
+    title: "আর্কাইভ",
+    description:
+      "আমাদের কার্যক্রমের আলোকচিত্র ও ভিডিও সংগ্রহ। ধরন, বিভাগ বা সাল অনুযায়ী দেখুন।",
+    // Filters
+    filterKind: "ধরন অনুযায়ী ফিল্টার",
+    filterCategory: "বিভাগ",
+    filterYear: "সাল",
+    all: "সব",
+    allCategories: "সব বিভাগ",
+    allYears: "সব সাল",
+    photoKind: "ছবির আর্কাইভ",
+    videoKind: "ভিডিও আর্কাইভ",
+    searchLabel: "আর্কাইভে খুঁজুন",
+    searchPlaceholder: "শিরোনাম বা বিবরণে খুঁজুন…",
+    clearSearch: "খোঁজা বাতিল করুন",
+    resultsLabel: "ফলাফল",
+    clearFilters: "সব ফিল্টার সরান",
+    // Cards and detail view
+    photosLabel: "ছবি",
+    viewGallery: "গ্যালারি দেখুন",
+    watchVideo: "ভিডিও দেখুন",
+    openExternal: "মূল ঠিকানায় দেখুন",
+    videoUnavailable: "এই ভিডিওটি এখানে চালানো যাচ্ছে না।",
+    noPhotos: "এই আর্কাইভে এখনো ছবি যোগ করা হয়নি।",
+    close: "বন্ধ করুন",
+    previousPhoto: "আগের ছবি",
+    nextPhoto: "পরের ছবি",
+    // Empty states
+    emptyTitle: "আর্কাইভ প্রস্তুত করা হচ্ছে",
+    emptyBody:
+      "পুরনো কার্যক্রমের ছবি ও ভিডিও গুছিয়ে তোলা হচ্ছে। ইতিমধ্যে হোমপেজে সাম্প্রতিক কার্যক্রমের একটি সংক্ষিপ্ত চিত্র দেখতে পারেন।",
+    viewRecent: "সাম্প্রতিক কার্যক্রম দেখুন",
+    noMatches: "এই ফিল্টারে কিছু পাওয়া যায়নি।",
   },
   auth: {
     loginTitle: "এইড ফর মেন",
@@ -265,12 +292,10 @@ const en = {
       "Our panel of experienced lawyers will guide you through the right steps.",
     legalHelpCta: "Request help",
     archiveEyebrow: "Archive",
-    archiveTitle: "Archive preview",
+    archiveTitle: "From the archive",
     archiveBody:
-      "A short overview of our work over recent years. Filter by category to narrow it down.",
-    allActivities: "All activities",
-    filterLabel: "Filter by category",
-    noItems: "Nothing has been added to this category yet.",
+      "A few of the most recent additions to our photo and video collection.",
+    viewArchive: "View the full archive",
     mediaEyebrow: "Media",
     mediaTitle: "Media & documentaries",
     mediaBody: "Video coverage and news reports on our work.",
@@ -335,14 +360,43 @@ const en = {
       "We are still building the community forum. Register now and you can take part the moment it opens.",
     forumDescription:
       "A place for members to share their experiences safely and support one another.",
-    archiveTitle: "The archive is being prepared",
-    archiveBody:
-      "We are organising past activities and publications. In the meantime, the homepage has a short overview of recent work.",
-    archiveDescription:
-      "A collection of our activities, publications, media coverage and annual reports.",
-    viewRecent: "See recent activities",
     community: "Community",
-    archiveEyebrow: "Archive",
+  },
+  archive: {
+    eyebrow: "Archive",
+    title: "Archive",
+    description:
+      "Photographs and video from our work. Browse by type, category or year.",
+    // Filters
+    filterKind: "Filter by type",
+    filterCategory: "Category",
+    filterYear: "Year",
+    all: "All",
+    allCategories: "All categories",
+    allYears: "All years",
+    photoKind: "Photo archive",
+    videoKind: "Video archive",
+    searchLabel: "Search the archive",
+    searchPlaceholder: "Search headings and text…",
+    clearSearch: "Clear search",
+    resultsLabel: "results",
+    clearFilters: "Clear all filters",
+    // Cards and detail view
+    photosLabel: "photos",
+    viewGallery: "View gallery",
+    watchVideo: "Watch video",
+    openExternal: "Open the original",
+    videoUnavailable: "This video cannot be played here.",
+    noPhotos: "No photographs have been added to this entry yet.",
+    close: "Close",
+    previousPhoto: "Previous photo",
+    nextPhoto: "Next photo",
+    // Empty states
+    emptyTitle: "The archive is being prepared",
+    emptyBody:
+      "We are organising photographs and video from past activities. In the meantime, the homepage has a short overview of recent work.",
+    viewRecent: "See recent activities",
+    noMatches: "Nothing matches these filters.",
   },
   auth: {
     loginTitle: "Aid For Men",

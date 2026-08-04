@@ -58,10 +58,6 @@ const placementInfo: Record<
         label: "সহায়ক কার্যক্রম",
         description: "হোমপেজে প্রধান কার্ডের পাশে ছোট কার্ড হিসেবে দেখাবে।",
     },
-    archive: {
-        label: "আর্কাইভ",
-        description: "শুধু আর্কাইভ পাতায় তালিকাভুক্ত হবে।",
-    },
 };
 
 type Draft = {
@@ -519,7 +515,7 @@ export function ActivitiesManager({ activities }: { activities: Activity[] }) {
                                     setDraft((d) => (d ? { ...d, category_en: v } : d))
                                 }
                                 placeholder="যেমন: আইনি সহায়তা"
-                                helper="আর্কাইভ পাতার ফিল্টারে এই নামেই দেখাবে।"
+                                helper="কার্ডে শিরোনামের উপরে ছোট করে দেখাবে।"
                             />
 
                             <BilingualField

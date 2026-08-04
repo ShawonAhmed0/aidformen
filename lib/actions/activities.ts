@@ -20,7 +20,7 @@ import {
 
 function fieldsFrom(formData: FormData) {
   return {
-    placement: enumField(formData, "placement", activityPlacements, "archive"),
+    placement: enumField(formData, "placement", activityPlacements, "secondary"),
     title: requiredText(formData, "title", "শিরোনাম", 200),
     title_en: optionalText(formData, "title_en", 200),
     category: optionalText(formData, "category", 80),
