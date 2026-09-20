@@ -195,9 +195,17 @@ export default function Footer({
                 </div>
 
                 <div className="border-t border-white/10 py-7 text-center text-xs text-brand-100/60">
-                    {/* Danda is Bengali punctuation; a full stop in the English line. */}
-                    © {new Date().getFullYear()} {orgName}
-                    {locale === "en" ? "." : "।"} {t.footer.rights}
+                    <p>
+                        {/* Danda is Bengali punctuation; a full stop in the English line. */}
+                        © {new Date().getFullYear()} {orgName}
+                        {locale === "en" ? "." : "।"} {t.footer.rights}
+                    </p>
+                    <a
+                        href="https://www.shawonahmed.com"
+                        className="mt-2 inline-block rounded-sm text-brand-100/80 transition-ui hover:text-white hover:underline"
+                    >
+                        Crafted with ❤️ by Shawon
+                    </a>
                 </div>
             </Container>
         </footer>
