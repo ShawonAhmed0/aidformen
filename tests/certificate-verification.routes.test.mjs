@@ -16,14 +16,16 @@ const INJECTION_PATH = `/verify/${encodeURIComponent(INJECTION_VALUE)}`;
 
 const EXPECTED_TEXT = [
   "Record found",
-  "Pending completion and authorized signature",
-  "This reference matches a certificate record held by Aid For Men Foundation. The certificate becomes valid only when completed and signed by an authorized representative.",
+  "Approved",
+  "This reference matches an approved certificate record held by Aid For Men Foundation.",
   REFERENCE_ID,
   "Certificate of Website Development",
   "Shawon Ahmed",
   "Designed and developed the website aidformen.com for Aid For Men Foundation",
   "https://aidformen.com",
   "info@aidformen.com",
+  "27 Aug 2026",
+  "Saiful Islam Nadim, General Secretary, Aid For Men Foundation",
 ];
 
 const TEST_ROOT = path.resolve(
@@ -310,7 +312,7 @@ after(async () => {
   await stopServer();
 });
 
-test("the canonical certificate URL returns the authoritative pending record", async () => {
+test("the canonical certificate URL returns the authoritative approved record", async () => {
   const response = await fetchRoute(VALID_PATH);
   const html = await response.text();
   const text = visibleText(html);
@@ -324,8 +326,17 @@ test("the canonical certificate URL returns the authoritative pending record", a
     assert.ok(text.includes(expected), `page must include: ${expected}`);
   }
 
-  assert.match(text, /Issue date\s*Not yet provided/i);
-  assert.match(text, /Authorized signatory\s*Not yet provided/i);
+  assert.match(text, /Document status\s*Approved/i);
+  assert.match(text, /Issue date\s*27 Aug 2026/i);
+  assert.match(
+    text,
+    /Authorized signatory\s*Saiful Islam Nadim, General Secretary, Aid For Men Foundation/i,
+  );
+  assert.doesNotMatch(text, /Pending completion and authorized signature/i);
+  assert.doesNotMatch(
+    text,
+    /becomes valid only when completed and signed by an authorized representative/i,
+  );
   assert.match(html, /href=["']https:\/\/aidformen\.com\/?["']/i);
   assert.match(html, /href=["']mailto:info@aidformen\.com["']/i);
 
@@ -359,7 +370,7 @@ test("the canonical certificate URL returns the authoritative pending record", a
     ),
     "JSON-LD must identify Aid For Men Foundation as an Organization",
   );
-  assert.equal("dateCreated" in creativeWork, false);
+  assert.equal(creativeWork.dateCreated, "2026-08-27");
   assert.equal("dateIssued" in creativeWork, false);
   assert.equal("datePublished" in creativeWork, false);
 });

@@ -66,6 +66,7 @@ export default async function CertificateVerificationPage({
     identifier: record.referenceId,
     description: record.achievement,
     url: canonicalUrl,
+    ...(record.issueDateIso ? { dateCreated: record.issueDateIso } : {}),
     about: {
       "@type": "Person",
       name: record.recipient,

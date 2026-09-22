@@ -13,9 +13,12 @@ export type CertificateRecord = Readonly<{
   website: string;
   contact: string;
   issueDate: string | null;
+  issueDateIso: string | null;
   authorizedSignatory: string | null;
   verificationResult: "Record found";
-  documentStatus: "Pending completion and authorized signature";
+  documentStatus:
+    | "Pending completion and authorized signature"
+    | "Approved";
   notice: string;
 }>;
 
@@ -32,12 +35,14 @@ const certificateRegistry: Readonly<Record<string, CertificateRecord>> =
         "Designed and developed the website aidformen.com for Aid For Men Foundation",
       website: "https://aidformen.com",
       contact: "info@aidformen.com",
-      issueDate: null,
-      authorizedSignatory: null,
+      issueDate: "27 Aug 2026",
+      issueDateIso: "2026-08-27",
+      authorizedSignatory:
+        "Saiful Islam Nadim, General Secretary, Aid For Men Foundation",
       verificationResult: "Record found",
-      documentStatus: "Pending completion and authorized signature",
+      documentStatus: "Approved",
       notice:
-        "This reference matches a certificate record held by Aid For Men Foundation. The certificate becomes valid only when completed and signed by an authorized representative.",
+        "This reference matches an approved certificate record held by Aid For Men Foundation.",
     }),
   });
 
