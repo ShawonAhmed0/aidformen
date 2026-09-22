@@ -42,8 +42,10 @@ export async function proxy(request: NextRequest) {
   // ---------------------------------------------------------------------
   const isAdminPath =
     pathname.startsWith("/admin") || pathname.startsWith("/dashboard");
+  const isVerificationPath =
+    pathname === "/verify" || pathname.startsWith("/verify/");
 
-  if (!isAdminPath) {
+  if (!isAdminPath && !isVerificationPath) {
     const first = pathname.split("/")[1];
 
     if (!isLocale(first)) {
