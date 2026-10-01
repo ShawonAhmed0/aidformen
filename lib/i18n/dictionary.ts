@@ -194,6 +194,42 @@ const bn = {
     errPhotoSize: "ছবির আকার ৫ মেগাবাইটের কম হতে হবে।",
     errTerms: "চালিয়ে যেতে শর্তাবলী মেনে নিন।",
     passwordHelper: "কমপক্ষে ৬ অক্ষর।",
+    recoveryEyebrow: "নিরাপদ অ্যাকাউন্ট পুনরুদ্ধার",
+    forgotPasswordTitle: "পাসওয়ার্ড রিসেট করুন",
+    forgotPasswordSubtitle:
+      "আপনার অ্যাকাউন্টের ইমেইল ঠিকানা লিখুন। আমরা পাসওয়ার্ড পরিবর্তনের একটি নিরাপদ লিংক পাঠাব।",
+    sendResetLink: "রিসেট লিংক পাঠান",
+    sendingResetLink: "লিংক পাঠানো হচ্ছে…",
+    resetLinkSentTitle: "ইমেইল দেখুন",
+    resetLinkSentBody:
+      "এই ইমেইল ঠিকানায় কোনো অ্যাকাউন্ট থাকলে আমরা পাসওয়ার্ড রিসেটের একটি লিংক পাঠিয়েছি। ইনবক্স ও স্প্যাম ফোল্ডার দেখুন।",
+    tryAnotherEmail: "অন্য ইমেইল ব্যবহার করুন",
+    backToLogin: "লগইনে ফিরে যান",
+    recoverySecurityNote:
+      "নিরাপত্তার জন্য রিসেট লিংকটি একবারই ব্যবহার করা যায় এবং অল্প সময়ের মধ্যে মেয়াদ শেষ হয়।",
+    resetPasswordTitle: "নতুন পাসওয়ার্ড দিন",
+    resetPasswordSubtitle:
+      "আপনার অ্যাকাউন্টের জন্য একটি নতুন, শক্তিশালী পাসওয়ার্ড তৈরি করুন।",
+    newPassword: "নতুন পাসওয়ার্ড",
+    confirmNewPassword: "নতুন পাসওয়ার্ড নিশ্চিত করুন",
+    updatePassword: "পাসওয়ার্ড পরিবর্তন করুন",
+    updatingPassword: "পাসওয়ার্ড পরিবর্তন হচ্ছে…",
+    passwordUpdatedTitle: "পাসওয়ার্ড পরিবর্তন হয়েছে",
+    passwordUpdatedBody:
+      "আপনার নতুন পাসওয়ার্ড প্রস্তুত। নিরাপত্তার জন্য এই পুনরুদ্ধার সেশনটি শেষ করা হয়েছে। এখন নতুন পাসওয়ার্ড দিয়ে লগইন করুন।",
+    resetLinkInvalidTitle: "রিসেট লিংকটি ব্যবহার করা যাচ্ছে না",
+    resetLinkInvalidBody:
+      "লিংকটির মেয়াদ শেষ হয়েছে, ইতিমধ্যে ব্যবহার করা হয়েছে, অথবা এই ব্রাউজারে খোলা হয়নি। নতুন লিংকের অনুরোধ করুন।",
+    requestNewResetLink: "নতুন লিংক নিন",
+    resetRequestFailed:
+      "রিসেট ইমেইল পাঠানো যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।",
+    passwordUpdateFailed:
+      "পাসওয়ার্ড পরিবর্তন করা যায়নি। নতুন রিসেট লিংক নিয়ে আবার চেষ্টা করুন।",
+    errEmailRequired: "আপনার ইমেইল ঠিকানা লিখুন।",
+    errEmailFormat: "সঠিক ইমেইল ঠিকানা লিখুন।",
+    errPasswordRequired: "নতুন পাসওয়ার্ডটি দুইবার লিখুন।",
+    errRecoveryPasswordShort: "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।",
+    recoveryPasswordHelper: "কমপক্ষে ৮ অক্ষর ব্যবহার করুন।",
   },
   forum: {
     title: "কমিউনিটি ফোরাম",
@@ -439,6 +475,42 @@ const en = {
     errPhotoSize: "The image must be smaller than 5 MB.",
     errTerms: "Please accept the terms to continue.",
     passwordHelper: "At least 6 characters.",
+    recoveryEyebrow: "Secure account recovery",
+    forgotPasswordTitle: "Reset your password",
+    forgotPasswordSubtitle:
+      "Enter the email address for your account and we’ll send you a secure password-reset link.",
+    sendResetLink: "Send reset link",
+    sendingResetLink: "Sending link…",
+    resetLinkSentTitle: "Check your email",
+    resetLinkSentBody:
+      "If an account exists for this email address, we’ve sent a password-reset link. Check your inbox and spam folder.",
+    tryAnotherEmail: "Use a different email",
+    backToLogin: "Back to log in",
+    recoverySecurityNote:
+      "For your security, each reset link can be used only once and expires after a short time.",
+    resetPasswordTitle: "Choose a new password",
+    resetPasswordSubtitle:
+      "Create a new, strong password for your account.",
+    newPassword: "New password",
+    confirmNewPassword: "Confirm new password",
+    updatePassword: "Update password",
+    updatingPassword: "Updating password…",
+    passwordUpdatedTitle: "Password updated",
+    passwordUpdatedBody:
+      "Your new password is ready. For your security, this recovery session has ended. Log in with your new password now.",
+    resetLinkInvalidTitle: "This reset link cannot be used",
+    resetLinkInvalidBody:
+      "The link has expired, has already been used, or was opened in a different browser. Request a new one.",
+    requestNewResetLink: "Request a new link",
+    resetRequestFailed:
+      "We couldn’t send the reset email. Please try again shortly.",
+    passwordUpdateFailed:
+      "We couldn’t update your password. Request a new reset link and try again.",
+    errEmailRequired: "Enter your email address.",
+    errEmailFormat: "Enter a valid email address.",
+    errPasswordRequired: "Enter the new password in both fields.",
+    errRecoveryPasswordShort: "Password must be at least 8 characters.",
+    recoveryPasswordHelper: "Use at least 8 characters.",
   },
   forum: {
     title: "Community forum",

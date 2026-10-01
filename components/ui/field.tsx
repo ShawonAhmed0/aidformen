@@ -64,7 +64,6 @@ export function Field({
               *
             </span>
           )}
-          {required && <span className="sr-only">(আবশ্যক)</span>}
         </Label>
         {action}
       </div>

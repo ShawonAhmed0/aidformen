@@ -32,6 +32,18 @@ const verificationSecurityHeaders = [
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
 ] as const;
 
+const authSecurityHeaders = [
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "no-referrer" },
+  {
+    key: "Permissions-Policy",
+    value:
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
+  },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+] as const;
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
@@ -42,6 +54,15 @@ const nextConfig: NextConfig = {
           value,
         })),
       },
+      ...[
+        "/:lang/forgot-password",
+        "/:lang/reset-password",
+        "/:lang/auth/callback",
+        "/:lang/auth/recovery-complete",
+      ].map((source) => ({
+        source,
+        headers: authSecurityHeaders.map(({ key, value }) => ({ key, value })),
+      })),
     ];
   },
   images: {

@@ -47,6 +47,14 @@ export function LoginForm({ locale, t }: { locale: Locale; t: Dictionary }) {
 
         const user = data.user;
 
+        // A completed/abandoned recovery marker must never carry into a new
+        // ordinary login session, even if the earlier cleanup request failed.
+        await fetch(`/${locale}/auth/recovery-complete`, {
+            method: "POST",
+            cache: "no-store",
+            credentials: "same-origin",
+        }).catch(() => undefined);
+
         const { data: profile } = await supabase
             .from("profiles")
             .select("role")
