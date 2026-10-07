@@ -41,6 +41,38 @@ export async function requireAdmin(): Promise<
 }
 
 /**
+ * Stronger gate for the small set of actions that can delegate admin access.
+ * Newly promoted administrators intentionally receive `can_manage_admins =
+ * false`, so ordinary CMS access does not silently become permission to create
+ * more administrators. The database RPC repeats this check atomically.
+ */
+export async function requireAdminManager(): Promise<
+  | { ok: true; supabase: SupabaseClient; userId: string }
+  | { ok: false; error: string }
+> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { ok: false, error: "আপনি লগইন করা নেই।" };
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role, can_manage_admins")
+    .eq("id", user.id)
+    .single();
+
+  if (error) return { ok: false, error: "প্রোফাইল যাচাই করা যায়নি।" };
+  if (profile?.role !== "admin" || profile.can_manage_admins !== true) {
+    return { ok: false, error: "আপনার অনুমতি নেই।" };
+  }
+
+  return { ok: true, supabase, userId: user.id };
+}
+
+/**
  * Gate for member-level actions: posting, commenting, reacting.
  *
  * Same defence-in-depth role as requireAdmin — RLS already refuses an

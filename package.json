@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "npm run test:auth && npm run test:certificates",
+    "test": "npm run test:auth && npm run test:admin-access && npm run test:certificates",
     "test:auth": "node --test tests/password-recovery.*.test.mjs",
+    "test:admin-access": "node --test tests/admin-access.*.test.mjs",
     "test:certificates": "node --test tests/certificate-verification.routes.test.mjs"
   },
   "dependencies": {

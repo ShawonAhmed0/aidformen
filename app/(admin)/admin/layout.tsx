@@ -15,7 +15,7 @@ export default async function AdminLayout({
 
     const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name, avatar_url, role')
+        .select('full_name, avatar_url, role, can_manage_admins')
         .eq('id', user.id)
         .single()
 
@@ -33,6 +33,7 @@ export default async function AdminLayout({
                 avatar_url: profile.avatar_url,
             }}
             orgName={settings?.organisation_name?.trim() || 'এইড ফর মেন'}
+            canManageAdmins={profile.can_manage_admins === true}
         >
             {children}
         </AdminShell>

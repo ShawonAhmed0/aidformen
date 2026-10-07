@@ -6,8 +6,8 @@ import {
     Bell,
     Search,
     LogOut,
-    User,
     Settings,
+    ShieldCheck,
     ChevronDown,
     Menu,
 } from 'lucide-react'
@@ -32,9 +32,10 @@ interface AdminHeaderProps {
         avatar_url?: string | null
     }
     onOpenMobile?: () => void
+    canManageAdmins?: boolean
 }
 
-export function AdminHeader({ user, onOpenMobile }: AdminHeaderProps) {
+export function AdminHeader({ user, onOpenMobile, canManageAdmins = false }: AdminHeaderProps) {
     const router = useRouter()
     const [searchQuery, setSearchQuery] = useState('')
 
@@ -154,11 +155,19 @@ export function AdminHeader({ user, onOpenMobile }: AdminHeaderProps) {
                         <DropdownMenuSeparator />
 
                         <DropdownMenuGroup>
-                            <DropdownMenuItem className="cursor-pointer rounded-lg text-sm">
-                                <User className="mr-2 size-4" />
-                                Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer rounded-lg text-sm">
+                            {canManageAdmins && (
+                                <DropdownMenuItem
+                                    onClick={() => router.push('/admin/access')}
+                                    className="cursor-pointer rounded-lg text-sm"
+                                >
+                                    <ShieldCheck className="mr-2 size-4" />
+                                    Admin access
+                                </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                                onClick={() => router.push('/admin/settings')}
+                                className="cursor-pointer rounded-lg text-sm"
+                            >
                                 <Settings className="mr-2 size-4" />
                                 Settings
                             </DropdownMenuItem>

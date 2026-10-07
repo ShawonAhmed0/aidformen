@@ -136,7 +136,6 @@ export function RegisterForm({ locale, t }: { locale: Locale; t: Dictionary }) {
             phone,
             date_of_birth: dateOfBirth,
             avatar_url: avatarUrl,
-            role: "member",
         });
 
         setLoading(false);

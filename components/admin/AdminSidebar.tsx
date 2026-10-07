@@ -13,6 +13,7 @@ import {
     Image as ImageIcon,
     Images,
     Settings,
+    ShieldCheck,
     ChevronLeft,
     ChevronRight,
     Building2,
@@ -63,6 +64,7 @@ type AdminSidebarProps = {
     onToggleCollapse: () => void
     mobileOpen: boolean
     onCloseMobile: () => void
+    canManageAdmins: boolean
 }
 
 /**
@@ -78,6 +80,7 @@ export function AdminSidebar({
     onToggleCollapse,
     mobileOpen,
     onCloseMobile,
+    canManageAdmins,
 }: AdminSidebarProps) {
     const pathname = usePathname()
 
@@ -134,7 +137,12 @@ export function AdminSidebar({
                         </p>
 
                         <div className="space-y-0.5">
-                            {group.items.map((item) => {
+                            {[
+                                ...group.items,
+                                ...(group.label === 'Configuration' && canManageAdmins
+                                    ? [{ title: 'Admin access', href: '/admin/access', icon: ShieldCheck }]
+                                    : []),
+                            ].map((item) => {
                                 const isActive =
                                     item.href === '/admin'
                                         ? pathname === '/admin'
