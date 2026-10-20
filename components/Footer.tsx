@@ -37,7 +37,7 @@ export default function Footer({
     const quickLinks = [
         { label: t.nav.about, href: `/${locale}/about` },
         { label: t.nav.team, href: `/${locale}/team` },
-        { label: t.nav.archive, href: `/${locale}/archive` },
+        { label: t.nav.archive, href: `/${locale}/news` },
         { label: t.nav.forum, href: `/${locale}/forum` },
     ];
 
@@ -49,7 +49,7 @@ export default function Footer({
     ];
 
     return (
-        <footer className="bg-brand-950 text-brand-50">
+        <footer data-site-chrome className="bg-brand-950 text-brand-50">
             <Container>
                 <div className="grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-4 lg:py-20">
                     {/* Brand */}

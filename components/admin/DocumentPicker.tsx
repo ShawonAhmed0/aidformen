@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { FileText, Loader2, Trash2, UploadCloud } from "lucide-react";
 
-import { uploadDocument } from "@/lib/actions/media";
+import { uploadDocumentToMedia } from "@/lib/supabase/upload";
 import type { MediaFolder } from "@/lib/types/media";
 import { cn } from "@/lib/utils";
 
@@ -30,8 +30,9 @@ function fileNameFrom(url: string) {
 
 /**
  * Drag-and-drop PDF field, mirroring ImagePicker so the two read the same in a
- * form. Client-side type and size checks are for feedback only — `uploadDocument`
- * re-checks both.
+ * form. Files go directly to Supabase Storage so Next's 1 MB Server Action
+ * body ceiling is never in the upload path; Storage RLS still requires an
+ * authenticated administrator and the upload helper re-checks the PDF.
  */
 export function DocumentPicker({
     value,
@@ -42,13 +43,13 @@ export function DocumentPicker({
     className,
 }: DocumentPickerProps) {
     const inputRef = useRef<HTMLInputElement>(null);
-    const [pending, startTransition] = useTransition();
+    const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [dragging, setDragging] = useState(false);
     // Only known for a file picked this session; a saved URL falls back to its key.
     const [uploadedName, setUploadedName] = useState<string | null>(null);
 
-    const handleFile = (file: File | undefined | null) => {
+    const handleFile = async (file: File | undefined | null) => {
         setError(null);
         if (!file) return;
 
@@ -63,19 +64,16 @@ export function DocumentPicker({
             return;
         }
 
-        const body = new FormData();
-        body.append("file", file);
-        body.append("folder", folder);
+        setPending(true);
+        const result = await uploadDocumentToMedia(file, folder);
+        setPending(false);
 
-        startTransition(async () => {
-            const result = await uploadDocument(body);
-            if (result.ok) {
-                setUploadedName(result.data?.name ?? null);
-                onChange(result.data?.url ?? null);
-            } else {
-                setError(result.error);
-            }
-        });
+        if (result.ok) {
+            setUploadedName(file.name);
+            onChange(result.url);
+        } else {
+            setError(result.error);
+        }
     };
 
     return (
@@ -91,7 +89,7 @@ export function DocumentPicker({
                 onDrop={(e) => {
                     e.preventDefault();
                     setDragging(false);
-                    handleFile(e.dataTransfer.files?.[0]);
+                    void handleFile(e.dataTransfer.files?.[0]);
                 }}
                 className={cn(
                     "relative rounded-xl border-2 border-dashed transition-ui",
@@ -176,7 +174,7 @@ export function DocumentPicker({
                 className="sr-only"
                 aria-label={label}
                 onChange={(e) => {
-                    handleFile(e.target.files?.[0]);
+                    void handleFile(e.target.files?.[0]);
                     // Reset so picking the same file twice still fires onChange.
                     e.target.value = "";
                 }}

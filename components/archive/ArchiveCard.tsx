@@ -1,7 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { CalendarDays, Images, ImageOff, Play } from "lucide-react";
+import Link from "next/link";
+import {
+    CalendarDays,
+    FileText,
+    Images,
+    ImageOff,
+    Mic2,
+    Play,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { formatCount } from "@/lib/i18n/config";
@@ -10,31 +18,39 @@ import type { ArchiveLabels } from "./labels";
 import { cn } from "@/lib/utils";
 
 /**
- * One archive entry as a card that opens the detail dialog.
- *
- * A button rather than a link: the heading, paragraph and media all live in the
- * dialog, so there is no separate page for a link to point at.
+ * One entry linking to its stable detail URL.
  */
 export function ArchiveCard({
     item,
     t,
     locale,
-    onOpen,
+    priority = false,
     className,
 }: {
     item: ArchiveItem;
     t: ArchiveLabels;
     locale: "bn" | "en";
-    onOpen: (event: React.MouseEvent<HTMLButtonElement>) => void;
+    priority?: boolean;
     className?: string;
 }) {
     const isVideo = item.kind === "video";
+    const isAudio = item.kind === "audio";
+    const isArticle = item.kind === "article";
     const photoCount = item.photos.length;
 
+    const kindLabel = isVideo
+        ? t.videoKind
+        : isAudio
+          ? t.audioKind
+          : isArticle
+            ? t.articleKind
+            : t.photoKind;
+
+    const KindIcon = isVideo ? Play : isAudio ? Mic2 : isArticle ? FileText : Images;
+
     return (
-        <button
-            type="button"
-            onClick={onOpen}
+        <Link
+            href={`/${locale}/news/${item.slug}`}
             className={cn(
                 "group flex h-full w-full flex-col overflow-hidden rounded-xl border border-ink-200 bg-surface text-left shadow-xs transition-ui hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-md",
                 className
@@ -46,6 +62,7 @@ export function ArchiveCard({
                         src={item.cover}
                         alt=""
                         fill
+                        priority={priority}
                         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                         className="object-cover transition-transform duration-500 ease-out-soft group-hover:scale-105"
                     />
@@ -55,32 +72,31 @@ export function ArchiveCard({
 
                 {/* Play affordance for a video entry. The scrim underneath is what
                     keeps the white glyph legible over an arbitrary photograph. */}
-                {isVideo && (
+                {(isVideo || isAudio) && (
                     <span
                         aria-hidden="true"
                         className="absolute inset-0 flex items-center justify-center bg-ink-950/35 transition-ui group-hover:bg-ink-950/25"
                     >
                         <span className="flex size-14 items-center justify-center rounded-full bg-white/95 text-brand-800 shadow-md transition-transform duration-200 group-hover:scale-105">
-                            <Play className="size-6 translate-x-px fill-current" />
+                            <KindIcon
+                                className={cn(
+                                    "size-6",
+                                    isVideo && "translate-x-px fill-current"
+                                )}
+                            />
                         </span>
                     </span>
                 )}
 
                 <span className="absolute left-3 top-3">
-                    <Badge tone={isVideo ? "solid" : "onDark"} size="sm">
-                        {isVideo ? (
-                            <>
-                                <Play aria-hidden="true" className="fill-current" />
-                                {t.videoKind}
-                            </>
-                        ) : (
-                            <>
-                                <Images aria-hidden="true" />
-                                {photoCount > 0
-                                    ? `${formatCount(locale, photoCount)} ${t.photosLabel}`
-                                    : t.photoKind}
-                            </>
-                        )}
+                    <Badge tone={isVideo || isAudio ? "solid" : "onDark"} size="sm">
+                        <KindIcon
+                            aria-hidden="true"
+                            className={cn(isVideo && "fill-current")}
+                        />
+                        {item.kind === "photo" && photoCount > 0
+                            ? `${formatCount(locale, photoCount)} ${t.photosLabel}`
+                            : kindLabel}
                     </Badge>
                 </span>
             </span>
@@ -109,9 +125,15 @@ export function ArchiveCard({
                 )}
 
                 <span className="mt-auto pt-4 text-sm font-semibold text-brand-700">
-                    {isVideo ? t.watchVideo : t.viewGallery}
+                    {isVideo
+                        ? t.watchVideo
+                        : isAudio
+                          ? t.listenAudio
+                          : item.kind === "photo"
+                            ? t.viewGallery
+                            : t.readArticle}
                 </span>
             </span>
-        </button>
+        </Link>
     );
 }

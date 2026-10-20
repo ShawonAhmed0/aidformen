@@ -219,6 +219,29 @@ export function urlField(form: FormData, key: string, label: string): string | n
   throw new FieldError(`${label} একটি সম্পূর্ণ ঠিকানা হতে হবে, যেমন https://…`);
 }
 
+/**
+ * Absolute HTTPS URL or null for public editorial downloads and source links.
+ * HTTP is rejected so a saved link cannot introduce mixed content on the live
+ * HTTPS site.
+ */
+export function httpsUrlField(
+  form: FormData,
+  key: string,
+  label: string
+): string | null {
+  const value = (form.get(key) as string | null)?.trim() ?? "";
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    if (url.protocol === "https:") return url.toString();
+  } catch {
+    /* falls through */
+  }
+
+  throw new FieldError(`${label} অবশ্যই https:// দিয়ে শুরু হওয়া সম্পূর্ণ লিঙ্ক হতে হবে।`);
+}
+
 export function enumField<T extends readonly string[]>(
   form: FormData,
   key: string,

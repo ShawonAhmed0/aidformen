@@ -27,7 +27,7 @@ export default async function MediaSection({
                 description={t.home.mediaBody}
                 action={
                     <Link
-                        href={`/${locale}/archive`}
+                        href={`/${locale}/news`}
                         className={buttonVariants({ variant: "outline" })}
                     >
                         {t.home.allVideos}
@@ -43,7 +43,7 @@ export default async function MediaSection({
                         title={pick(locale, video.title, video.title_en)}
                         duration={video.duration}
                         year={video.year}
-                        href={video.video_url || `/${locale}/archive`}
+                        href={video.video_url || `/${locale}/news`}
                         durationLabel={t.home.duration}
                     />
                 ))}

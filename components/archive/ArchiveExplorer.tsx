@@ -1,10 +1,25 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Images, Play, Search, SlidersHorizontal, X } from "lucide-react";
+import Link from "next/link";
+import {
+    FileText,
+    Images,
+    Mic2,
+    Newspaper,
+    Play,
+    Search,
+    SlidersHorizontal,
+    X,
+} from "lucide-react";
 
 import { formatCount } from "@/lib/i18n/config";
-import { archiveKinds, type ArchiveItem, type ArchiveKind } from "@/lib/types/archive";
+import {
+    archiveKinds,
+    type ArchiveItem,
+    type ArchiveKind,
+    type ArchiveSection,
+} from "@/lib/types/archive";
 import type { ArchiveLabels } from "./labels";
 import { ArchiveGrid } from "./ArchiveGrid";
 import { cn } from "@/lib/utils";
@@ -25,6 +40,7 @@ export function ArchiveExplorer({
     years,
     t,
     locale,
+    initialSection,
 }: {
     items: ArchiveItem[];
     categories: string[];
@@ -32,8 +48,10 @@ export function ArchiveExplorer({
     years: { value: string; label: string }[];
     t: ArchiveLabels;
     locale: "bn" | "en";
+    initialSection: ArchiveSection;
 }) {
     const [kind, setKind] = useState<KindFilter>("all");
+    const section = initialSection;
     const [category, setCategory] = useState<string | null>(null);
     const [year, setYear] = useState<string | null>(null);
     const [query, setQuery] = useState("");
@@ -42,6 +60,7 @@ export function ArchiveExplorer({
         const needle = query.trim().toLowerCase();
 
         return items.filter((item) => {
+            if (item.section !== section) return false;
             if (kind !== "all" && item.kind !== kind) return false;
             if (category && item.category !== category) return false;
             if (year && item.year !== year) return false;
@@ -53,9 +72,16 @@ export function ArchiveExplorer({
 
             return true;
         });
-    }, [items, kind, category, year, query]);
+    }, [items, section, kind, category, year, query]);
 
     const filtered = kind !== "all" || category || year || query.trim();
+
+    const activeCategories = categories.filter((value) =>
+        items.some((item) => item.section === section && item.category === value)
+    );
+    const activeYears = years.filter((option) =>
+        items.some((item) => item.section === section && item.year === option.value)
+    );
 
     const reset = () => {
         setKind("all");
@@ -65,19 +91,95 @@ export function ArchiveExplorer({
     };
 
     const kindLabel: Record<ArchiveKind, string> = {
+        article: t.articleKind,
         photo: t.photoKind,
         video: t.videoKind,
+        audio: t.audioKind,
     };
 
-    const kindIcon = { photo: Images, video: Play } as const;
+    const kindIcon = {
+        article: FileText,
+        photo: Images,
+        video: Play,
+        audio: Mic2,
+    } as const;
+
+    const yearLabels = new Map(years.map((item) => [item.value, item.label]));
+    const groups = Array.from(
+        visible.reduce((map, item) => {
+            const key = item.year ?? "undated";
+            const list = map.get(key);
+            if (list) list.push(item);
+            else map.set(key, [item]);
+            return map;
+        }, new Map<string, ArchiveItem[]>())
+    ).sort(([a], [b]) => {
+        if (a === "undated") return 1;
+        if (b === "undated") return -1;
+        return b.localeCompare(a);
+    });
 
     return (
         <>
             <div className="mb-10 space-y-5">
+                <div
+                    aria-label={t.filterSection}
+                    className="grid gap-3 rounded-2xl bg-surface-sunken p-2 sm:grid-cols-2"
+                >
+                    {(
+                        [
+                            {
+                                value: "press_media" as const,
+                                label: t.pressMediaTab,
+                                description: t.pressMediaTabDescription,
+                                icon: Newspaper,
+                            },
+                            {
+                                value: "news_archive" as const,
+                                label: t.newsArchiveTab,
+                                description: t.newsArchiveTabDescription,
+                                icon: FileText,
+                            },
+                        ]
+                    ).map((option) => {
+                        const active = section === option.value;
+                        const Icon = option.icon;
+                        return (
+                            <Link
+                                key={option.value}
+                                href={`/${locale}/news?section=${option.value}`}
+                                aria-current={active ? "page" : undefined}
+                                className={cn(
+                                    "flex min-h-24 items-start gap-3 rounded-xl border p-4 text-left transition-ui",
+                                    active
+                                        ? "border-brand-700 bg-surface text-brand-900 shadow-sm"
+                                        : "border-transparent text-ink-600 hover:border-ink-200 hover:bg-surface"
+                                )}
+                            >
+                                <span
+                                    className={cn(
+                                        "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg",
+                                        active
+                                            ? "bg-brand-800 text-white"
+                                            : "bg-brand-50 text-brand-700"
+                                    )}
+                                >
+                                    <Icon className="size-5" aria-hidden="true" />
+                                </span>
+                                <span>
+                                    <span className="block font-semibold">{option.label}</span>
+                                    <span className="mt-1 block text-xs leading-relaxed">
+                                        {option.description}
+                                    </span>
+                                </span>
+                            </Link>
+                        );
+                    })}
+                </div>
+
                 {/* Type is the primary split, so it gets the prominent control and
                     sits above the narrower facets. */}
                 <div
-                    role="tablist"
                     aria-label={t.filterKind}
                     className="flex flex-wrap gap-2"
                 >
@@ -89,8 +191,7 @@ export function ArchiveExplorer({
                             <button
                                 key={value}
                                 type="button"
-                                role="tab"
-                                aria-selected={isActive}
+                                aria-pressed={isActive}
                                 onClick={() => setKind(value)}
                                 className={cn(
                                     "inline-flex min-h-11 items-center gap-2 rounded-full border px-5 text-sm font-medium transition-ui",
@@ -115,22 +216,22 @@ export function ArchiveExplorer({
                 </div>
 
                 <div className="flex flex-wrap items-end gap-4">
-                    {categories.length > 0 && (
+                    {activeCategories.length > 0 && (
                         <Facet
                             label={t.filterCategory}
                             allLabel={t.allCategories}
                             value={category}
-                            options={categories.map((c) => ({ value: c, label: c }))}
+                            options={activeCategories.map((c) => ({ value: c, label: c }))}
                             onChange={setCategory}
                         />
                     )}
 
-                    {years.length > 0 && (
+                    {activeYears.length > 0 && (
                         <Facet
                             label={t.filterYear}
                             allLabel={t.allYears}
                             value={year}
-                            options={years}
+                            options={activeYears}
                             onChange={setYear}
                         />
                     )}
@@ -200,7 +301,38 @@ export function ArchiveExplorer({
                     </button>
                 </div>
             ) : (
-                <ArchiveGrid items={visible} t={t} locale={locale} />
+                <div className="space-y-12">
+                    {groups.map(([groupYear, groupItems], groupIndex) => (
+                        <section
+                            key={groupYear}
+                            aria-labelledby={`archive-year-${groupYear}`}
+                            className="relative pl-5 sm:pl-8"
+                        >
+                            <span
+                                aria-hidden="true"
+                                className="absolute bottom-0 left-0 top-2 w-px bg-brand-200"
+                            />
+                            <span
+                                aria-hidden="true"
+                                className="absolute left-[-5px] top-2 size-[11px] rounded-full border-2 border-brand-700 bg-surface"
+                            />
+                            <h2
+                                id={`archive-year-${groupYear}`}
+                                className="mb-5 text-xl text-brand-800"
+                            >
+                                {groupYear === "undated"
+                                    ? t.undated
+                                    : yearLabels.get(groupYear) ?? groupYear}
+                            </h2>
+                            <ArchiveGrid
+                                items={groupItems}
+                                t={t}
+                                locale={locale}
+                                priorityFirst={groupIndex === 0}
+                            />
+                        </section>
+                    ))}
+                </div>
             )}
         </>
     );

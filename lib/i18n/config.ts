@@ -119,3 +119,28 @@ export function switchLocalePath(pathname: string, next: Locale): string {
 
   return "/" + segments.join("/");
 }
+
+/**
+ * Resolves an editor-controlled CTA safely for the active public locale.
+ * External schemes stay untouched, locale-agnostic internal paths gain the
+ * language prefix, and legacy /archive links land in the News & Media Center.
+ */
+export function localizeHref(
+  locale: Locale,
+  href: string | null | undefined,
+  fallback: string
+): string {
+  const raw = href?.trim() || fallback;
+
+  if (/^(https?:|mailto:|tel:)/i.test(raw) || raw.startsWith("#")) return raw;
+  if (!raw.startsWith("/")) return `/${locale}/${raw.replace(/^\/+/, "")}`;
+
+  const suffixIndex = raw.search(/[?#]/u);
+  const path = suffixIndex === -1 ? raw : raw.slice(0, suffixIndex);
+  const suffix = suffixIndex === -1 ? "" : raw.slice(suffixIndex);
+  const segments = path.split("/").filter(Boolean);
+  if (isLocale(segments[0])) segments.shift();
+
+  if (segments[0] === "archive") segments[0] = "news";
+  return `/${locale}/${segments.join("/")}${suffix}`.replace(/\/$/, "");
+}

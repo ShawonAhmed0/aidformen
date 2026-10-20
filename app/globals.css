@@ -348,3 +348,91 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================================
+   PRINT
+   Every public page remains readable without its interactive chrome. The small
+   fixed provenance line is intentionally text-only so it prints reliably even
+   when a browser is configured not to print background graphics.
+   ========================================================================= */
+@page {
+  margin: 16mm 14mm 18mm;
+}
+
+@media print {
+  html {
+    scroll-behavior: auto;
+    scroll-padding-top: 0;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #101828 !important;
+    font-size: 11pt;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body::after {
+    content: "Downloaded from aidformen.com";
+    position: fixed;
+    right: 0;
+    bottom: -11mm;
+    z-index: 9999;
+    color: #4a5565;
+    font-family: system-ui, sans-serif;
+    font-size: 8pt;
+    letter-spacing: 0.02em;
+  }
+
+  [data-site-chrome],
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  [data-print-document],
+  main,
+  article,
+  section {
+    overflow: visible !important;
+  }
+
+  [data-print-keep],
+  article,
+  figure,
+  blockquote,
+  table,
+  li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  img,
+  video {
+    max-height: 230mm;
+    object-fit: contain;
+  }
+
+  a {
+    color: inherit !important;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .shadow-xs,
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl {
+    box-shadow: none !important;
+  }
+}

@@ -2,22 +2,31 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { Film, ImagePlus, Loader2, Trash2, UploadCloud } from "lucide-react";
+import {
+    Film,
+    ImagePlus,
+    Loader2,
+    Music2,
+    Trash2,
+    UploadCloud,
+} from "lucide-react";
 
 import {
+    ARCHIVE_AUDIO_TYPES,
     ARCHIVE_IMAGE_TYPES,
     ARCHIVE_VIDEO_TYPES,
     describeArchiveFileError,
     uploadToMedia,
 } from "@/lib/supabase/upload";
+import type { MediaFolder } from "@/lib/types/media";
 import { cn } from "@/lib/utils";
 
 type MediaFieldProps = {
     value: string | null;
     onChange: (url: string | null) => void;
-    /** Which of the two file families this field accepts. */
-    accept: "image" | "video";
-    folder: string;
+    /** Which editorial file family this field accepts. */
+    accept: "image" | "video" | "audio";
+    folder: MediaFolder;
     label: string;
     helper?: string;
     className?: string;
@@ -45,7 +54,12 @@ export function MediaField({
     const [dragging, setDragging] = useState(false);
 
     const isVideo = accept === "video";
-    const types = isVideo ? ARCHIVE_VIDEO_TYPES : ARCHIVE_IMAGE_TYPES;
+    const isAudio = accept === "audio";
+    const types = isVideo
+        ? ARCHIVE_VIDEO_TYPES
+        : isAudio
+          ? ARCHIVE_AUDIO_TYPES
+          : ARCHIVE_IMAGE_TYPES;
 
     const handleFile = async (file: File | undefined | null) => {
         setError(null);
@@ -58,6 +72,8 @@ export function MediaField({
             setError(
                 isVideo
                     ? "শুধু ভিডিও ফাইল (MP4, WEBM, MOV) দেওয়া যাবে।"
+                    : isAudio
+                      ? "শুধু অডিও ফাইল (MP3, M4A, OGG, WAV) দেওয়া যাবে।"
                     : "শুধু ছবি (JPG, PNG, WEBP, AVIF) দেওয়া যাবে।"
             );
             return;
@@ -93,7 +109,8 @@ export function MediaField({
                     void handleFile(event.dataTransfer.files?.[0]);
                 }}
                 className={cn(
-                    "relative aspect-video overflow-hidden rounded-xl border-2 border-dashed transition-ui",
+                    "relative overflow-hidden rounded-xl border-2 border-dashed transition-ui",
+                    isAudio ? "min-h-40" : "aspect-video",
                     dragging
                         ? "border-brand-600 bg-brand-50"
                         : "border-ink-300 bg-surface-sunken",
@@ -110,6 +127,20 @@ export function MediaField({
                                 playsInline
                                 className="size-full bg-ink-950 object-contain"
                             />
+                        ) : isAudio ? (
+                            <div className="flex size-full min-h-40 flex-col items-center justify-center gap-3 px-5 pb-14 pt-5">
+                                <span className="flex size-10 items-center justify-center rounded-full bg-brand-50 text-brand-700">
+                                    <Music2 className="size-5" aria-hidden="true" />
+                                </span>
+                                <audio
+                                    src={value}
+                                    controls
+                                    preload="metadata"
+                                    className="w-full"
+                                >
+                                    আপনার ব্রাউজার অডিও চালাতে পারছে না।
+                                </audio>
+                            </div>
                         ) : (
                             <Image
                                 src={value}
@@ -156,6 +187,8 @@ export function MediaField({
                         <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
                             {isVideo ? (
                                 <Film className="size-5" aria-hidden="true" />
+                            ) : isAudio ? (
+                                <Music2 className="size-5" aria-hidden="true" />
                             ) : (
                                 <ImagePlus className="size-5" aria-hidden="true" />
                             )}
@@ -163,11 +196,15 @@ export function MediaField({
                         <span className="text-sm font-medium text-ink-700">
                             {isVideo
                                 ? "ভিডিও টেনে আনুন বা ক্লিক করুন"
+                                : isAudio
+                                  ? "অডিও টেনে আনুন বা ক্লিক করুন"
                                 : "ছবি টেনে আনুন বা ক্লিক করুন"}
                         </span>
                         <span className="text-xs text-ink-500">
                             {isVideo
                                 ? "MP4, WEBM, MOV · সর্বোচ্চ ৫০ MB"
+                                : isAudio
+                                  ? "MP3, M4A, OGG, WAV · সর্বোচ্চ ২৫ MB"
                                 : "JPG, PNG, WEBP · সর্বোচ্চ ৮ MB"}
                         </span>
                     </button>

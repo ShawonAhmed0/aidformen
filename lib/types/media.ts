@@ -15,6 +15,8 @@ export const mediaFolders = [
   "documents",
   "activities",
   "videos",
+  "archive",
+  "audio",
 ] as const;
 
 export type MediaFolder = (typeof mediaFolders)[number];

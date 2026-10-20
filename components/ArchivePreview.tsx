@@ -38,7 +38,7 @@ export default async function ArchivePreview({
                 description={t.home.archiveBody}
                 action={
                     <Link
-                        href={`/${locale}/archive`}
+                        href={`/${locale}/news`}
                         className={buttonVariants({ variant: "outline" })}
                     >
                         {t.home.viewArchive}

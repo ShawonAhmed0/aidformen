@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Megaphone } from "lucide-react";
 
-import { pick, type Locale } from "@/lib/i18n/config";
+import { localizeHref, pick, type Locale } from "@/lib/i18n/config";
 import type { SiteSettings } from "@/lib/types/content";
 import { Container } from "./ui/container";
 import { Badge } from "./ui/badge";
@@ -38,8 +38,9 @@ export default function Announcement({
         settings.announcement_cta_label,
         settings.announcement_cta_label_en
     );
-    const ctaHref = settings.announcement_cta_href?.trim();
-    const href = ctaHref?.startsWith("/") ? `/${locale}${ctaHref}` : ctaHref;
+    const href = settings.announcement_cta_href
+        ? localizeHref(locale, settings.announcement_cta_href, "/news")
+        : null;
 
     return (
         // Flows below the hero rather than overlapping it: the hero panel now

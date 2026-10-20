@@ -34,7 +34,7 @@ const navGroups = [
             { title: 'Hero & Carousel', href: '/admin/hero', icon: PanelsTopLeft },
             { title: 'Our Team', href: '/admin/team', icon: Users },
             { title: 'Activities', href: '/admin/activities', icon: FileText },
-            { title: 'Archive', href: '/admin/archive', icon: Images },
+            { title: 'News & Media', href: '/admin/archive', icon: Images },
             { title: 'Videos', href: '/admin/videos', icon: Video },
         ],
     },

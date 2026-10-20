@@ -97,6 +97,7 @@ export default async function PublicLayout({
             botName={pick(lang, chatbot.bot_name, chatbot.bot_name_en)}
             greeting={pick(lang, chatbot.greeting, chatbot.greeting_en)}
             disclaimer={pick(lang, chatbot.disclaimer, chatbot.disclaimer_en)}
+            historyRetentionDays={chatbot.history_retention_days ?? 90}
             labels={t.chat}
           />
         )}

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 import { getActivities } from "@/lib/content/queries";
-import { pick, type Locale } from "@/lib/i18n/config";
+import { localizeHref, pick, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { Activity } from "@/lib/types/content";
 import { Section } from "./ui/section";
@@ -59,7 +59,7 @@ export default async function LatestActivities({
                 title={t.home.activitiesTitle}
                 action={
                     <Link
-                        href={`/${locale}/archive`}
+                        href={`/${locale}/news`}
                         className={buttonVariants({ variant: "outline" })}
                     >
                         {t.home.viewAllActivities}
@@ -71,7 +71,7 @@ export default async function LatestActivities({
             <div className="grid gap-5 lg:grid-cols-3">
                 {lead && (
                     <Link
-                        href={lead.href || `/${locale}/archive`}
+                        href={localizeHref(locale, lead.href, "/news")}
                         className="group relative col-span-full overflow-hidden rounded-xl lg:col-span-2"
                     >
                         <div className="relative aspect-16/10 bg-ink-200 sm:aspect-16/9">
@@ -144,7 +144,7 @@ export default async function LatestActivities({
                         </div>
 
                         <Link
-                            href={note.href || `/${locale}/archive`}
+                            href={localizeHref(locale, note.href, "/news")}
                             className="group mt-6 inline-flex items-center gap-1.5 self-start rounded-sm text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
                         >
                             {pick(locale, note.action_label, note.action_label_en) ||
@@ -190,7 +190,7 @@ export default async function LatestActivities({
                     {secondary.map((item) => (
                         <li key={item.id}>
                             <Link
-                                href={item.href || `/${locale}/archive`}
+                                href={localizeHref(locale, item.href, "/news")}
                                 className="group flex gap-4 rounded-xl p-4 transition-ui hover:bg-surface-sunken"
                             >
                                 <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-ink-200">

@@ -22,8 +22,39 @@ function warn(scope: string, error: { message: string } | null) {
 
 type EntryRow = Omit<ArchiveEntry, "photos">;
 
+/**
+ * New application code can be deployed a few minutes before migration 0012 is
+ * applied. PostgREST simply omits columns that do not yet exist from `select
+ * *`, so normalize those legacy rows here instead of letting the public cards
+ * or the admin editor read `undefined` values.
+ */
+function normalizeEntryRow(row: EntryRow): EntryRow {
+  return {
+    ...row,
+    slug: row.slug || `archive-${row.id.slice(0, 8)}`,
+    section: row.section || "press_media",
+    content_type: row.content_type || "event",
+    event_status: row.event_status ?? null,
+    notice_body: row.notice_body ?? null,
+    notice_body_en: row.notice_body_en ?? null,
+    post_event_body: row.post_event_body ?? null,
+    post_event_body_en: row.post_event_body_en ?? null,
+    press_release_body: row.press_release_body ?? null,
+    press_release_body_en: row.press_release_body_en ?? null,
+    press_release_url: row.press_release_url ?? null,
+    hd_photos_url: row.hd_photos_url ?? null,
+    raw_video_url: row.raw_video_url ?? null,
+    audio_url: row.audio_url ?? null,
+    source_name: row.source_name ?? null,
+    source_name_en: row.source_name_en ?? null,
+    source_url: row.source_url ?? null,
+  };
+}
+
 async function withPhotos(rows: EntryRow[]): Promise<ArchiveEntry[]> {
   if (rows.length === 0) return [];
+
+  const normalizedRows = rows.map(normalizeEntryRow);
 
   const supabase = await createClient();
 
@@ -32,7 +63,7 @@ async function withPhotos(rows: EntryRow[]): Promise<ArchiveEntry[]> {
     .select("*")
     .in(
       "entry_id",
-      rows.map((r) => r.id)
+      normalizedRows.map((r) => r.id)
     )
     .order("sort_order", { ascending: true });
 
@@ -45,7 +76,10 @@ async function withPhotos(rows: EntryRow[]): Promise<ArchiveEntry[]> {
     else byEntry.set(photo.entry_id, [photo]);
   }
 
-  return rows.map((row) => ({ ...row, photos: byEntry.get(row.id) ?? [] }));
+  return normalizedRows.map((row) => ({
+    ...row,
+    photos: byEntry.get(row.id) ?? [],
+  }));
 }
 
 export const getArchiveEntries = cache(async (): Promise<ArchiveEntry[]> => {
@@ -78,3 +112,39 @@ export const getAllArchiveEntries = cache(async (): Promise<ArchiveEntry[]> => {
   warn("admin:archive_entries", error);
   return withPhotos((data as EntryRow[] | null) ?? []);
 });
+
+/** One published entry for the server-rendered, shareable detail route. */
+export const getArchiveEntryBySlug = cache(
+  async (slug: string): Promise<ArchiveEntry | null> => {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("archive_entries")
+      .select("*")
+      .eq("slug", slug)
+      .eq("is_published", true)
+      .maybeSingle();
+
+    warn("archive_entry_by_slug", error);
+    if (error) {
+      // Keep existing archive links usable during a rolling deployment where
+      // the application can reach production before migration 0012 has added
+      // the slug column. Legacy entries already have a deterministic public
+      // slug in resolveArchiveEntry; searching the published read model lets
+      // those links resolve until the migration backfills the stored value.
+      const legacyEntries = await getArchiveEntries();
+      return (
+        legacyEntries.find(
+          (entry) =>
+            entry.slug === slug ||
+            (!entry.slug && `archive-${entry.id.slice(0, 8)}` === slug)
+        ) ?? null
+      );
+    }
+
+    if (!data) return null;
+
+    const [entry] = await withPhotos([data as EntryRow]);
+    return entry ?? null;
+  }
+);

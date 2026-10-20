@@ -9,8 +9,30 @@ import { formatDate, pick, type Locale } from "@/lib/i18n/config";
  * either an external link or an uploaded file.
  */
 
-export const archiveKinds = ["photo", "video"] as const;
+export const archiveKinds = ["article", "photo", "video", "audio"] as const;
 export type ArchiveKind = (typeof archiveKinds)[number];
+
+export const archiveSections = ["press_media", "news_archive"] as const;
+export type ArchiveSection = (typeof archiveSections)[number];
+
+export const archiveContentTypes = [
+  "event",
+  "press_release",
+  "media_coverage",
+  "mens_rights_news",
+  "case_study",
+  "report",
+] as const;
+export type ArchiveContentType = (typeof archiveContentTypes)[number];
+
+export const archiveEventStatuses = ["upcoming", "completed"] as const;
+export type ArchiveEventStatus = (typeof archiveEventStatuses)[number];
+
+export const ARCHIVE_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+export function isArchiveSlug(value: string): boolean {
+  return value.length <= 120 && ARCHIVE_SLUG_PATTERN.test(value);
+}
 
 /**
  * Gallery ceiling, shared by the editor and the action that stores it. A gallery
@@ -30,7 +52,11 @@ export type ArchivePhoto = {
 
 export type ArchiveEntry = {
   id: string;
+  slug: string;
   kind: ArchiveKind;
+  section: ArchiveSection;
+  content_type: ArchiveContentType;
+  event_status: ArchiveEventStatus | null;
   heading: string;
   heading_en: string | null;
   body: string | null;
@@ -45,6 +71,19 @@ export type ArchiveEntry = {
   video_url: string | null;
   /** Uploaded file in our own storage bucket, played in a <video> tag. */
   video_file_url: string | null;
+  notice_body: string | null;
+  notice_body_en: string | null;
+  post_event_body: string | null;
+  post_event_body_en: string | null;
+  press_release_body: string | null;
+  press_release_body_en: string | null;
+  press_release_url: string | null;
+  hd_photos_url: string | null;
+  raw_video_url: string | null;
+  audio_url: string | null;
+  source_name: string | null;
+  source_name_en: string | null;
+  source_url: string | null;
   sort_order: number;
   is_published: boolean;
   /** Empty for a video entry. Ordered by sort_order. */
@@ -65,7 +104,7 @@ export function archiveYear(entry: ArchiveEntry): string | null {
  * to its first gallery image, so uploading a gallery is enough.
  */
 export function archiveCover(entry: ArchiveEntry): string | null {
-  return entry.cover_image_url ?? entry.photos[0]?.image_url ?? null;
+  return safeMediaUrl(entry.cover_image_url ?? entry.photos[0]?.image_url);
 }
 
 /** Whether a video entry has anything to play at all. */
@@ -83,13 +122,18 @@ export function hasPlayableVideo(entry: ArchiveEntry): boolean {
  */
 export type ArchiveItem = {
   id: string;
+  slug: string;
   kind: ArchiveKind;
+  section: ArchiveSection;
+  contentType: ArchiveContentType;
+  eventStatus: ArchiveEventStatus | null;
   heading: string;
   body: string;
   category: string;
   location: string;
   /** Formatted for display; null when the entry has no date. */
   date: string | null;
+  dateIso: string | null;
   /** Raw year, used by the year filter. */
   year: string | null;
   cover: string | null;
@@ -98,8 +142,35 @@ export type ArchiveItem = {
   /** The original watch page, offered as a link out. */
   externalUrl: string | null;
   fileUrl: string | null;
+  noticeBody: string;
+  postEventBody: string;
+  pressReleaseBody: string;
+  pressReleaseUrl: string | null;
+  hdPhotosUrl: string | null;
+  rawVideoUrl: string | null;
+  audioUrl: string | null;
+  sourceName: string;
+  sourceUrl: string | null;
   photos: { id: string; url: string; caption: string }[];
 };
+
+/** External editorial links are HTTPS-only to prevent mixed-content warnings. */
+export function safeHttpsUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Public media may be an app-local path or a secure absolute URL. */
+export function safeMediaUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  if (value.startsWith("/") && !value.startsWith("//")) return value;
+  return safeHttpsUrl(value);
+}
 
 export function resolveArchiveEntry(
   locale: Locale,
@@ -107,21 +178,48 @@ export function resolveArchiveEntry(
 ): ArchiveItem {
   return {
     id: entry.id,
+    slug: entry.slug || `archive-${entry.id.slice(0, 8)}`,
     kind: entry.kind,
+    section: entry.section || "press_media",
+    contentType: entry.content_type || "event",
+    eventStatus: entry.event_status || null,
     heading: pick(locale, entry.heading, entry.heading_en),
     body: pick(locale, entry.body, entry.body_en),
     category: pick(locale, entry.category, entry.category_en),
     location: pick(locale, entry.location, entry.location_en),
     date: formatDate(locale, entry.event_date),
+    dateIso: entry.event_date,
     year: archiveYear(entry),
     cover: archiveCover(entry),
-    embedUrl: entry.video_url ? toEmbedUrl(entry.video_url) : null,
-    externalUrl: entry.video_url,
-    fileUrl: entry.video_file_url,
-    photos: entry.photos.map((photo) => ({
-      id: photo.id,
-      url: photo.image_url,
-      caption: pick(locale, photo.caption, photo.caption_en),
-    })),
+    embedUrl: safeHttpsUrl(entry.video_url)
+      ? toEmbedUrl(safeHttpsUrl(entry.video_url)!)
+      : null,
+    externalUrl: safeHttpsUrl(entry.video_url),
+    fileUrl: safeHttpsUrl(entry.video_file_url),
+    noticeBody: pick(locale, entry.notice_body, entry.notice_body_en),
+    postEventBody: pick(locale, entry.post_event_body, entry.post_event_body_en),
+    pressReleaseBody: pick(
+      locale,
+      entry.press_release_body,
+      entry.press_release_body_en
+    ),
+    pressReleaseUrl: safeHttpsUrl(entry.press_release_url),
+    hdPhotosUrl: safeHttpsUrl(entry.hd_photos_url),
+    rawVideoUrl: safeHttpsUrl(entry.raw_video_url),
+    audioUrl: safeHttpsUrl(entry.audio_url),
+    sourceName: pick(locale, entry.source_name, entry.source_name_en),
+    sourceUrl: safeHttpsUrl(entry.source_url),
+    photos: entry.photos.flatMap((photo) => {
+      const url = safeMediaUrl(photo.image_url);
+      return url
+        ? [
+            {
+              id: photo.id,
+              url,
+              caption: pick(locale, photo.caption, photo.caption_en),
+            },
+          ]
+        : [];
+    }),
   };
 }

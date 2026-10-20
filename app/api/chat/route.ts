@@ -2,9 +2,13 @@ import Anthropic from "@anthropic-ai/sdk";
 
 import { getChatbotSettings } from "@/lib/content/chatbot";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { createClient } from "@/lib/supabase/server";
 import {
   chatModelConfig,
+  isValidBangladeshPhone,
   MAX_MESSAGE_CHARS,
+  normalizeBangladeshPhone,
+  type ChatSessionCredentials,
   type ChatMessage,
 } from "@/lib/types/chatbot";
 
@@ -53,6 +57,9 @@ function clientKey(request: Request) {
 function bad(message: string, status = 400) {
   return Response.json({ error: message }, { status });
 }
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
  * Builds the system prompt.
@@ -107,7 +114,13 @@ export async function POST(request: Request) {
   const settings = await getChatbotSettings();
   if (!settings?.is_enabled) return bad("চ্যাট এই মুহূর্তে বন্ধ আছে।", 503);
 
-  let body: { messages?: unknown; locale?: unknown };
+  let body: {
+    messages?: unknown;
+    locale?: unknown;
+    visitorName?: unknown;
+    phone?: unknown;
+    conversation?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -115,6 +128,29 @@ export async function POST(request: Request) {
   }
 
   const locale: Locale = isLocale(body.locale as string) ? (body.locale as Locale) : "bn";
+
+  const visitorName =
+    typeof body.visitorName === "string"
+      ? body.visitorName.trim().replace(/\s+/g, " ")
+      : "";
+  const phone =
+    typeof body.phone === "string" ? normalizeBangladeshPhone(body.phone) : "";
+
+  if (visitorName.length < 2 || visitorName.length > 100) {
+    return bad(
+      locale === "en"
+        ? "Please enter your name (2–100 characters)."
+        : "আপনার নাম লিখুন (২–১০০ অক্ষর)।"
+    );
+  }
+
+  if (!isValidBangladeshPhone(phone)) {
+    return bad(
+      locale === "en"
+        ? "Enter a valid 11-digit Bangladesh mobile number."
+        : "সঠিক ১১ সংখ্যার বাংলাদেশি মোবাইল নম্বর লিখুন।"
+    );
+  }
 
   if (!Array.isArray(body.messages) || body.messages.length === 0) {
     return bad("কোনো বার্তা পাওয়া যায়নি।");
@@ -142,6 +178,13 @@ export async function POST(request: Request) {
   // The API requires the conversation to open with a user turn.
   while (messages.length && messages[0].role === "assistant") messages.shift();
   if (!messages.length) return bad("কোনো বার্তা পাওয়া যায়নি।");
+  if (messages[messages.length - 1]?.role !== "user") {
+    return bad(
+      locale === "en"
+        ? "The latest message must be from the visitor."
+        : "সর্বশেষ বার্তাটি দর্শনার্থীর হতে হবে।"
+    );
+  }
 
   const turns = messages.filter((m) => m.role === "user").length;
   if (turns > settings.max_turns) {
@@ -166,12 +209,71 @@ export async function POST(request: Request) {
   const disclaimer =
     (locale === "en" ? settings.disclaimer_en?.trim() : null) || settings.disclaimer;
 
+  const supabase = await createClient();
+  let conversation: ChatSessionCredentials;
+  const supplied = body.conversation as
+    | { id?: unknown; token?: unknown }
+    | null
+    | undefined;
+
+  if (supplied == null) {
+    const { data, error } = await supabase.rpc("start_chat_conversation", {
+      p_visitor_name: visitorName,
+      p_phone: phone,
+      p_locale: locale,
+    });
+    const row = Array.isArray(data) ? data[0] : null;
+
+    if (
+      error ||
+      !row ||
+      typeof row.conversation_id !== "string" ||
+      typeof row.conversation_token !== "string"
+    ) {
+      console.error("[chat] could not create private conversation", error?.message);
+      return bad(
+        locale === "en"
+          ? "Chat could not be started. Please try again."
+          : "চ্যাট শুরু করা যায়নি। আবার চেষ্টা করুন।",
+        503
+      );
+    }
+
+    conversation = {
+      id: row.conversation_id,
+      token: row.conversation_token,
+    };
+  } else {
+    if (
+      typeof supplied.id !== "string" ||
+      typeof supplied.token !== "string" ||
+      !UUID_PATTERN.test(supplied.id) ||
+      !UUID_PATTERN.test(supplied.token)
+    ) {
+      return bad(
+        locale === "en"
+          ? "This chat session is invalid. Please start again."
+          : "এই চ্যাট সেশনটি সঠিক নয়। নতুন করে শুরু করুন।"
+      );
+    }
+
+    conversation = { id: supplied.id, token: supplied.token };
+  }
+
+  const lastUserMessage = messages[messages.length - 1].content;
+
   const client = new Anthropic({ apiKey });
 
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      let assistantText = "";
+      const push = (text: string) => {
+        assistantText += text;
+        controller.enqueue(encoder.encode(text));
+      };
+
       try {
         const config = chatModelConfig(settings.model);
 
@@ -212,7 +314,7 @@ export async function POST(request: Request) {
             event.type === "content_block_delta" &&
             event.delta.type === "text_delta"
           ) {
-            controller.enqueue(encoder.encode(event.delta.text));
+            push(event.delta.text);
           }
         }
 
@@ -225,12 +327,10 @@ export async function POST(request: Request) {
             "[chat] refused:",
             final.stop_details?.category ?? "unknown"
           );
-          controller.enqueue(
-            encoder.encode(
-              locale === "en"
-                ? "I can't help with that one. Please contact us directly."
-                : "এই বিষয়ে আমি সহায়তা করতে পারছি না। অনুগ্রহ করে সরাসরি যোগাযোগ করুন।"
-            )
+          push(
+            locale === "en"
+              ? "I can't help with that one. Please contact us directly."
+              : "এই বিষয়ে আমি সহায়তা করতে পারছি না। অনুগ্রহ করে সরাসরি যোগাযোগ করুন।"
           );
         }
       } catch (error) {
@@ -245,14 +345,31 @@ export async function POST(request: Request) {
           console.error("[chat] stream failed:", error);
         }
 
-        controller.enqueue(
-          encoder.encode(
-            locale === "en"
-              ? "\n\nSorry — something went wrong. Please try again."
-              : "\n\nদুঃখিত, সমস্যা হয়েছে। আবার চেষ্টা করুন।"
-          )
+        push(
+          locale === "en"
+            ? "\n\nSorry — something went wrong. Please try again."
+            : "\n\nদুঃখিত, সমস্যা হয়েছে। আবার চেষ্টা করুন।"
         );
       } finally {
+        if (assistantText.trim()) {
+          const { data: stored, error } = await supabase.rpc(
+            "append_chat_exchange",
+            {
+              p_conversation_id: conversation.id,
+              p_conversation_token: conversation.token,
+              p_user_message: lastUserMessage,
+              p_assistant_message: assistantText.trim(),
+            }
+          );
+
+          if (error || stored !== true) {
+            console.error(
+              "[chat] could not store conversation exchange",
+              error?.message ?? "session rejected"
+            );
+          }
+        }
+
         controller.close();
       }
     },
@@ -263,6 +380,8 @@ export async function POST(request: Request) {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Accel-Buffering": "no",
+      "X-Chat-Conversation-Id": conversation.id,
+      "X-Chat-Conversation-Token": conversation.token,
     },
   });
 }

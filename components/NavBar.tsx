@@ -55,7 +55,7 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
     const navLinks = [
         { name: t.nav.home, href: `/${locale}` },
         { name: t.nav.about, href: `/${locale}/about` },
-        { name: t.nav.archive, href: `/${locale}/archive` },
+        { name: t.nav.archive, href: `/${locale}/news` },
         { name: t.nav.contact, href: `/${locale}/contact` },
         { name: t.nav.forum, href: `/${locale}/forum` },
         { name: t.nav.team, href: `/${locale}/team` },
@@ -70,7 +70,10 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
     const emergency = settings?.emergency_phone?.trim() || "01404555999";
 
     return (
-        <header className="sticky top-0 z-50 border-b border-ink-200 bg-surface/85 backdrop-blur-md">
+        <header
+            data-site-chrome
+            className="sticky top-0 z-50 border-b border-ink-200 bg-surface/85 backdrop-blur-md"
+        >
             <Container width="wide">
                 {/* gap-4 rather than gap-6: at the xl breakpoint the English
                     labels need every pixel, and 24px gaps pushed the row into

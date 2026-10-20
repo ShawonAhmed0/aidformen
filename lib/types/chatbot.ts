@@ -12,6 +12,32 @@ export type ChatbotSettings = {
   disclaimer_en: string | null;
   model: string;
   max_turns: number;
+  history_retention_days: number;
+};
+
+/** Private admin-only history row. The per-session token never leaves the API. */
+export type ChatConversation = {
+  id: string;
+  visitor_name: string;
+  phone: string;
+  locale: "bn" | "en";
+  summary: string | null;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+  messages: ChatHistoryMessage[];
+};
+
+export type ChatHistoryMessage = {
+  id: number;
+  role: ChatRole;
+  content: string;
+  created_at: string;
+};
+
+export type ChatSessionCredentials = {
+  id: string;
+  token: string;
 };
 
 /**
@@ -85,3 +111,20 @@ export type ChatMessage = {
 };
 
 export const MAX_MESSAGE_CHARS = 1000;
+
+/**
+ * Accept Bengali numerals in the visitor form, then validate one canonical
+ * Bangladesh mobile format everywhere else.
+ */
+export function normalizeBangladeshPhone(value: string): string {
+  const bengaliDigits = "০১২৩৪৫৬৭৮৯";
+
+  return value
+    .trim()
+    .replace(/[০-৯]/g, (digit) => String(bengaliDigits.indexOf(digit)))
+    .replace(/[\s()-]/g, "");
+}
+
+export function isValidBangladeshPhone(value: string): boolean {
+  return /^01[3-9][0-9]{8}$/.test(normalizeBangladeshPhone(value));
+}

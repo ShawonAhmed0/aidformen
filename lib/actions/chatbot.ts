@@ -28,6 +28,10 @@ export async function updateChatbotSettings(formData: FormData) {
     }
 
     const maxTurns = Math.min(50, Math.max(1, intField(formData, "max_turns", 12)));
+    const retentionDays = intField(formData, "history_retention_days", 90);
+    if (retentionDays < 7 || retentionDays > 365) {
+      return fail("চ্যাট হিস্ট্রি ৭ থেকে ৩৬৫ দিন রাখা যাবে।");
+    }
 
     const { error } = await auth.supabase.from("chatbot_settings").upsert({
       id: true,
@@ -42,6 +46,7 @@ export async function updateChatbotSettings(formData: FormData) {
       disclaimer_en: optionalText(formData, "disclaimer_en", 300),
       model: requiredText(formData, "model", "মডেল", 60),
       max_turns: maxTurns,
+      history_retention_days: retentionDays,
     });
 
     if (error) return fail(error.message);

@@ -71,6 +71,7 @@ export function ChatbotEditor({
         disclaimer_en: s(settings?.disclaimer_en),
         model: settings?.model ?? DEFAULT_CHAT_MODEL,
         max_turns: String(settings?.max_turns ?? 12),
+        history_retention_days: String(settings?.history_retention_days ?? 90),
     });
 
     const known = chatModelConfig(form.model);
@@ -288,6 +289,28 @@ export function ChatbotEditor({
                                 value={form.max_turns}
                                 onChange={(e) => set("max_turns")(e.target.value)}
                             />
+                        )}
+                    </Field>
+
+                    <Field
+                        label="চ্যাট হিস্ট্রি রাখার সময়"
+                        helper="৭–৩৬৫ দিন। নতুন চ্যাট শুরু হলে মেয়াদ পেরোনো হিস্ট্রি স্বয়ংক্রিয়ভাবে মুছে যায়।"
+                    >
+                        {(props) => (
+                            <div className="relative">
+                                <Input
+                                    {...props}
+                                    type="number"
+                                    min={7}
+                                    max={365}
+                                    value={form.history_retention_days}
+                                    onChange={(e) => set("history_retention_days")(e.target.value)}
+                                    className="pr-14"
+                                />
+                                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-500">
+                                    দিন
+                                </span>
+                            </div>
                         )}
                     </Field>
                 </div>

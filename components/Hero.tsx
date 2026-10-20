@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CircleHelp, HandHeart } from "lucide-react";
 
 import { getCarouselImages, getHeroContent } from "@/lib/content/queries";
-import { pick, type Locale } from "@/lib/i18n/config";
+import { localizeHref, pick, type Locale } from "@/lib/i18n/config";
 import HeroSlider from "@/components/HeroSlider";
 import { Container } from "@/components/ui/container";
 import { buttonVariants } from "@/components/ui/button";
@@ -27,12 +27,6 @@ export default async function Hero({ locale }: { locale: Locale }) {
     const secondaryLabel =
         pick(locale, hero?.secondary_cta_label, hero?.secondary_cta_label_en) ||
         (locale === "en" ? "Join as a volunteer" : "স্বেচ্ছাসেবী হিসেবে যোগ দিন");
-
-    // Stored links are locale-agnostic paths like /about; prefix them here.
-    const localise = (href: string | null | undefined, fallback: string) => {
-        const value = href?.trim() || fallback;
-        return value.startsWith("/") ? `/${locale}${value}` : value;
-    };
 
     return (
         // Two siblings, not one section. The panel has to straddle the photo's
@@ -90,7 +84,7 @@ export default async function Hero({ locale }: { locale: Locale }) {
 
                         <div className="mt-5 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:gap-4">
                             <Link
-                                href={localise(hero?.primary_cta_href, "/about")}
+                                href={localizeHref(locale, hero?.primary_cta_href, "/about")}
                                 className={buttonVariants({
                                     variant: "onDark",
                                     size: "lg",
@@ -101,7 +95,7 @@ export default async function Hero({ locale }: { locale: Locale }) {
                             </Link>
 
                             <Link
-                                href={localise(hero?.secondary_cta_href, "/register")}
+                                href={localizeHref(locale, hero?.secondary_cta_href, "/register")}
                                 className={buttonVariants({
                                     variant: "outlineOnDark",
                                     size: "lg",
