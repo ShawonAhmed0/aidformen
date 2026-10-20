@@ -34,6 +34,165 @@ export function isArchiveSlug(value: string): boolean {
   return value.length <= 120 && ARCHIVE_SLUG_PATTERN.test(value);
 }
 
+const bengaliDigits = "০১২৩৪৫৬৭৮৯";
+const bengaliIndependentVowels: Record<string, string> = {
+  "অ": "a",
+  "আ": "a",
+  "ই": "i",
+  "ঈ": "i",
+  "উ": "u",
+  "ঊ": "u",
+  "ঋ": "ri",
+  "এ": "e",
+  "ঐ": "oi",
+  "ও": "o",
+  "ঔ": "ou",
+};
+const bengaliVowelSigns: Record<string, string> = {
+  "া": "a",
+  "ি": "i",
+  "ী": "i",
+  "ু": "u",
+  "ূ": "u",
+  "ৃ": "ri",
+  "ে": "e",
+  "ৈ": "oi",
+  "ো": "o",
+  "ৌ": "ou",
+};
+const bengaliConsonants: Record<string, string> = {
+  "ক": "k",
+  "খ": "kh",
+  "গ": "g",
+  "ঘ": "gh",
+  "ঙ": "ng",
+  "চ": "ch",
+  "ছ": "chh",
+  "জ": "j",
+  "ঝ": "jh",
+  "ঞ": "n",
+  "ট": "t",
+  "ঠ": "th",
+  "ড": "d",
+  "ঢ": "dh",
+  "ণ": "n",
+  "ত": "t",
+  "থ": "th",
+  "দ": "d",
+  "ধ": "dh",
+  "ন": "n",
+  "প": "p",
+  "ফ": "ph",
+  "ব": "b",
+  "ভ": "bh",
+  "ম": "m",
+  "য": "y",
+  "র": "r",
+  "ল": "l",
+  "শ": "sh",
+  "ষ": "sh",
+  "স": "s",
+  "হ": "h",
+  "ৎ": "t",
+};
+
+/**
+ * Generates an ASCII route segment from either an English or Bengali title.
+ *
+ * Bengali is transliterated rather than discarded so an administrator can
+ * create a useful URL without also entering the optional English title.
+ * Collision suffixes are added by the create action, where the authoritative
+ * list of existing slugs is available.
+ */
+export function archiveSlugFromTitle(title: string): string {
+  const chars = Array.from(
+    title.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+  );
+  let transliterated = "";
+
+  for (let index = 0; index < chars.length; index += 1) {
+    const char = chars[index];
+    const digit = bengaliDigits.indexOf(char);
+
+    if (/[A-Za-z0-9]/.test(char)) {
+      transliterated += char;
+      continue;
+    }
+    if (digit >= 0) {
+      transliterated += String(digit);
+      continue;
+    }
+    if (char === "&") {
+      transliterated += " and ";
+      continue;
+    }
+    if (char === "'" || char === "’") continue;
+
+    const independentVowel = bengaliIndependentVowels[char];
+    if (independentVowel) {
+      transliterated += independentVowel;
+      continue;
+    }
+
+    let consonant = bengaliConsonants[char];
+    let nextIndex = index + 1;
+    if (
+      (char === "ড" || char === "ঢ" || char === "য") &&
+      chars[nextIndex] === "়"
+    ) {
+      consonant = char === "ড" ? "r" : char === "ঢ" ? "rh" : "y";
+      index += 1;
+      nextIndex += 1;
+    }
+    if (consonant) {
+      const next = chars[nextIndex];
+      transliterated += consonant;
+      if (!bengaliVowelSigns[next] && next !== "্") transliterated += "a";
+      continue;
+    }
+
+    const vowelSign = bengaliVowelSigns[char];
+    if (vowelSign) {
+      transliterated += vowelSign;
+      continue;
+    }
+    if (char === "ং") {
+      transliterated += "ng";
+      continue;
+    }
+    if (char === "ঃ") {
+      transliterated += "h";
+      continue;
+    }
+    if (char === "ঁ") {
+      transliterated += "n";
+      continue;
+    }
+    if (char === "্" || char === "়") continue;
+
+    transliterated += " ";
+  }
+
+  const slug = transliterated
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-")
+    .slice(0, 100)
+    .replace(/-+$/g, "");
+
+  return slug || "news-item";
+}
+
+/** Adds the deterministic suffix used when another record already owns a slug. */
+export function archiveSlugWithSequence(base: string, sequence: number): string {
+  if (sequence <= 1) return base;
+
+  const suffix = `-${sequence}`;
+  const prefix = base.slice(0, 120 - suffix.length).replace(/-+$/g, "");
+  return `${prefix}${suffix}`;
+}
+
 /**
  * Gallery ceiling, shared by the editor and the action that stores it. A gallery
  * this long is already unusable to scroll; the cap is there so one entry cannot

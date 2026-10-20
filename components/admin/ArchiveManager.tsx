@@ -37,6 +37,7 @@ import {
     archiveEventStatuses,
     archiveKinds,
     archiveSections,
+    archiveSlugFromTitle,
     isArchiveSlug,
     MAX_ARCHIVE_PHOTOS,
     type ArchiveContentType,
@@ -181,7 +182,7 @@ const emptyDraft = (kind: ArchiveKind): Draft => ({
     source_name_en: "",
     source_url: "",
     // New editorial records start as drafts. Publishing is an explicit choice
-    // after required media/source fields have been checked.
+    // after the required title and primary media have been checked.
     is_published: false,
     photos: [],
 });
@@ -289,7 +290,10 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
             toast.error("শিরোনাম প্রয়োজন।");
             return;
         }
-        if (!isArchiveSlug(draft.slug.trim())) {
+        const slug = draft.id
+            ? draft.slug.trim()
+            : archiveSlugFromTitle(draft.heading_en.trim() || draft.heading);
+        if (!isArchiveSlug(slug)) {
             toast.error(
                 "ইউআরএল স্লাগে শুধু ছোট হাতের ইংরেজি অক্ষর, সংখ্যা ও হাইফেন দিন।"
             );
@@ -305,7 +309,7 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
 
         const body = new FormData();
         if (draft.id) body.append("id", draft.id);
-        body.append("slug", draft.slug.trim().toLowerCase());
+        body.append("slug", slug);
         body.append("kind", draft.kind);
         body.append("section", draft.section);
         body.append("content_type", draft.content_type);
@@ -789,25 +793,25 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                 </div>
 
                                 <Field
-                                    label="ইউনিক URL স্লাগ"
-                                    required
-                                    helper="উদাহরণ: dhaka-press-conference-2026 — প্রকাশের পর বদলানো এড়িয়ে চলুন।"
+                                    label="ইউনিক URL স্লাগ (স্বয়ংক্রিয়)"
+                                    helper={
+                                        draft.id
+                                            ? "প্রকাশিত URL স্থির রাখতে edit করার সময় slug অপরিবর্তিত থাকে।"
+                                            : "বাংলা বা English শিরোনাম থেকে স্বয়ংক্রিয়ভাবে তৈরি হবে।"
+                                    }
                                 >
                                     {(props) => (
                                         <Input
                                             {...props}
                                             value={draft.slug}
-                                            onChange={(event) =>
-                                                patch({
-                                                    slug: event.target.value
-                                                        .toLowerCase()
-                                                        .replace(/\s+/g, "-"),
-                                                })
-                                            }
-                                            placeholder="event-name-2026"
+                                            readOnly
+                                            placeholder="শিরোনাম লিখলে তৈরি হবে"
                                             autoCapitalize="none"
                                             spellCheck={false}
-                                            pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                                            className={cn(
+                                                props.className,
+                                                "bg-ink-50 text-ink-600"
+                                            )}
                                         />
                                     )}
                                 </Field>
@@ -893,9 +897,33 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                     multiline
                                     rows={2}
                                     value={draft.heading}
-                                    onChange={(v) => patch({ heading: v })}
+                                    onChange={(v) => {
+                                        const slugTitle = draft.heading_en.trim() || v.trim();
+                                        patch({
+                                            heading: v,
+                                            ...(!draft.id
+                                                ? {
+                                                      slug: slugTitle
+                                                          ? archiveSlugFromTitle(slugTitle)
+                                                          : "",
+                                                  }
+                                                : {}),
+                                        });
+                                    }}
                                     valueEn={draft.heading_en}
-                                    onChangeEn={(v) => patch({ heading_en: v })}
+                                    onChangeEn={(v) => {
+                                        const slugTitle = v.trim() || draft.heading.trim();
+                                        patch({
+                                            heading_en: v,
+                                            ...(!draft.id
+                                                ? {
+                                                      slug: slugTitle
+                                                          ? archiveSlugFromTitle(slugTitle)
+                                                          : "",
+                                                  }
+                                                : {}),
+                                        });
+                                    }}
                                 />
 
                                 <BilingualField
@@ -1052,15 +1080,15 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                 <section className="space-y-5 rounded-xl border border-ink-200 p-5">
                                     <div>
                                         <h4 className="font-semibold text-ink-900">
-                                            মূল সংবাদ / তথ্যসূত্র
+                                            মূল সংবাদ / তথ্যসূত্র (ঐচ্ছিক)
                                         </h4>
                                         <p className="mt-1 text-sm text-ink-500">
-                                            বাইরের সংবাদ হলে প্রকাশকের নাম ও সরাসরি HTTPS লিঙ্ক
-                                            দিন।
+                                            প্রকাশকের নাম বা মূল প্রতিবেদনের লিঙ্ক থাকলে যোগ করতে
+                                            পারেন; publish করার জন্য এগুলো বাধ্যতামূলক নয়।
                                         </p>
                                     </div>
                                     <BilingualField
-                                        label="উৎস / প্রকাশকের নাম"
+                                        label="উৎস / প্রকাশকের নাম (ঐচ্ছিক)"
                                         value={draft.source_name}
                                         onChange={(v) => patch({ source_name: v })}
                                         valueEn={draft.source_name_en}
@@ -1070,12 +1098,13 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                         placeholder="যেমন: প্রথম আলো"
                                     />
                                     <HttpsField
-                                        label="মূল সংবাদ / উৎসের লিঙ্ক"
+                                        label="মূল সংবাদ / উৎসের লিঙ্ক (ঐচ্ছিক)"
                                         value={draft.source_url}
                                         onChange={(value) =>
                                             patch({ source_url: value })
                                         }
                                         placeholder="https://…"
+                                        helper="ঐচ্ছিক — লিঙ্ক দিলে নিরাপত্তার জন্য https:// ব্যবহার করুন।"
                                     />
                                 </section>
                             )}
@@ -1243,9 +1272,6 @@ type PublishableEntry = Pick<
     | "video_url"
     | "video_file_url"
     | "audio_url"
-    | "section"
-    | "content_type"
-    | "source_url"
 > & {
     heading: string;
     slug: string;
@@ -1267,13 +1293,6 @@ function publicationError(entry: PublishableEntry): string | null {
     }
     if (entry.kind === "audio" && !entry.audio_url) {
         return "অডিও এন্ট্রিতে HTTPS লিঙ্ক বা অডিও ফাইল দিন।";
-    }
-    const needsSource =
-        entry.section === "news_archive" &&
-        (entry.content_type === "media_coverage" ||
-            entry.content_type === "mens_rights_news");
-    if (needsSource && !entry.source_url) {
-        return "বাহ্যিক সংবাদ বা মিডিয়া কভারেজে মূল উৎসের HTTPS লিঙ্ক দিন।";
     }
     return null;
 }

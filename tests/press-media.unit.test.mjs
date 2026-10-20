@@ -13,6 +13,14 @@ const sharedActionsSource = await readFile(
   new URL("../lib/actions/shared.ts", import.meta.url),
   "utf8",
 );
+const archiveActionsSource = await readFile(
+  new URL("../lib/actions/archive.ts", import.meta.url),
+  "utf8",
+);
+const archiveManagerSource = await readFile(
+  new URL("../components/admin/ArchiveManager.tsx", import.meta.url),
+  "utf8",
+);
 
 /**
  * Execute a TypeScript module in a deliberately tiny CommonJS sandbox.
@@ -91,6 +99,39 @@ test("archive slugs reject malformed, traversal, and injection-shaped input", ()
   }
 });
 
+test("archive slugs are generated from English or Bengali titles", () => {
+  assert.equal(
+    archiveTypes.archiveSlugFromTitle("International Men's Day 2026"),
+    "international-mens-day-2026",
+  );
+  assert.equal(
+    archiveTypes.archiveSlugFromTitle("Crème & Café"),
+    "creme-and-cafe",
+  );
+
+  const bengaliSlug = archiveTypes.archiveSlugFromTitle("পুরুষ অধিকার সংবাদ ২০২৬");
+  assert.equal(archiveTypes.isArchiveSlug(bengaliSlug), true);
+  assert.match(bengaliSlug, /2026$/);
+  assert.notEqual(bengaliSlug, "news-item");
+
+  assert.equal(archiveTypes.archiveSlugFromTitle("!!!"), "news-item");
+
+  const longSlug = archiveTypes.archiveSlugFromTitle("Long archive title ".repeat(20));
+  assert.equal(archiveTypes.isArchiveSlug(longSlug), true);
+  assert.ok(longSlug.length <= 100);
+});
+
+test("duplicate archive titles receive stable numeric slug suffixes", () => {
+  assert.equal(archiveTypes.archiveSlugWithSequence("same-title", 1), "same-title");
+  assert.equal(archiveTypes.archiveSlugWithSequence("same-title", 2), "same-title-2");
+  assert.equal(archiveTypes.archiveSlugWithSequence("same-title", 3), "same-title-3");
+
+  const suffixed = archiveTypes.archiveSlugWithSequence("a".repeat(120), 100);
+  assert.equal(suffixed.length, 120);
+  assert.equal(archiveTypes.isArchiveSlug(suffixed), true);
+  assert.match(suffixed, /-100$/);
+});
+
 test("archive display links remain HTTPS-only", () => {
   assert.equal(
     archiveTypes.safeHttpsUrl("https://drive.google.com/folder/abc"),
@@ -160,33 +201,40 @@ test("server action link validation accepts HTTPS and rejects mixed-content or a
   }
 });
 
-test("archive writes normalize then validate bounded slugs and validate every editorial link", () => {
-  const archiveActionSourcePromise = readFile(
-    new URL("../lib/actions/archive.ts", import.meta.url),
-    "utf8",
+test("archive writes generate collision-safe slugs server-side and preserve existing URLs", () => {
+  assert.match(archiveActionsSource, /slug:\s*slugField\(headingEn \|\| heading\)/);
+  assert.match(
+    archiveActionsSource,
+    /slug:\s*archiveSlugWithSequence\(fields\.slug, sequence\)/,
   );
+  assert.match(archiveActionsSource, /error\.code !== ["']23505["']/);
+  assert.match(archiveActionsSource, /const next = \{ \.\.\.submitted, slug: existing\.slug/);
+  assert.doesNotMatch(
+    archiveActionsSource,
+    /requiredText\(formData,\s*["']slug["']/,
+    "the server must not trust a manually supplied client slug",
+  );
+});
 
-  return archiveActionSourcePromise.then((source) => {
+test("editorial links stay HTTPS-only when provided, while source details are optional", () => {
+  for (const field of [
+    "video_url",
+    "video_file_url",
+    "press_release_url",
+    "hd_photos_url",
+    "raw_video_url",
+    "audio_url",
+    "source_url",
+  ]) {
     assert.match(
-      source,
-      /requiredText\(formData,\s*["']slug["'],[\s\S]*?120\)\.toLowerCase\(\)/,
+      archiveActionsSource,
+      new RegExp(`httpsUrlField\\(\\s*formData,\\s*["']${field}["']`),
+      `${field} must pass through the HTTPS-only action validator`,
     );
-    assert.match(source, /if \(!isArchiveSlug\(slug\)\)/);
+  }
 
-    for (const field of [
-      "video_url",
-      "video_file_url",
-      "press_release_url",
-      "hd_photos_url",
-      "raw_video_url",
-      "audio_url",
-      "source_url",
-    ]) {
-      assert.match(
-        source,
-        new RegExp(`httpsUrlField\\(\\s*formData,\\s*["']${field}["']`),
-        `${field} must pass through the HTTPS-only action validator`,
-      );
-    }
-  });
+  assert.doesNotMatch(archiveActionsSource, /needsSource/);
+  assert.doesNotMatch(archiveManagerSource, /needsSource/);
+  assert.match(archiveManagerSource, /মূল সংবাদ \/ তথ্যসূত্র \(ঐচ্ছিক\)/);
+  assert.match(archiveManagerSource, /publish করার জন্য এগুলো বাধ্যতামূলক নয়/);
 });

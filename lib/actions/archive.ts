@@ -8,6 +8,8 @@ import {
   archiveEventStatuses,
   archiveKinds,
   archiveSections,
+  archiveSlugFromTitle,
+  archiveSlugWithSequence,
   isArchiveSlug,
   MAX_ARCHIVE_PHOTOS,
 } from "@/lib/types/archive";
@@ -27,11 +29,11 @@ import {
   FieldError,
 } from "./shared";
 
-function slugField(formData: FormData) {
-  const slug = requiredText(formData, "slug", "ইউআরএল স্লাগ", 120).toLowerCase();
+function slugField(title: string) {
+  const slug = archiveSlugFromTitle(title);
   if (!isArchiveSlug(slug)) {
     throw new FieldError(
-      "ইউআরএল স্লাগে শুধু ছোট হাতের ইংরেজি অক্ষর, সংখ্যা ও মাঝখানে হাইফেন ব্যবহার করুন।"
+      "শিরোনাম থেকে একটি নিরাপদ ইউআরএল তৈরি করা যায়নি।"
     );
   }
   return slug;
@@ -52,8 +54,13 @@ function secureMediaHref(formData: FormData, key: string, label: string) {
 }
 
 function fieldsFrom(formData: FormData) {
+  const heading = requiredText(formData, "heading", "শিরোনাম", 200);
+  const headingEn = optionalText(formData, "heading_en", 200);
+
   return {
-    slug: slugField(formData),
+    // The server derives this independently instead of trusting a client URL.
+    // Updates replace it with the stored slug so published links stay stable.
+    slug: slugField(headingEn || heading),
     kind: enumField(formData, "kind", archiveKinds, "article"),
     section: enumField(
       formData,
@@ -68,8 +75,8 @@ function fieldsFrom(formData: FormData) {
       "event"
     ),
     event_status: optionalEventStatus(formData),
-    heading: requiredText(formData, "heading", "শিরোনাম", 200),
-    heading_en: optionalText(formData, "heading_en", 200),
+    heading,
+    heading_en: headingEn,
     body: optionalText(formData, "body", 20000, "বিবরণ"),
     body_en: optionalText(formData, "body_en", 20000, "ইংরেজি বিবরণ"),
     category: optionalText(formData, "category", 80),
@@ -143,9 +150,6 @@ type PublishableArchiveFields = Pick<
   | "video_url"
   | "video_file_url"
   | "audio_url"
-  | "section"
-  | "content_type"
-  | "source_url"
 >;
 
 function validatePublishedEntry(fields: PublishableArchiveFields, photos: PhotoInput[]) {
@@ -159,14 +163,6 @@ function validatePublishedEntry(fields: PublishableArchiveFields, photos: PhotoI
   }
   if (fields.kind === "audio" && !fields.audio_url) {
     throw new FieldError("প্রকাশিত অডিও এন্ট্রিতে অডিও লিঙ্ক বা ফাইল দিন।");
-  }
-
-  const needsSource =
-    fields.section === "news_archive" &&
-    (fields.content_type === "media_coverage" ||
-      fields.content_type === "mens_rights_news");
-  if (needsSource && !fields.source_url) {
-    throw new FieldError("বাহ্যিক সংবাদ বা মিডিয়া কভারেজ প্রকাশ করতে মূল উৎসের লিঙ্ক দিন।");
   }
 }
 
@@ -258,21 +254,35 @@ export async function createArchiveEntry(formData: FormData) {
     const photos = photosFrom(formData);
     validatePublishedEntry(fields, photos);
 
-    const { data, error } = await auth.supabase
-      .from("archive_entries")
-      .insert({ ...fields, sort_order: await nextSortOrder(auth.supabase) })
-      .select("id")
-      .single();
+    const sortOrder = await nextSortOrder(auth.supabase);
+    let entryId: string | null = null;
 
-    if (error) {
-      return fail(
-        error.code === "23505"
-          ? "এই ইউআরএল স্লাগটি ইতিমধ্যে ব্যবহার হয়েছে। অন্য একটি দিন।"
-          : error.message
-      );
+    // The unique database index is the final authority. Retrying the insert,
+    // instead of checking first, also handles two admins creating the same
+    // title concurrently without producing a duplicate public URL.
+    for (let sequence = 1; sequence <= 100; sequence += 1) {
+      const { data, error } = await auth.supabase
+        .from("archive_entries")
+        .insert({
+          ...fields,
+          slug: archiveSlugWithSequence(fields.slug, sequence),
+          sort_order: sortOrder,
+        })
+        .select("id")
+        .single();
+
+      if (!error) {
+        entryId = data.id as string;
+        break;
+      }
+      if (error.code !== "23505") return fail(error.message);
     }
 
-    const photoError = await replacePhotos(auth.supabase, data.id as string, photos);
+    if (!entryId) {
+      return fail("একই শিরোনামের অনেক রেকর্ড আছে। শিরোনামটি একটু আলাদা করে আবার চেষ্টা করুন।");
+    }
+
+    const photoError = await replacePhotos(auth.supabase, entryId, photos);
     if (photoError) return fail(photoError);
 
     revalidatePath("/", "layout");
@@ -286,15 +296,21 @@ export async function updateArchiveEntry(formData: FormData) {
     if (!auth.ok) return fail(auth.error);
 
     const id = requiredText(formData, "id", "আইডি", 64);
-    const next = fieldsFrom(formData);
+    const submitted = fieldsFrom(formData);
     const photos = photosFrom(formData);
-    validatePublishedEntry(next, photos);
 
-    const { data: existing } = await auth.supabase
+    const { data: existing, error: existingError } = await auth.supabase
       .from("archive_entries")
-      .select("cover_image_url, video_file_url, audio_url, press_release_url")
+      .select("slug, cover_image_url, video_file_url, audio_url, press_release_url")
       .eq("id", id)
       .maybeSingle();
+
+    if (existingError || !existing) {
+      return fail(existingError?.message ?? "এন্ট্রিটি পাওয়া যায়নি।");
+    }
+
+    const next = { ...submitted, slug: existing.slug as string };
+    validatePublishedEntry(next, photos);
 
     const { data: existingPhotos } = await auth.supabase
       .from("archive_media")
@@ -422,7 +438,7 @@ export async function toggleArchivePublished(formData: FormData) {
           auth.supabase
             .from("archive_entries")
             .select(
-              "kind, cover_image_url, video_url, video_file_url, audio_url, section, content_type, source_url"
+              "kind, cover_image_url, video_url, video_file_url, audio_url"
             )
             .eq("id", id)
             .maybeSingle(),
