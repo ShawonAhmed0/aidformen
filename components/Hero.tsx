@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleHelp, HandHeart } from "lucide-react";
+import { Building2, ChevronRight, UserRoundPlus } from "lucide-react";
 
 import { getCarouselImages, getHeroContent } from "@/lib/content/queries";
 import { localizeHref, pick, type Locale } from "@/lib/i18n/config";
@@ -82,16 +82,33 @@ export default async function Hero({ locale }: { locale: Locale }) {
                             </p>
                         )}
 
-                        <div className="mt-5 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:gap-4">
+                        <div className="mt-5 grid max-w-4xl gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4">
                             <Link
                                 href={localizeHref(locale, hero?.primary_cta_href, "/about")}
                                 className={buttonVariants({
                                     variant: "onDark",
                                     size: "lg",
+                                    className:
+                                        "h-auto min-h-[68px] w-full justify-between whitespace-normal rounded-2xl border border-white/90 bg-white px-4 py-3 text-left text-base font-semibold tracking-[-0.01em] shadow-[0_12px_32px_rgba(0,36,49,0.24)] ring-1 ring-brand-950/5 hover:-translate-y-0.5 hover:border-white hover:bg-white hover:shadow-[0_16px_38px_rgba(0,36,49,0.30)] focus-visible:outline-white sm:px-5 sm:text-lg",
                                 })}
                             >
-                                <CircleHelp aria-hidden="true" />
-                                {primaryLabel}
+                                <span className="flex min-w-0 items-center gap-3">
+                                    <span className="flex shrink-0 items-center justify-center text-brand-700 transition-ui group-hover/button:scale-105 group-hover/button:text-brand-900">
+                                        <Building2
+                                            className="size-6"
+                                            strokeWidth={1.75}
+                                            aria-hidden="true"
+                                        />
+                                    </span>
+                                    <span className="text-balance leading-[1.35]">{primaryLabel}</span>
+                                </span>
+                                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100 transition-ui group-hover/button:bg-brand-100">
+                                    <ChevronRight
+                                        className="size-4 transition-ui group-hover/button:translate-x-0.5"
+                                        strokeWidth={2}
+                                        aria-hidden="true"
+                                    />
+                                </span>
                             </Link>
 
                             <Link
@@ -99,10 +116,27 @@ export default async function Hero({ locale }: { locale: Locale }) {
                                 className={buttonVariants({
                                     variant: "outlineOnDark",
                                     size: "lg",
+                                    className:
+                                        "h-auto min-h-[68px] w-full justify-between whitespace-normal rounded-2xl border-brand-200/50 bg-brand-700 px-4 py-3 text-left text-base font-semibold tracking-[-0.01em] shadow-[0_12px_32px_rgba(0,36,49,0.22)] ring-1 ring-white/10 hover:-translate-y-0.5 hover:border-white/70 hover:bg-brand-700 hover:shadow-[0_16px_38px_rgba(0,36,49,0.28)] focus-visible:outline-white sm:px-5 sm:text-lg",
                                 })}
                             >
-                                <HandHeart aria-hidden="true" />
-                                {secondaryLabel}
+                                <span className="flex min-w-0 items-center gap-3">
+                                    <span className="flex shrink-0 items-center justify-center text-brand-100 transition-ui group-hover/button:scale-105 group-hover/button:text-white">
+                                        <UserRoundPlus
+                                            className="size-6"
+                                            strokeWidth={1.75}
+                                            aria-hidden="true"
+                                        />
+                                    </span>
+                                    <span className="text-balance leading-[1.35]">{secondaryLabel}</span>
+                                </span>
+                                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-inset ring-white/20 transition-ui group-hover/button:bg-white/20">
+                                    <ChevronRight
+                                        className="size-4 transition-ui group-hover/button:translate-x-0.5"
+                                        strokeWidth={2}
+                                        aria-hidden="true"
+                                    />
+                                </span>
                             </Link>
                         </div>
                     </div>
