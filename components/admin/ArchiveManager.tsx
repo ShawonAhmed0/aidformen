@@ -51,6 +51,7 @@ import { Badge } from "@/components/ui/badge";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { BilingualField } from "./BilingualField";
+import { EditorialTextField } from "./EditorialTextField";
 import { MediaField } from "./MediaField";
 import { DocumentPicker } from "./DocumentPicker";
 import { ArchiveGalleryEditor, type GalleryPhoto } from "./ArchiveGalleryEditor";
@@ -926,15 +927,14 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                     }}
                                 />
 
-                                <BilingualField
+                                <EditorialTextField
                                     label="বিবরণ / সংক্ষিপ্ত সারসংক্ষেপ"
-                                    multiline
                                     rows={5}
                                     value={draft.body}
                                     onChange={(v) => patch({ body: v })}
                                     valueEn={draft.body_en}
                                     onChangeEn={(v) => patch({ body_en: v })}
-                                    helper="ডিটেইল পেজে শিরোনামের নিচে দেখাবে। অনুচ্ছেদ ভাঙা রাখা যাবে।"
+                                    helper="শিরোনাম, তালিকা, লিঙ্ক ও লেখার মাঝখানে কেন্দ্র করে ছবি যোগ করা যাবে।"
                                 />
 
                                 <div className="grid gap-5 sm:grid-cols-2">
@@ -989,9 +989,8 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                         </p>
                                     </div>
 
-                                    <BilingualField
+                                    <EditorialTextField
                                         label="ইভেন্ট-পূর্ব নোটিশ"
-                                        multiline
                                         rows={5}
                                         value={draft.notice_body}
                                         onChange={(v) => patch({ notice_body: v })}
@@ -1002,9 +1001,8 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                         helper="আসন্ন কর্মসূচির সময়, উদ্দেশ্য ও সাংবাদিকদের নির্দেশনা দিন।"
                                     />
 
-                                    <BilingualField
+                                    <EditorialTextField
                                         label="ইভেন্ট-পরবর্তী সারসংক্ষেপ"
-                                        multiline
                                         rows={6}
                                         value={draft.post_event_body}
                                         onChange={(v) =>
@@ -1016,9 +1014,8 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                         }
                                     />
 
-                                    <BilingualField
+                                    <EditorialTextField
                                         label="প্রেস রিলিজ — অনলাইনে পড়ার লেখা"
-                                        multiline
                                         rows={10}
                                         value={draft.press_release_body}
                                         onChange={(v) =>

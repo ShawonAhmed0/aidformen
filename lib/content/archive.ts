@@ -97,6 +97,46 @@ export const getArchiveEntries = cache(async (): Promise<ArchiveEntry[]> => {
 });
 
 /**
+ * A small, server-only set for the detail-page suggestions rail.
+ *
+ * Fetching a bounded candidate set keeps the article response light. Entries
+ * from the same editorial section and content type are preferred, while the
+ * database's newest-first order remains the tie-breaker.
+ */
+export async function getRelatedArchiveEntries(
+  current: ArchiveEntry,
+  limit = 4
+): Promise<ArchiveEntry[]> {
+  const supabase = await createClient();
+  const candidateLimit = Math.max(limit * 3, 12);
+
+  const { data, error } = await supabase
+    .from("archive_entries")
+    .select("*")
+    .eq("is_published", true)
+    .neq("id", current.id)
+    .order("event_date", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(candidateLimit);
+
+  warn("related_archive_entries", error);
+  const candidates = await withPhotos((data as EntryRow[] | null) ?? []);
+
+  return candidates
+    .map((entry, index) => ({
+      entry,
+      index,
+      score:
+        (entry.section === current.section ? 4 : 0) +
+        (entry.content_type === current.content_type ? 2 : 0) +
+        (entry.category && entry.category === current.category ? 1 : 0),
+    }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, limit)
+    .map(({ entry }) => entry);
+}
+
+/**
  * Admin read — includes unpublished entries. RLS still enforces the admin check;
  * this differs only in not filtering by is_published.
  */

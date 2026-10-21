@@ -310,8 +310,66 @@ export type ArchiveItem = {
   audioUrl: string | null;
   sourceName: string;
   sourceUrl: string | null;
+  photoCount: number;
   photos: { id: string; url: string; caption: string }[];
 };
+
+/** The intentionally small shape sent to interactive listing grids. */
+export type ArchiveListingItem = Pick<
+  ArchiveItem,
+  | "id"
+  | "slug"
+  | "kind"
+  | "section"
+  | "heading"
+  | "body"
+  | "category"
+  | "location"
+  | "date"
+  | "dateIso"
+  | "year"
+  | "cover"
+  | "photoCount"
+>;
+
+export function toArchiveListingItem(item: ArchiveItem): ArchiveListingItem {
+  return {
+    id: item.id,
+    slug: item.slug,
+    kind: item.kind,
+    section: item.section,
+    heading: item.heading,
+    body: item.body,
+    category: item.category,
+    location: item.location,
+    date: item.date,
+    dateIso: item.dateIso,
+    year: item.year,
+    cover: item.cover,
+    photoCount: item.photoCount,
+  };
+}
+
+/**
+ * Orders the public News & Media timeline by its editorial date, newest first.
+ *
+ * Undated records belong at the end. Equal dates intentionally retain the
+ * server-provided order so an administrator can still make a deterministic
+ * choice between entries published on the same day.
+ */
+export function sortArchiveItemsNewestFirst<T extends Pick<ArchiveItem, "dateIso">>(
+  items: readonly T[]
+): T[] {
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const aDate = a.item.dateIso ?? "";
+      const bDate = b.item.dateIso ?? "";
+      const byDate = bDate.localeCompare(aDate);
+      return byDate || a.index - b.index;
+    })
+    .map(({ item }) => item);
+}
 
 /** External editorial links are HTTPS-only to prevent mixed-content warnings. */
 export function safeHttpsUrl(value: string | null | undefined): string | null {
@@ -368,6 +426,7 @@ export function resolveArchiveEntry(
     audioUrl: safeHttpsUrl(entry.audio_url),
     sourceName: pick(locale, entry.source_name, entry.source_name_en),
     sourceUrl: safeHttpsUrl(entry.source_url),
+    photoCount: entry.photos.length,
     photos: entry.photos.flatMap((photo) => {
       const url = safeMediaUrl(photo.image_url);
       return url

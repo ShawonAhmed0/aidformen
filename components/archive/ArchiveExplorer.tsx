@@ -16,7 +16,8 @@ import {
 import { formatCount } from "@/lib/i18n/config";
 import {
     archiveKinds,
-    type ArchiveItem,
+    sortArchiveItemsNewestFirst,
+    type ArchiveListingItem,
     type ArchiveKind,
     type ArchiveSection,
 } from "@/lib/types/archive";
@@ -42,7 +43,7 @@ export function ArchiveExplorer({
     locale,
     initialSection,
 }: {
-    items: ArchiveItem[];
+    items: ArchiveListingItem[];
     categories: string[];
     /** Raw year as the value, localised numerals as the label. */
     years: { value: string; label: string }[];
@@ -59,19 +60,21 @@ export function ArchiveExplorer({
     const visible = useMemo(() => {
         const needle = query.trim().toLowerCase();
 
-        return items.filter((item) => {
-            if (item.section !== section) return false;
-            if (kind !== "all" && item.kind !== kind) return false;
-            if (category && item.category !== category) return false;
-            if (year && item.year !== year) return false;
+        return sortArchiveItemsNewestFirst(
+            items.filter((item) => {
+                if (item.section !== section) return false;
+                if (kind !== "all" && item.kind !== kind) return false;
+                if (category && item.category !== category) return false;
+                if (year && item.year !== year) return false;
 
-            if (needle) {
-                const haystack = `${item.heading} ${item.body} ${item.category} ${item.location}`;
-                if (!haystack.toLowerCase().includes(needle)) return false;
-            }
+                if (needle) {
+                    const haystack = `${item.heading} ${item.body} ${item.category} ${item.location}`;
+                    if (!haystack.toLowerCase().includes(needle)) return false;
+                }
 
-            return true;
-        });
+                return true;
+            })
+        );
     }, [items, section, kind, category, year, query]);
 
     const filtered = kind !== "all" || category || year || query.trim();
@@ -112,7 +115,7 @@ export function ArchiveExplorer({
             if (list) list.push(item);
             else map.set(key, [item]);
             return map;
-        }, new Map<string, ArchiveItem[]>())
+        }, new Map<string, ArchiveListingItem[]>())
     ).sort(([a], [b]) => {
         if (a === "undated") return 1;
         if (b === "undated") return -1;
@@ -329,6 +332,7 @@ export function ArchiveExplorer({
                                 t={t}
                                 locale={locale}
                                 priorityFirst={groupIndex === 0}
+                                className="grid gap-5 sm:grid-cols-2"
                             />
                         </section>
                     ))}

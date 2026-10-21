@@ -173,6 +173,60 @@ test("public images allow app-local paths and HTTPS without mixed content", () =
   }
 });
 
+test("public archive timelines put dated media newest-first and keep ties stable", () => {
+  const items = [
+    { id: "older-video", dateIso: "2025-11-12" },
+    { id: "undated-audio", dateIso: null },
+    { id: "new-photo", dateIso: "2026-08-27" },
+    { id: "same-day-report", dateIso: "2026-08-27" },
+    { id: "undated-article", dateIso: null },
+  ];
+
+  assert.deepEqual(
+    archiveTypes.sortArchiveItemsNewestFirst(items).map((item) => item.id),
+    [
+      "new-photo",
+      "same-day-report",
+      "older-video",
+      "undated-audio",
+      "undated-article",
+    ],
+  );
+  assert.deepEqual(items.map((item) => item.id), [
+    "older-video",
+    "undated-audio",
+    "new-photo",
+    "same-day-report",
+    "undated-article",
+  ]);
+});
+
+test("interactive archive listings omit full galleries and private detail payload", () => {
+  const listing = archiveTypes.toArchiveListingItem({
+    id: "one",
+    slug: "one",
+    kind: "photo",
+    section: "press_media",
+    heading: "Heading",
+    body: "Summary",
+    category: "Event",
+    location: "Dhaka",
+    date: "21 October 2026",
+    dateIso: "2026-10-21",
+    year: "2026",
+    cover: "https://cdn.example.org/cover.jpg",
+    photoCount: 24,
+    photos: Array.from({ length: 24 }, (_, index) => ({ id: String(index) })),
+    pressReleaseBody: "A very large press release",
+    rawVideoUrl: "https://cdn.example.org/raw.mp4",
+  });
+
+  assert.equal(listing.photoCount, 24);
+  assert.equal(Object.hasOwn(listing, "photos"), false);
+  assert.equal(Object.hasOwn(listing, "pressReleaseBody"), false);
+  assert.equal(Object.hasOwn(listing, "rawVideoUrl"), false);
+});
+
 test("server action link validation accepts HTTPS and rejects mixed-content or active URLs", () => {
   const valid = new FormData();
   valid.set("resource", " https://cdn.example.org/raw/audio.mp3 ");

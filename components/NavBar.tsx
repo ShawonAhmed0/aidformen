@@ -75,12 +75,13 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
             className="sticky top-0 z-50 border-b border-ink-200 bg-surface/85 backdrop-blur-md"
         >
             <Container width="wide">
-                {/* gap-4 rather than gap-6: at the xl breakpoint the English
-                    labels need every pixel, and 24px gaps pushed the row into
-                    horizontal overflow. */}
-                <div className="flex h-18 items-center justify-between gap-4">
+                {/* The primary navigation appears on laptop screens. Utilities
+                    move into the menu until xl, where there is enough room for
+                    every control without squeezing or wrapping Bengali labels. */}
+                <div className="flex h-18 items-center justify-between gap-2 xl:gap-3">
                     <Link
                         href={`/${locale}`}
+                        aria-label={orgName}
                         className="flex shrink-0 items-center gap-3 rounded-md transition-ui hover:opacity-85"
                     >
                         <Image
@@ -93,12 +94,12 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                         />
                         {/* nowrap: the name is a single label, and letting flex
                             wrap it broke the 72px header row onto two lines. */}
-                        <span className="font-display text-xl font-semibold tracking-tight whitespace-nowrap text-brand-800">
+                        <span className="hidden font-display text-xl font-semibold tracking-tight whitespace-nowrap text-brand-800 2xl:inline">
                             {orgName}
                         </span>
                     </Link>
 
-                    <nav aria-label={t.nav.menu} className="hidden xl:block">
+                    <nav aria-label={t.nav.menu} className="hidden min-w-0 lg:block">
                         <ul className="flex items-center gap-1">
                             {navLinks.map((link) => {
                                 const isActive = pathname === link.href;
@@ -109,7 +110,7 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                                             href={link.href}
                                             aria-current={isActive ? "page" : undefined}
                                             className={cn(
-                                                "relative flex h-11 items-center whitespace-nowrap rounded-md px-3 text-base font-medium transition-ui",
+                                                "relative flex h-11 items-center whitespace-nowrap rounded-md px-2 text-sm font-medium transition-ui xl:px-2.5",
                                                 isActive
                                                     ? "text-brand-800"
                                                     : "text-ink-600 hover:bg-ink-100 hover:text-brand-800"
@@ -129,7 +130,7 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                         </ul>
                     </nav>
 
-                    <div className="hidden items-center gap-2.5 xl:flex">
+                    <div className="hidden items-center gap-2 xl:flex">
                         <LocaleSwitcher locale={locale} label={t.nav.switchLanguage} />
 
                         <AuthButton locale={locale} t={t} />
@@ -162,7 +163,7 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                     className="border-t border-ink-200 bg-surface xl:hidden"
                 >
                     <Container width="wide" className="py-5">
-                        <nav aria-label={t.nav.menu}>
+                        <nav aria-label={t.nav.menu} className="lg:hidden">
                             <ul className="flex flex-col gap-1">
                                 {navLinks.map((link) => {
                                     const isActive = pathname === link.href;
@@ -187,7 +188,7 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                             </ul>
                         </nav>
 
-                        <div className="mt-5 flex flex-col gap-3 border-t border-ink-200 pt-5">
+                        <div className="mt-5 flex flex-col gap-3 border-t border-ink-200 pt-5 lg:mt-0 lg:flex-row lg:items-center lg:justify-end lg:border-t-0 lg:pt-0">
                             <LocaleSwitcher
                                 locale={locale}
                                 label={t.nav.switchLanguage}
@@ -197,7 +198,7 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                             <AuthButton
                                 locale={locale}
                                 t={t}
-                                className="flex-col items-stretch"
+                                className="flex-col items-stretch lg:flex-row lg:items-center"
                             />
 
                             <a

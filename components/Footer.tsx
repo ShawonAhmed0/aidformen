@@ -79,6 +79,8 @@ export default function Footer({
                                     href={settings.website_url}
                                     className={socialClass}
                                     aria-label={t.footer.website}
+                                    target="_blank"
+                                    rel="noopener noreferrer external"
                                 >
                                     <Globe className="size-[18px]" aria-hidden="true" />
                                 </a>
@@ -88,6 +90,8 @@ export default function Footer({
                                     href={settings.facebook_url}
                                     className={socialClass}
                                     aria-label="Facebook"
+                                    target="_blank"
+                                    rel="noopener noreferrer external"
                                 >
                                     <FaFacebookF className="size-[18px]" aria-hidden="true" />
                                 </a>
@@ -97,6 +101,8 @@ export default function Footer({
                                     href={settings.youtube_url}
                                     className={socialClass}
                                     aria-label="YouTube"
+                                    target="_blank"
+                                    rel="noopener noreferrer external"
                                 >
                                     <FaYoutube className="size-[18px]" aria-hidden="true" />
                                 </a>
@@ -203,6 +209,8 @@ export default function Footer({
                     <a
                         href="https://www.shawonahmed.com"
                         className="mt-2 inline-block rounded-sm text-brand-100/80 transition-ui hover:text-white hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer external"
                     >
                         Crafted with ❤️ by Shawon
                     </a>

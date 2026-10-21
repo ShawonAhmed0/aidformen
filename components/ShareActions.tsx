@@ -95,17 +95,20 @@ export function ShareActions({ title, locale, className }: ShareActionsProps) {
   };
 
   const buttonClass =
-    "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink-200 bg-surface px-3.5 text-sm font-semibold text-ink-700 transition-ui hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800";
+    "inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-full border border-ink-200 bg-surface text-sm font-semibold text-ink-700 shadow-xs transition-ui hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 sm:size-auto sm:min-h-11 sm:rounded-lg sm:px-3.5";
 
   return (
     <div
       data-print-hide
-      className={cn("flex flex-wrap items-center gap-2", className)}
+      className={cn(
+        "flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0",
+        className
+      )}
       aria-label={labels.share}
     >
       <button type="button" onClick={() => void nativeShare()} className={buttonClass}>
         <Share2 className="size-4" aria-hidden="true" />
-        {labels.share}
+        <span className="sr-only sm:not-sr-only">{labels.share}</span>
       </button>
 
       <button

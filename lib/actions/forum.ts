@@ -166,10 +166,18 @@ export async function deleteForumPost(formData: FormData) {
 
     const id = requiredText(formData, "id", "আইডি", 64);
 
-    // RLS already restricts this to the author or an admin; the delete simply
-    // matches nothing for anyone else.
-    const { error } = await auth.supabase.from("forum_posts").delete().eq("id", id);
+    // Keep the thread and its replies for moderation/audit purposes. RLS still
+    // restricts this update to the author or an administrator. Ask PostgREST
+    // for an affected-row count rather than returning the removed row: the
+    // public SELECT policy intentionally hides a soft-deleted post from its
+    // non-admin author immediately after this update.
+    const { count, error } = await auth.supabase
+      .from("forum_posts")
+      .update({ is_removed: true }, { count: "exact" })
+      .eq("id", id)
+      .eq("is_removed", false);
     if (error) return fail(error.message);
+    if (count !== 1) return fail("পোস্টটি পাওয়া যায়নি অথবা মুছে ফেলার অনুমতি নেই।");
 
     revalidateForum();
     return ok();

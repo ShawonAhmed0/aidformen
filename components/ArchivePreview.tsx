@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { getArchiveEntries } from "@/lib/content/archive";
-import { resolveArchiveEntry } from "@/lib/types/archive";
+import { resolveArchiveEntry, toArchiveListingItem } from "@/lib/types/archive";
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { ArchiveGrid } from "./archive/ArchiveGrid";
@@ -28,7 +28,7 @@ export default async function ArchivePreview({
     // /admin/archive is how it gets made.
     const items = entries
         .slice(0, PREVIEW_COUNT)
-        .map((entry) => resolveArchiveEntry(locale, entry));
+        .map((entry) => toArchiveListingItem(resolveArchiveEntry(locale, entry)));
 
     return (
         <Section tone="sunken" space="lg">

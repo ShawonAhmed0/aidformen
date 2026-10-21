@@ -174,6 +174,7 @@ export const getForumPost = cache(async (id: string): Promise<ForumPost | null> 
     .from("forum_posts")
     .select(postSelect(viewer.userId !== null))
     .eq("id", id)
+    .eq("is_removed", false)
     .maybeSingle();
 
   warn("post", error);

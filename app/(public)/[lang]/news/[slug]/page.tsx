@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import {
   ArrowLeft,
+  ArrowRight,
   CalendarDays,
   Download,
   ExternalLink,
@@ -18,13 +20,24 @@ import {
 } from "lucide-react";
 
 import { ShareActions } from "@/components/ShareActions";
+import {
+  EditorialContent,
+  editorialPlainText,
+} from "@/components/content/EditorialContent";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import { getArchiveEntryBySlug } from "@/lib/content/archive";
+import {
+  getArchiveEntryBySlug,
+  getRelatedArchiveEntries,
+} from "@/lib/content/archive";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionary";
-import { isArchiveSlug, resolveArchiveEntry } from "@/lib/types/archive";
+import {
+  isArchiveSlug,
+  resolveArchiveEntry,
+  type ArchiveEntry,
+} from "@/lib/types/archive";
 
 type Props = {
   params: Promise<{ lang: string; slug: string }>;
@@ -33,7 +46,7 @@ type Props = {
 function descriptionFrom(...values: (string | null | undefined)[]) {
   const value = values.find((item) => item?.trim())?.trim();
   if (!value) return undefined;
-  return value.replace(/\s+/g, " ").slice(0, 180);
+  return editorialPlainText(value).slice(0, 180);
 }
 
 function canPlayAudioInline(url: string) {
@@ -134,8 +147,8 @@ export default async function NewsDetailPage({ params }: Props) {
           </Container>
         </div>
 
-        <Container className="py-10 sm:py-14 lg:py-16">
-          <header className="mx-auto max-w-4xl text-center">
+        <Container className="py-8 sm:py-12 lg:py-14">
+          <header className="mx-auto max-w-3xl text-center">
             <div className="flex flex-wrap items-center justify-center gap-2">
               <Badge tone="brand" size="sm">
                 {item.section === "press_media"
@@ -173,11 +186,15 @@ export default async function NewsDetailPage({ params }: Props) {
               )}
             </div>
 
-            <ShareActions title={item.heading} locale={lang} className="mt-7 justify-center" />
+            <ShareActions
+              title={item.heading}
+              locale={lang}
+              className="mt-5 justify-start sm:mt-7 sm:justify-center"
+            />
           </header>
 
           {item.cover && (
-            <figure className="relative mx-auto mt-10 aspect-16/9 max-w-5xl overflow-hidden rounded-2xl bg-brand-50" data-print-keep>
+            <figure className="relative mx-auto mt-8 aspect-16/9 max-w-3xl overflow-hidden rounded-2xl bg-brand-50 sm:mt-10" data-print-keep>
               <Image
                 src={item.cover}
                 alt={item.heading}
@@ -189,17 +206,25 @@ export default async function NewsDetailPage({ params }: Props) {
             </figure>
           )}
 
-          <div className="mx-auto mt-10 max-w-4xl space-y-8 sm:mt-12">
-            {item.body && (
-              <section aria-labelledby="overview-heading" data-print-keep>
-                <h2 id="overview-heading" className="text-2xl text-brand-900">
-                  {t.archive.overview}
-                </h2>
-                <div className="mt-4 whitespace-pre-line text-base leading-relaxed text-ink-700">
-                  {item.body}
-                </div>
-              </section>
-            )}
+          <div className="mx-auto mt-8 grid max-w-6xl gap-10 sm:mt-10 lg:grid-cols-[minmax(0,48rem)_18rem] lg:items-start xl:gap-12">
+            <div className="min-w-0 space-y-8">
+              {item.audioUrl && (
+                <AudioRecording
+                  url={item.audioUrl}
+                  inline={Boolean(audioInline)}
+                  title={t.archive.audioRecording}
+                  openLabel={t.archive.openAudio}
+                />
+              )}
+
+              {item.body && (
+                <section aria-labelledby="overview-heading">
+                  <h2 id="overview-heading" className="text-2xl text-brand-900">
+                    {t.archive.overview}
+                  </h2>
+                  <EditorialContent content={item.body} className="mt-4" />
+                </section>
+              )}
 
             {item.noticeBody && (
               <ContentPanel
@@ -308,34 +333,6 @@ export default async function NewsDetailPage({ params }: Props) {
               />
             )}
 
-            {item.audioUrl && (
-              <section
-                aria-labelledby="audio-heading"
-                className="rounded-2xl border border-ink-200 bg-surface p-5 sm:p-6"
-                data-print-keep
-              >
-                <h2 id="audio-heading" className="flex items-center gap-2 text-xl text-brand-900">
-                  <FileAudio className="size-5" aria-hidden="true" />
-                  {t.archive.audioRecording}
-                </h2>
-                {audioInline ? (
-                  <audio controls preload="metadata" className="mt-4 w-full" src={item.audioUrl}>
-                    <a href={item.audioUrl}>{t.archive.openAudio}</a>
-                  </audio>
-                ) : (
-                  <a
-                    href={item.audioUrl}
-                    target="_blank"
-                    rel="noopener noreferrer external"
-                    className={buttonVariants({ variant: "outline", className: "mt-4" })}
-                  >
-                    <ExternalLink className="size-4" aria-hidden="true" />
-                    {t.archive.openAudio}
-                  </a>
-                )}
-              </section>
-            )}
-
             {hasMediaKit && item.section === "press_media" && (
               <section
                 aria-labelledby="media-kit-heading"
@@ -419,10 +416,144 @@ export default async function NewsDetailPage({ params }: Props) {
                 </a>
               </section>
             )}
+            </div>
+
+            <Suspense fallback={<RelatedNewsSkeleton title={t.archive.relatedNews} />}>
+              <RelatedNewsAside
+                current={entry}
+                lang={lang}
+                title={t.archive.relatedNews}
+                viewAll={t.archive.viewAllNews}
+              />
+            </Suspense>
           </div>
         </Container>
       </article>
     </main>
+  );
+}
+
+function AudioRecording({
+  url,
+  inline,
+  title,
+  openLabel,
+}: {
+  url: string;
+  inline: boolean;
+  title: string;
+  openLabel: string;
+}) {
+  return (
+    <section
+      aria-labelledby="audio-heading"
+      className="rounded-2xl border border-brand-200 bg-brand-50 p-5 sm:p-6"
+      data-print-keep
+    >
+      <h2 id="audio-heading" className="flex items-center gap-2 text-xl text-brand-900">
+        <FileAudio className="size-5" aria-hidden="true" />
+        {title}
+      </h2>
+      {inline ? (
+        <audio controls preload="metadata" className="mt-4 w-full" src={url}>
+          <a href={url}>{openLabel}</a>
+        </audio>
+      ) : (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer external"
+          className={buttonVariants({ variant: "outline", className: "mt-4" })}
+        >
+          <ExternalLink className="size-4" aria-hidden="true" />
+          {openLabel}
+        </a>
+      )}
+    </section>
+  );
+}
+
+async function RelatedNewsAside({
+  current,
+  lang,
+  title,
+  viewAll,
+}: {
+  current: ArchiveEntry;
+  lang: "bn" | "en";
+  title: string;
+  viewAll: string;
+}) {
+  const entries = await getRelatedArchiveEntries(current);
+  if (entries.length === 0) return null;
+
+  const items = entries.map((entry) => resolveArchiveEntry(lang, entry));
+
+  return (
+    <aside aria-labelledby="related-news-heading" className="min-w-0" data-print-hide>
+      <div className="lg:sticky lg:top-24">
+        <div className="flex items-end justify-between gap-4 border-b border-ink-200 pb-3">
+          <h2 id="related-news-heading" className="text-xl text-brand-900">
+            {title}
+          </h2>
+        </div>
+
+        <nav aria-label={title} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+          {items.map((related) => (
+            <Link
+              key={related.id}
+              href={`/${lang}/news/${related.slug}`}
+              className="group grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] gap-3 rounded-xl border border-ink-200 bg-surface p-2.5 shadow-xs transition-ui hover:border-brand-300 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+            >
+              <span className="relative aspect-4/3 overflow-hidden rounded-lg bg-brand-50">
+                {related.cover ? (
+                  <Image
+                    src={related.cover}
+                    alt=""
+                    fill
+                    sizes="88px"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <span className="flex size-full items-center justify-center text-brand-600">
+                    <Newspaper className="size-5" aria-hidden="true" />
+                  </span>
+                )}
+              </span>
+              <span className="min-w-0 self-center">
+                {related.date && (
+                  <span className="block text-xs text-ink-500">{related.date}</span>
+                )}
+                <span className="mt-1 line-clamp-3 block font-display text-sm leading-snug text-brand-900 group-hover:text-brand-700">
+                  {related.heading}
+                </span>
+              </span>
+            </Link>
+          ))}
+        </nav>
+
+        <Link
+          href={`/${lang}/news`}
+          className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-700 transition-ui hover:text-brand-900"
+        >
+          {viewAll}
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </Link>
+      </div>
+    </aside>
+  );
+}
+
+function RelatedNewsSkeleton({ title }: { title: string }) {
+  return (
+    <aside aria-hidden="true" className="hidden lg:block" data-print-hide>
+      <h2 className="border-b border-ink-200 pb-3 text-xl text-brand-900">{title}</h2>
+      <div className="mt-4 space-y-3">
+        {[0, 1, 2].map((item) => (
+          <div key={item} className="h-24 animate-pulse rounded-xl bg-ink-100 motion-reduce:animate-none" />
+        ))}
+      </div>
+    </aside>
   );
 }
 
@@ -447,15 +578,12 @@ function ContentPanel({
           ? "rounded-2xl border border-brand-200 bg-brand-50 p-6 sm:p-8"
           : "rounded-2xl border border-ink-200 bg-surface p-6 sm:p-8"
       }
-      data-print-keep
     >
       <h2 id={`${id}-heading`} className="flex items-center gap-2 text-2xl text-brand-900">
         {icon}
         {title}
       </h2>
-      <div className="mt-4 whitespace-pre-line text-base leading-relaxed text-ink-700">
-        {body}
-      </div>
+      <EditorialContent content={body} className="mt-4" />
     </section>
   );
 }

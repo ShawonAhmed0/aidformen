@@ -1,6 +1,6 @@
 "use client";
 
-import type { ArchiveItem } from "@/lib/types/archive";
+import type { ArchiveListingItem } from "@/lib/types/archive";
 import type { ArchiveLabels } from "./labels";
 import { ArchiveCard } from "./ArchiveCard";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,7 @@ export function ArchiveGrid({
     priorityFirst = false,
     className = "grid gap-5 sm:grid-cols-2 lg:grid-cols-3",
 }: {
-    items: ArchiveItem[];
+    items: ArchiveListingItem[];
     t: ArchiveLabels;
     locale: "bn" | "en";
     priorityFirst?: boolean;

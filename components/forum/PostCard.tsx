@@ -73,7 +73,14 @@ export function PostCard({
                     </p>
                 </div>
 
-                {canDelete && <DeletePostButton postId={post.id} t={t} locale={locale} />}
+                {canDelete && (
+                    <DeletePostButton
+                        postId={post.id}
+                        t={t}
+                        locale={locale}
+                        redirectAfter={detail}
+                    />
+                )}
             </header>
 
             <h2 className="mt-4 text-lg text-brand-800 sm:text-xl">

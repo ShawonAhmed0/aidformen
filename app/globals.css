@@ -356,6 +356,7 @@
    when a browser is configured not to print background graphics.
    ========================================================================= */
 @page {
+  size: A4 portrait;
   margin: 16mm 14mm 18mm;
 }
 
@@ -397,12 +398,25 @@
     overflow: visible !important;
   }
 
-  [data-print-keep],
+  [data-print-document] {
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  /* Avoid only compact, atomic content. Keeping a whole article, section, or
+     generic list item together creates nearly empty A4 pages when it is taller
+     than the remaining printable area. */
   article,
+  section,
+  [data-print-keep]:is(article, section, div) {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
   figure,
-  blockquote,
   table,
-  li {
+  li[data-print-keep] {
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -417,8 +431,17 @@
 
   img,
   video {
+    width: auto;
+    max-width: 100% !important;
     max-height: 230mm;
     object-fit: contain;
+  }
+
+  p,
+  blockquote,
+  li {
+    orphans: 3;
+    widows: 3;
   }
 
   a {

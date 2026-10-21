@@ -10,7 +10,7 @@ import { Section } from "@/components/ui/section";
 import { getArchiveEntries } from "@/lib/content/archive";
 import { formatYear, isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionary";
-import { resolveArchiveEntry } from "@/lib/types/archive";
+import { resolveArchiveEntry, toArchiveListingItem } from "@/lib/types/archive";
 
 export async function generateMetadata({
   params,
@@ -55,7 +55,9 @@ export default async function NewsPage({
     getArchiveEntries(),
   ]);
 
-  const items = entries.map((entry) => resolveArchiveEntry(lang, entry));
+  const items = entries.map((entry) =>
+    toArchiveListingItem(resolveArchiveEntry(lang, entry))
+  );
   const categories = Array.from(
     new Set(items.map((item) => item.category).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b, lang));
@@ -73,8 +75,8 @@ export default async function NewsPage({
         description={t.archive.description}
       />
 
-      <Section space="lg">
-        <div className="mb-10 grid gap-4 lg:grid-cols-2" data-print-keep>
+      <Section space="md" containerWidth="prose">
+        <div className="mb-8 grid gap-4 sm:grid-cols-2" data-print-keep>
           <div className="flex gap-4 rounded-2xl border border-brand-200 bg-brand-50 p-5 sm:p-6">
             <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-800 text-white">
               <Cloud className="size-5" aria-hidden="true" />

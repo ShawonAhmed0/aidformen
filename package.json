@@ -11,7 +11,7 @@
     "test:auth": "node --test tests/password-recovery.*.test.mjs",
     "test:admin-access": "node --test tests/admin-access.*.test.mjs",
     "test:certificates": "node --test tests/certificate-verification.routes.test.mjs",
-    "test:editorial": "node --test tests/press-media.*.test.mjs tests/chat-history.migration.test.mjs"
+    "test:editorial": "node --test tests/press-media.*.test.mjs tests/forum-moderation.routes.test.mjs tests/chat-history.migration.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

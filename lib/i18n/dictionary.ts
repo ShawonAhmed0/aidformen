@@ -20,7 +20,7 @@ const bn = {
   nav: {
     home: "হোম",
     about: "সম্পর্কে",
-    archive: "নিউজ ও মিডিয়া",
+    archive: "মিডিয়া ও কেস স্টাডি",
     contact: "যোগাযোগ",
     forum: "ফোরাম",
     team: "আমাদের দল",
@@ -197,6 +197,8 @@ const bn = {
       "নিচের মিডিয়া সম্পদ সাংবাদিক, সংবাদমাধ্যম ও প্রকাশকদের ব্যবহারের জন্য রয়্যালটি ও কপিরাইটমুক্ত।",
     originalSource: "মূল সংবাদ ও উৎস",
     openOriginalSource: "মূল উৎস খুলুন",
+    relatedNews: "আরও সংবাদ ও কেস স্টাডি",
+    viewAllNews: "সব মিডিয়া ও কেস স্টাডি দেখুন",
   },
   auth: {
     loginTitle: "এইড ফর মেন",
@@ -365,7 +367,7 @@ const en = {
   nav: {
     home: "Home",
     about: "About",
-    archive: "News & Media",
+    archive: "Media & Case Study",
     contact: "Contact",
     forum: "Forum",
     team: "Our Team",
@@ -541,6 +543,8 @@ const en = {
       "The media assets below are royalty-free and copyright-free for journalists, media and publishers to use.",
     originalSource: "Original story and source",
     openOriginalSource: "Open original source",
+    relatedNews: "More news and case studies",
+    viewAllNews: "View all media and case studies",
   },
   auth: {
     loginTitle: "Aid For Men",

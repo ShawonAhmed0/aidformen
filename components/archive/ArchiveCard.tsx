@@ -12,8 +12,9 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { editorialPlainText } from "@/components/content/EditorialContent";
 import { formatCount } from "@/lib/i18n/config";
-import type { ArchiveItem } from "@/lib/types/archive";
+import type { ArchiveListingItem } from "@/lib/types/archive";
 import type { ArchiveLabels } from "./labels";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +28,7 @@ export function ArchiveCard({
     priority = false,
     className,
 }: {
-    item: ArchiveItem;
+    item: ArchiveListingItem;
     t: ArchiveLabels;
     locale: "bn" | "en";
     priority?: boolean;
@@ -36,7 +37,7 @@ export function ArchiveCard({
     const isVideo = item.kind === "video";
     const isAudio = item.kind === "audio";
     const isArticle = item.kind === "article";
-    const photoCount = item.photos.length;
+    const photoCount = item.photoCount;
 
     const kindLabel = isVideo
         ? t.videoKind
@@ -120,7 +121,7 @@ export function ArchiveCard({
 
                 {item.body && (
                     <span className="mt-2 line-clamp-2 text-sm text-ink-600">
-                        {item.body}
+                        {editorialPlainText(item.body)}
                     </span>
                 )}
 
