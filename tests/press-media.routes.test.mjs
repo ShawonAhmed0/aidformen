@@ -57,10 +57,7 @@ test("news detail is a server-rendered dynamic route with a safe not-found bound
   );
   assert.match(route, /getArchiveEntryBySlug\(slug\)/);
   assert.match(route, /if \(!entry\) notFound\(\)/);
-  assert.match(
-    route,
-    /robots:\s*\{\s*index:\s*false,\s*follow:\s*false\s*\}/,
-  );
+  assert.match(route, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false\s*\}/);
 });
 
 test("news detail emits share-ready canonical and Open Graph metadata", () => {
@@ -68,7 +65,10 @@ test("news detail emits share-ready canonical and Open Graph metadata", () => {
   assert.match(route, /alternates\s*:\s*\{[\s\S]*?canonical/i);
   assert.match(route, /openGraph\s*:/i);
   assert.match(route, /\/news\//i);
-  assert.match(publicLayout, /metadataBase:\s*new URL\(["']https:\/\/aidformen\.com["']\)/i);
+  assert.match(
+    publicLayout,
+    /metadataBase:\s*new URL\(["']https:\/\/aidformen\.com["']\)/i,
+  );
   assert.match(publicLayout, /title:\s*\{\s*default:[\s\S]*?template:/i);
 });
 
@@ -78,7 +78,10 @@ test("news detail opts into print treatment and the reusable share controls", ()
 });
 
 test("news pages use a focused reading width, stream suggestions, and prioritise audio", () => {
-  assert.match(listingRoute, /<Section\s+space=["']md["']\s+containerWidth=["']prose["']/);
+  assert.match(
+    listingRoute,
+    /<Section\s+space=["']md["']\s+containerWidth=["']prose["']/,
+  );
   assert.match(route, /<Suspense\b[\s\S]*?<RelatedNewsAside\b/);
   assert.match(route, /getRelatedArchiveEntries\(current\)/);
   assert.ok(
@@ -89,13 +92,47 @@ test("news pages use a focused reading width, stream suggestions, and prioritise
   assert.match(newsLoading, /role=["']status["']/);
 });
 
+test("news detail uses a publication-style hierarchy with wide media and narrow prose", () => {
+  assert.doesNotMatch(route, /<header[^>]*\btext-center\b/);
+  assert.match(route, /<header[^>]*\bmax-w-5xl\b/);
+  assert.match(route, /<figure[^>]*\bmax-w-5xl\b/);
+  assert.match(route, /data-news-layout/);
+  assert.match(route, /lg:grid-cols-\[minmax\(0,42rem\)_/);
+  assert.match(
+    route,
+    /<EditorialContent[\s\S]*?content=\{item\.body\}[\s\S]*?variant=["']article["'][\s\S]*?locale=\{lang\}/,
+  );
+  assert.match(route, /<section\s+aria-label=\{t\.archive\.overview\}>/);
+  assert.doesNotMatch(route, /<h2[^>]*overview-heading[^>]*>/);
+});
+
+test("article typography and the related-news rail stay editorial instead of card-heavy", () => {
+  assert.match(
+    editorialContent,
+    /variant\?:\s*["']default["']\s*\|\s*["']article["']/,
+  );
+  assert.match(editorialContent, /data-article-prose/);
+  assert.match(editorialContent, /font-display/);
+  assert.match(route, /<aside[^>]*related-news-heading[^>]*data-print-hide/);
+  assert.match(route, /lg:sticky\s+lg:top-24/);
+  assert.match(route, /border-t-4\s+border-brand-800/);
+  assert.doesNotMatch(
+    route,
+    /href=\{`\/\$\{lang\}\/news\/\$\{related\.slug\}`\}[\s\S]{0,300}\bshadow-(?:xs|sm|md|lg|xl|2xl)\b/,
+  );
+});
+
 test("archive long-form editing supports safe formatting and centred inline images", () => {
   assert.match(archiveManager, /<EditorialTextField\b/);
   assert.match(editorialField, /uploadToMedia\(file,\s*["']archive["']\)/);
   assert.match(editorialField, /\*\*|Heading2|ListOrdered/);
   assert.match(editorialContent, /safeMediaUrl\(/);
   assert.match(editorialContent, /safeEditorialLink\(/);
-  assert.match(editorialContent, /className=["'][^"']*mx-auto[^"']*text-center/);
+  assert.match(editorialContent, /["'][^"']*mx-auto\s+w-full[^"']*["']/);
+  assert.match(
+    editorialContent,
+    /article\s*\?\s*["']max-w-full text-left["']\s*:\s*["']max-w-2xl text-center["']/,
+  );
   assert.doesNotMatch(editorialContent, /dangerouslySetInnerHTML/);
   assert.match(route, /<EditorialContent\s+content=\{item\.body\}/);
 });
@@ -109,16 +146,22 @@ test("news listing exposes both editorial sections, dated timeline filters, thum
   assert.match(archiveExplorer, /activeYears/);
   assert.match(
     archiveExplorer,
-    /groups\.map\(\(\[groupYear, groupItems\], groupIndex\)/
+    /groups\.map\(\(\[groupYear, groupItems\], groupIndex\)/,
   );
   assert.match(archiveExplorer, /archive-year-\$\{groupYear\}/);
-  assert.match(archiveCard, /href=\{`\/\$\{locale\}\/news\/\$\{item\.slug\}`\}/);
+  assert.match(
+    archiveCard,
+    /href=\{`\/\$\{locale\}\/news\/\$\{item\.slug\}`\}/,
+  );
   assert.match(archiveCard, /<Image\b/);
   assert.match(archiveCard, /item\.kind === ["']audio["']/);
 });
 
 test("global print CSS keeps content readable and adds the required provenance watermark", () => {
-  assert.match(globalCss, /@page\s*\{[\s\S]*?size:\s*A4 portrait;[\s\S]*?margin:/i);
+  assert.match(
+    globalCss,
+    /@page\s*\{[\s\S]*?size:\s*A4 portrait;[\s\S]*?margin:/i,
+  );
   assert.match(globalCss, /@media print\s*\{/i);
   assert.match(
     globalCss,
@@ -136,6 +179,14 @@ test("global print CSS keeps content readable and adds the required provenance w
   assert.match(globalCss, /\borphans:\s*3/i);
   assert.match(globalCss, /\bwidows:\s*3/i);
   assert.match(globalCss, /print-color-adjust:\s*exact/i);
+  assert.match(
+    globalCss,
+    /\[data-news-layout\]\s*\{[\s\S]*?display:\s*block\s*!important/i,
+  );
+  assert.match(
+    globalCss,
+    /\[data-article-prose\]\s*\{[\s\S]*?max-width:\s*none\s*!important/i,
+  );
 });
 
 test("share controls support native share, social destinations, copy fallback, and printing", () => {

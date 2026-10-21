@@ -110,9 +110,12 @@
   /* Elevation — tinted with ink, never pure black, so shadows read as depth
      rather than dirt. */
   --shadow-xs: 0 1px 2px 0 rgb(16 24 40 / 0.04);
-  --shadow-sm: 0 1px 3px 0 rgb(16 24 40 / 0.06), 0 1px 2px -1px rgb(16 24 40 / 0.04);
-  --shadow-md: 0 4px 12px -2px rgb(16 24 40 / 0.08), 0 2px 6px -2px rgb(16 24 40 / 0.04);
-  --shadow-lg: 0 12px 28px -6px rgb(16 24 40 / 0.10), 0 4px 10px -4px rgb(16 24 40 / 0.05);
+  --shadow-sm:
+    0 1px 3px 0 rgb(16 24 40 / 0.06), 0 1px 2px -1px rgb(16 24 40 / 0.04);
+  --shadow-md:
+    0 4px 12px -2px rgb(16 24 40 / 0.08), 0 2px 6px -2px rgb(16 24 40 / 0.04);
+  --shadow-lg:
+    0 12px 28px -6px rgb(16 24 40 / 0.1), 0 4px 10px -4px rgb(16 24 40 / 0.05);
   --shadow-xl: 0 24px 48px -12px rgb(16 24 40 / 0.14);
   --shadow-ring: 0 0 0 1px rgb(16 24 40 / 0.05);
 
@@ -127,7 +130,8 @@
      Latin resolves to Inter; Bengali falls through to Kalpurush, which is
      scoped to U+0980–09FF so it only ever supplies Bengali glyphs. */
   --font-sans: var(--font-inter), var(--font-kalpurush), system-ui, sans-serif;
-  --font-display: var(--font-noto-bengali), var(--font-kalpurush), Georgia, serif;
+  --font-display:
+    var(--font-noto-bengali), var(--font-kalpurush), Georgia, serif;
 }
 
 /* ============================================================================
@@ -218,7 +222,7 @@
   --destructive: #f97066;
   --destructive-foreground: var(--color-ink-950);
 
-  --border: rgb(255 255 255 / 0.10);
+  --border: rgb(255 255 255 / 0.1);
   --input: rgb(255 255 255 / 0.16);
   --ring: var(--color-brand-400);
 }
@@ -291,13 +295,17 @@
   /* Headings take the serif display face. Kalpurush has a single weight, so
      leaning on Noto Serif Bengali's real 500–700 masters here is what removes
      the synthetic faux-bold the site was rendering before. */
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply font-display text-balance;
     font-weight: 600;
     letter-spacing: -0.005em;
   }
 
-  p, li {
+  p,
+  li {
     @apply text-pretty;
   }
 
@@ -314,11 +322,16 @@
   }
 
   /* Bengali numerals and tabular data should not jitter between values. */
-  time, [data-numeric] {
+  time,
+  [data-numeric] {
     font-variant-numeric: tabular-nums;
   }
 
-  img, picture, video, canvas, svg {
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
     @apply block max-w-full;
   }
 }
@@ -327,7 +340,8 @@
   /* Standard motion for interactive surfaces — colour, shadow and transform
      only, so nothing animates layout. */
   .transition-ui {
-    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-property:
+      color, background-color, border-color, box-shadow, opacity, transform;
     transition-duration: var(--duration-base);
     transition-timing-function: var(--ease-standard);
   }
@@ -402,6 +416,20 @@
     width: auto !important;
     max-width: none !important;
     margin: 0 !important;
+  }
+
+  /* The screen layout keeps suggestions in a narrow right rail. Printing
+     restores a single A4 flow and lets the article use the printable width. */
+  [data-news-layout] {
+    display: block !important;
+    max-width: none !important;
+    padding-left: 0 !important;
+  }
+
+  [data-article-prose] {
+    max-width: none !important;
+    font-size: 11pt !important;
+    line-height: 1.55 !important;
   }
 
   /* Avoid only compact, atomic content. Keeping a whole article, section, or
