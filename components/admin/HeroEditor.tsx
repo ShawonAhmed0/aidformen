@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { BilingualField } from "./BilingualField";
+import { MediaField } from "./MediaField";
 import type { HeroContent } from "@/lib/types/content";
 
 const s = (v: string | null | undefined) => v ?? "";
@@ -19,6 +20,7 @@ export function HeroEditor({ hero }: { hero: HeroContent | null }) {
     const [pending, startTransition] = useTransition();
 
     const [form, setForm] = useState({
+        about_audio_url: s(hero?.about_audio_url),
         title: s(hero?.title),
         title_en: s(hero?.title_en),
         description: s(hero?.description),
@@ -152,6 +154,31 @@ export function HeroEditor({ hero }: { hero: HeroContent | null }) {
                         </Field>
                     </div>
                 </div>
+            </div>
+
+            <div className="rounded-xl border border-ink-200 bg-surface p-6 shadow-xs">
+                <h2 className="text-base font-semibold text-ink-900">
+                    হোমপেজ পরিচিতি অডিও
+                </h2>
+                <p className="mt-1 text-sm text-ink-500">
+                    হিরোর পরের “আমাদের সম্পর্কে” অংশে দর্শনার্থীরা এই রেকর্ডিংটি
+                    শুনতে পারবেন।
+                </p>
+
+                <MediaField
+                    accept="audio"
+                    folder="audio"
+                    label="পরিচিতি অডিও"
+                    helper="MP3, M4A, OGG বা WAV · সর্বোচ্চ ২৫ MB"
+                    className="mt-6"
+                    value={form.about_audio_url || null}
+                    onChange={(url) =>
+                        setForm((prev) => ({
+                            ...prev,
+                            about_audio_url: url ?? "",
+                        }))
+                    }
+                />
             </div>
 
             {/* Sticky so the save control stays reachable on a long form. */}

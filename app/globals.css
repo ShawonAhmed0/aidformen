@@ -1,3 +1,6 @@
+@import "quill/dist/quill.snow.css";
+@import "quill-table-better/dist/quill-table-better.css";
+@import "quill-resize-module/dist/resize.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -344,6 +347,347 @@
       color, background-color, border-color, box-shadow, opacity, transform;
     transition-duration: var(--duration-base);
     transition-timing-function: var(--ease-standard);
+  }
+}
+
+/* ============================================================================
+   EDITORIAL CONTENT
+   Quill's canvas and the published article share this class, so the font,
+   spacing, alignment, tables and resized media shown while editing are the
+   same rules readers receive on the public detail page.
+   ========================================================================== */
+.editorial-editor .ql-toolbar.ql-snow,
+.editorial-editor .ql-container.ql-snow {
+  border: 0;
+}
+
+.editorial-editor .ql-toolbar.ql-snow {
+  border-bottom: 1px solid var(--color-ink-200);
+  font-family: var(--font-sans);
+}
+
+.editorial-editor .ql-toolbar .ql-formats {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0.125rem;
+}
+
+.editorial-editor .ql-toolbar button,
+.editorial-editor .ql-toolbar .ql-picker-label {
+  border-radius: var(--radius-sm);
+}
+
+.editorial-editor .ql-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editorial-editor .ql-toolbar button:hover,
+.editorial-editor .ql-toolbar button:focus-visible,
+.editorial-editor .ql-toolbar button.ql-active,
+.editorial-editor .ql-toolbar .ql-picker-label:hover,
+.editorial-editor .ql-toolbar .ql-picker-label.ql-active {
+  background: var(--color-brand-50);
+  color: var(--color-brand-800);
+}
+
+.editorial-editor .ql-toolbar button > svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.editorial-editor .ql-container {
+  min-height: var(--editor-min-height);
+  overflow: auto;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.editorial-editor .ql-editor {
+  min-height: var(--editor-min-height);
+  padding: 1rem 1.125rem;
+}
+
+.editorial-editor .ql-editor.ql-blank::before {
+  right: 1.125rem;
+  left: 1.125rem;
+  color: var(--color-ink-400);
+  font-style: normal;
+}
+
+.editorial-source {
+  min-height: var(--editor-min-height);
+}
+
+.editorial-rich-content {
+  overflow-wrap: anywhere;
+  color: inherit;
+  font-family: inherit;
+  line-height: inherit;
+}
+
+.editorial-rich-content > :first-child {
+  margin-top: 0;
+}
+
+.editorial-rich-content > :last-child {
+  margin-bottom: 0;
+}
+
+.editorial-rich-content > p,
+.editorial-rich-content > ul,
+.editorial-rich-content > ol,
+.editorial-rich-content > blockquote,
+.editorial-rich-content > pre,
+.editorial-rich-content > table,
+.editorial-rich-content > iframe,
+.editorial-rich-content > video {
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.editorial-rich-content h1,
+.editorial-rich-content h2,
+.editorial-rich-content h3,
+.editorial-rich-content h4 {
+  margin-top: 1.75em;
+  margin-bottom: 0.6em;
+  color: var(--color-brand-950);
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.editorial-rich-content h1 {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+}
+
+.editorial-rich-content h2 {
+  border-top: 1px solid var(--color-ink-300);
+  padding-top: 0.75rem;
+  font-size: clamp(1.625rem, 3vw, 2rem);
+}
+
+.editorial-rich-content h3 {
+  font-size: clamp(1.375rem, 2.5vw, 1.625rem);
+}
+
+.editorial-rich-content h4 {
+  font-size: 1.2em;
+}
+
+.editorial-rich-content strong,
+.editorial-rich-content b {
+  font-weight: 700;
+}
+
+.editorial-rich-content a {
+  color: var(--color-brand-700);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--color-brand-300);
+  text-underline-offset: 0.2em;
+}
+
+.editorial-rich-content a:hover {
+  color: var(--color-brand-900);
+}
+
+.editorial-rich-content blockquote {
+  border-inline-start: 0.25rem solid var(--color-brand-400);
+  background: var(--color-brand-50);
+  padding: 1rem 1.25rem;
+  color: var(--color-ink-800);
+  font-style: italic;
+}
+
+.editorial-rich-content ul,
+.editorial-rich-content ol {
+  padding-inline-start: 1.75rem;
+}
+
+.editorial-rich-content ul {
+  list-style: disc outside;
+}
+
+.editorial-rich-content ol {
+  list-style: decimal outside;
+}
+
+.editorial-rich-content li + li {
+  margin-top: 0.4rem;
+}
+
+.editorial-rich-content pre,
+.editorial-rich-content code {
+  border-radius: var(--radius-sm);
+  background: var(--color-ink-100);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.editorial-rich-content code {
+  padding: 0.12em 0.35em;
+  font-size: 0.9em;
+}
+
+.editorial-rich-content pre {
+  overflow-x: auto;
+  padding: 1rem;
+}
+
+.editorial-rich-content pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.editorial-rich-content img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.25rem auto;
+  border-radius: var(--radius-lg);
+}
+
+.editorial-rich-content iframe,
+.editorial-rich-content video {
+  display: block;
+  max-width: 100%;
+  border: 0;
+  background: var(--color-ink-950);
+}
+
+.editorial-rich-content iframe:not([width]),
+.editorial-rich-content video:not([width]) {
+  width: 100%;
+}
+
+.editorial-rich-content iframe:not([height]),
+.editorial-rich-content video:not([height]) {
+  aspect-ratio: 16 / 9;
+  height: auto;
+}
+
+.editorial-rich-content table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: 0.92em;
+}
+
+.editorial-rich-content th,
+.editorial-rich-content td {
+  min-width: 5rem;
+  border: 1px solid var(--color-ink-300);
+  padding: 0.65rem 0.75rem;
+  text-align: start;
+  vertical-align: top;
+}
+
+.editorial-rich-content th {
+  background: var(--color-brand-50);
+  color: var(--color-brand-950);
+  font-weight: 700;
+}
+
+.editorial-rich-content .ql-align-center {
+  text-align: center;
+}
+
+.editorial-rich-content .ql-align-right {
+  text-align: right;
+}
+
+.editorial-rich-content .ql-align-justify {
+  text-align: justify;
+}
+
+.editorial-rich-content .ql-direction-rtl {
+  direction: rtl;
+}
+
+.editorial-rich-content .ql-font-serif {
+  font-family: var(--font-display);
+}
+
+.editorial-rich-content .ql-font-monospace {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.editorial-rich-content .ql-size-small {
+  font-size: 0.75em;
+}
+
+.editorial-rich-content .ql-size-large {
+  font-size: 1.5em;
+}
+
+.editorial-rich-content .ql-size-huge {
+  font-size: 2.25em;
+}
+
+.editorial-rich-content .ql-resize-style-left {
+  float: left;
+  margin: 0 1em 1em 0;
+}
+
+.editorial-rich-content .ql-resize-style-center {
+  display: block;
+  margin: 1.25rem auto;
+  text-align: center;
+}
+
+.editorial-rich-content .ql-resize-style-right {
+  float: right;
+  margin: 0 0 1em 1em;
+}
+
+.editorial-rich-content .ql-resize-style-full {
+  width: 100% !important;
+}
+
+.editorial-rich-content::after {
+  display: table;
+  clear: both;
+  content: "";
+}
+
+.editorial-rich-content .ql-indent-1 {
+  padding-inline-start: 3em;
+}
+
+.editorial-rich-content .ql-indent-2 {
+  padding-inline-start: 6em;
+}
+
+.editorial-rich-content .ql-indent-3 {
+  padding-inline-start: 9em;
+}
+
+.editorial-rich-content .ql-indent-4 {
+  padding-inline-start: 12em;
+}
+
+.editorial-rich-content .ql-indent-5,
+.editorial-rich-content .ql-indent-6,
+.editorial-rich-content .ql-indent-7,
+.editorial-rich-content .ql-indent-8 {
+  padding-inline-start: 15em;
+}
+
+@media (max-width: 639px) {
+  .editorial-editor .ql-toolbar.ql-snow {
+    overflow-x: auto;
+  }
+
+  .editorial-rich-content .ql-indent-3,
+  .editorial-rich-content .ql-indent-4,
+  .editorial-rich-content .ql-indent-5,
+  .editorial-rich-content .ql-indent-6,
+  .editorial-rich-content .ql-indent-7,
+  .editorial-rich-content .ql-indent-8 {
+    padding-inline-start: 6em;
   }
 }
 

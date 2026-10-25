@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { Fragment, type ReactNode } from "react";
 
+import { isEditorialHtml } from "@/lib/editorial/legacy";
+import { sanitizeEditorialHtml } from "@/lib/editorial/sanitize";
 import { safeHttpsUrl, safeMediaUrl } from "@/lib/types/archive";
 import { cn } from "@/lib/utils";
 
@@ -146,12 +148,7 @@ function parse(source: string): Block[] {
   );
 }
 
-/**
- * Safe, intentionally small renderer for editorial copy.
- *
- * It supports only the controls offered by EditorialTextField. HTML is never
- * parsed or mounted, and URLs are allow-listed before becoming links/media.
- */
+/** Renders new sanitized rich HTML and keeps the previous Markdown subset live. */
 export function EditorialContent({
   content,
   className,
@@ -163,8 +160,27 @@ export function EditorialContent({
   variant?: "default" | "article";
   locale?: "bn" | "en";
 }) {
-  const blocks = parse(content);
   const article = variant === "article";
+  const typographyClass = article
+    ? locale === "bn"
+      ? "font-display text-[1.125rem] leading-[1.75] text-ink-800"
+      : "font-display text-[1.125rem] leading-[1.55] text-ink-800"
+    : "text-base leading-8 text-ink-700 sm:text-lg";
+
+  if (isEditorialHtml(content)) {
+    // Persistence sanitizes rich copy too, but public rendering is a second
+    // trust boundary for pre-existing/imported rows and future write paths.
+    const safeHtml = sanitizeEditorialHtml(content);
+    return (
+      <div
+        data-article-prose={article ? true : undefined}
+        className={cn("editorial-rich-content", typographyClass, className)}
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+      />
+    );
+  }
+
+  const blocks = parse(content);
   const firstParagraph = blocks.findIndex(
     (block) => block.kind === "paragraph",
   );
@@ -173,11 +189,8 @@ export function EditorialContent({
     <div
       data-article-prose={article ? true : undefined}
       className={cn(
-        article
-          ? locale === "bn"
-            ? "space-y-5 font-display text-[1.125rem] leading-[1.75] text-ink-800"
-            : "space-y-5 font-display text-[1.125rem] leading-[1.55] text-ink-800"
-          : "space-y-5 text-base leading-8 text-ink-700 sm:text-lg",
+        "space-y-5",
+        typographyClass,
         className,
       )}
     >
@@ -297,20 +310,4 @@ export function EditorialContent({
       })}
     </div>
   );
-}
-
-/** Plain copy for metadata, search excerpts and card summaries. */
-export function editorialPlainText(source: string): string {
-  return source
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/^#{1,6}\s+/gm, "")
-    .replace(/^>\s?/gm, "")
-    .replace(/^[-*+]\s+/gm, "")
-    .replace(/^\d+[.)]\s+/gm, "")
-    .replace(/(\*\*|__)(.*?)\1/g, "$2")
-    .replace(/(\*|_)(.*?)\1/g, "$2")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/\s+/g, " ")
-    .trim();
 }

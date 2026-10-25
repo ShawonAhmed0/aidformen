@@ -20,10 +20,7 @@ import {
 } from "lucide-react";
 
 import { ShareActions } from "@/components/ShareActions";
-import {
-  EditorialContent,
-  editorialPlainText,
-} from "@/components/content/EditorialContent";
+import { EditorialContent } from "@/components/content/EditorialContent";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -31,6 +28,7 @@ import {
   getArchiveEntryBySlug,
   getRelatedArchiveEntries,
 } from "@/lib/content/archive";
+import { editorialPlainText } from "@/lib/editorial/plain-text";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import {
@@ -224,7 +222,7 @@ export default async function NewsDetailPage({ params }: Props) {
                   src={item.cover}
                   alt={item.heading}
                   fill
-                  priority
+                  preload
                   sizes="(min-width: 1024px) 1024px, 100vw"
                   className="object-cover"
                 />
@@ -346,7 +344,9 @@ export default async function NewsDetailPage({ params }: Props) {
                     id="gallery-heading"
                     className="border-t-4 border-brand-800 pt-3 text-2xl text-brand-950"
                   >
-                    {t.archive.photoGallery}
+                    {item.kind === "photo"
+                      ? t.archive.photoGallery
+                      : t.archive.supportingImages}
                   </h2>
                   <ul className="mt-5 grid gap-4 sm:grid-cols-2">
                     {item.photos.map((photo) => (
@@ -367,6 +367,52 @@ export default async function NewsDetailPage({ params }: Props) {
                             </figcaption>
                           )}
                         </figure>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {item.attachments.length > 0 && (
+                <section
+                  aria-labelledby="references-heading"
+                  className="border-t-4 border-brand-800 pt-3"
+                  data-print-keep
+                >
+                  <h2
+                    id="references-heading"
+                    className="text-2xl text-brand-950"
+                  >
+                    {t.archive.referencesTitle}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-ink-600">
+                    {t.archive.referencesBody}
+                  </p>
+                  <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+                    {item.attachments.map((attachment) => (
+                      <li key={attachment.id}>
+                        <a
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noopener noreferrer external"
+                          download={attachment.kind === "document"}
+                          aria-label={`${t.archive.openReference}: ${attachment.label}`}
+                          className="group flex min-h-16 items-center gap-3 rounded-xl border border-ink-200 bg-surface px-4 py-3 text-sm font-semibold text-brand-800 transition-ui hover:border-brand-400 hover:bg-brand-50"
+                        >
+                          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700 transition-ui group-hover:bg-surface">
+                            {attachment.kind === "document" ? (
+                              <Download className="size-4" aria-hidden="true" />
+                            ) : (
+                              <ExternalLink
+                                className="size-4"
+                                aria-hidden="true"
+                              />
+                            )}
+                          </span>
+                          <span className="min-w-0 flex-1 break-words">
+                            {attachment.label}
+                          </span>
+                        </a>
                       </li>
                     ))}
                   </ul>

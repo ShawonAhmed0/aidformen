@@ -9,6 +9,7 @@ import {
   fail,
   guarded,
   hrefField,
+  httpsUrlField,
   intField,
   ok,
   optionalText,
@@ -31,6 +32,7 @@ export async function updateHeroContent(formData: FormData) {
     if (!auth.ok) return fail(auth.error);
 
     const payload = {
+      about_audio_url: httpsUrlField(formData, "about_audio_url", "পরিচিতি অডিও"),
       title: requiredText(formData, "title", "শিরোনাম", 200),
       description: optionalText(formData, "description", 800),
       eyebrow: optionalText(formData, "eyebrow", 80),
@@ -46,12 +48,22 @@ export async function updateHeroContent(formData: FormData) {
     };
 
     const id = (formData.get("id") as string | null)?.trim();
+    let previousAudioUrl: string | null = null;
 
     // The table is a singleton but has a uuid key, so update by the id we were
     // given and insert only when there is genuinely no row yet. The previous
     // implementation matched `.eq("id", 1)` against a uuid column, which could
     // never match — that is why saving silently did nothing.
     if (id) {
+      const { data: existing, error: existingError } = await auth.supabase
+        .from("hero_content")
+        .select("about_audio_url")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (existingError) return fail(existingError.message);
+      previousAudioUrl = existing?.about_audio_url ?? null;
+
       const { error } = await auth.supabase
         .from("hero_content")
         .update(payload)
@@ -61,6 +73,13 @@ export async function updateHeroContent(formData: FormData) {
     } else {
       const { error } = await auth.supabase.from("hero_content").insert(payload);
       if (error) return fail(error.message);
+    }
+
+    // The upload completes before the form is saved. Once the row safely points
+    // at the replacement, remove the superseded object from our own bucket so
+    // repeated edits do not leave private editorial debris behind.
+    if (previousAudioUrl && previousAudioUrl !== payload.about_audio_url) {
+      await deleteImageByUrl(previousAudioUrl);
     }
 
     revalidateSite();

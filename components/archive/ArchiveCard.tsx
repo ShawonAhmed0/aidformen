@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { editorialPlainText } from "@/components/content/EditorialContent";
+import { editorialPlainText } from "@/lib/editorial/plain-text";
 import { formatCount } from "@/lib/i18n/config";
 import type { ArchiveListingItem } from "@/lib/types/archive";
 import type { ArchiveLabels } from "./labels";

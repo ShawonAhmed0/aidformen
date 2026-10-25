@@ -5,8 +5,8 @@ import { notFound } from "next/navigation";
 import { PageHero } from "@/components/PageHero";
 import { Section } from "@/components/ui/section";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { aboutPhotos, getAboutContent, type PhotoId } from "@/lib/content/about";
 import { isLocale } from "@/lib/i18n/config";
-import { aboutPhotos, getAboutContent, type PhotoId } from "./content";
 
 export async function generateMetadata({
     params,

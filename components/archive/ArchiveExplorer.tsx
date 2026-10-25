@@ -17,6 +17,7 @@ import { formatCount } from "@/lib/i18n/config";
 import {
     archiveKinds,
     sortArchiveItemsNewestFirst,
+    type ArchiveContentType,
     type ArchiveListingItem,
     type ArchiveKind,
     type ArchiveSection,
@@ -27,13 +28,25 @@ import { cn } from "@/lib/utils";
 
 type KindFilter = ArchiveKind | "all";
 
+const contentTypesBySection: Record<
+    ArchiveSection,
+    readonly ArchiveContentType[]
+> = {
+    press_media: ["event", "press_release"],
+    news_archive: [
+        "media_coverage",
+        "mens_rights_news",
+        "case_study",
+        "report",
+    ],
+};
+
 /**
  * Filters plus the results grid.
  *
- * All four filters run in the browser over the full published set. The archive
- * is tens of entries, not thousands, so filtering here costs one pass over an
- * array and keeps every change instant — a server round trip per chip would be
- * slower and would lose the reader's scroll position.
+ * The section and content-type links make the primary view shareable. The
+ * narrower presentation, category, year, and text filters then run in the
+ * browser over the published set so those quick refinements preserve scroll.
  */
 export function ArchiveExplorer({
     items,
@@ -42,6 +55,7 @@ export function ArchiveExplorer({
     t,
     locale,
     initialSection,
+    initialContentType,
 }: {
     items: ArchiveListingItem[];
     categories: string[];
@@ -50,6 +64,7 @@ export function ArchiveExplorer({
     t: ArchiveLabels;
     locale: "bn" | "en";
     initialSection: ArchiveSection;
+    initialContentType: ArchiveContentType | null;
 }) {
     const [kind, setKind] = useState<KindFilter>("all");
     const section = initialSection;
@@ -63,6 +78,9 @@ export function ArchiveExplorer({
         return sortArchiveItemsNewestFirst(
             items.filter((item) => {
                 if (item.section !== section) return false;
+                if (initialContentType && item.contentType !== initialContentType) {
+                    return false;
+                }
                 if (kind !== "all" && item.kind !== kind) return false;
                 if (category && item.category !== category) return false;
                 if (year && item.year !== year) return false;
@@ -75,15 +93,26 @@ export function ArchiveExplorer({
                 return true;
             })
         );
-    }, [items, section, kind, category, year, query]);
+    }, [items, section, initialContentType, kind, category, year, query]);
 
-    const filtered = kind !== "all" || category || year || query.trim();
+    const filtered =
+        Boolean(initialContentType) || kind !== "all" || category || year || query.trim();
 
     const activeCategories = categories.filter((value) =>
-        items.some((item) => item.section === section && item.category === value)
+        items.some(
+            (item) =>
+                item.section === section &&
+                (!initialContentType || item.contentType === initialContentType) &&
+                item.category === value
+        )
     );
     const activeYears = years.filter((option) =>
-        items.some((item) => item.section === section && item.year === option.value)
+        items.some(
+            (item) =>
+                item.section === section &&
+                (!initialContentType || item.contentType === initialContentType) &&
+                item.year === option.value
+        )
     );
 
     const reset = () => {
@@ -98,6 +127,15 @@ export function ArchiveExplorer({
         photo: t.photoKind,
         video: t.videoKind,
         audio: t.audioKind,
+    };
+
+    const contentTypeLabel: Record<ArchiveContentType, string> = {
+        event: t.typeEvent,
+        press_release: t.typePressRelease,
+        media_coverage: t.typeMediaCoverage,
+        mens_rights_news: t.typeMensRightsNews,
+        case_study: t.typeCaseStudy,
+        report: t.typeReport,
     };
 
     const kindIcon = {
@@ -180,8 +218,47 @@ export function ArchiveExplorer({
                     })}
                 </div>
 
-                {/* Type is the primary split, so it gets the prominent control and
-                    sits above the narrower facets. */}
+                <nav aria-label={t.filterContentType} className="space-y-2">
+                    <span className="block text-xs font-semibold uppercase text-ink-500">
+                        {t.filterContentType}
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                        <Link
+                            href={`/${locale}/news?section=${section}`}
+                            aria-current={!initialContentType ? "page" : undefined}
+                            className={cn(
+                                "inline-flex min-h-11 items-center rounded-full border px-5 text-sm font-medium transition-ui",
+                                !initialContentType
+                                    ? "border-brand-800 bg-brand-800 text-white"
+                                    : "border-ink-200 bg-surface text-ink-600 hover:border-brand-400 hover:text-brand-800"
+                            )}
+                        >
+                            {t.allContentTypes}
+                        </Link>
+
+                        {contentTypesBySection[section].map((contentType) => {
+                            const active = initialContentType === contentType;
+                            return (
+                                <Link
+                                    key={contentType}
+                                    href={`/${locale}/news?section=${section}&type=${contentType}`}
+                                    aria-current={active ? "page" : undefined}
+                                    className={cn(
+                                        "inline-flex min-h-11 items-center rounded-full border px-5 text-sm font-medium transition-ui",
+                                        active
+                                            ? "border-brand-800 bg-brand-800 text-white"
+                                            : "border-ink-200 bg-surface text-ink-600 hover:border-brand-400 hover:text-brand-800"
+                                    )}
+                                >
+                                    {contentTypeLabel[contentType]}
+                                </Link>
+                            );
+                        })}
+                    </div>
+                </nav>
+
+                {/* Presentation kind is the first in-page refinement, above the
+                    unbounded category and year facets. */}
                 <div
                     aria-label={t.filterKind}
                     className="flex flex-wrap gap-2"
@@ -279,7 +356,15 @@ export function ArchiveExplorer({
                         {formatCount(locale, visible.length)} {t.resultsLabel}
                     </p>
 
-                    {filtered && (
+                    {filtered && (initialContentType ? (
+                        <Link
+                            href={`/${locale}/news?section=${section}`}
+                            className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
+                        >
+                            <SlidersHorizontal className="size-4" aria-hidden="true" />
+                            {t.clearFilters}
+                        </Link>
+                    ) : (
                         <button
                             type="button"
                             onClick={reset}
@@ -288,20 +373,29 @@ export function ArchiveExplorer({
                             <SlidersHorizontal className="size-4" aria-hidden="true" />
                             {t.clearFilters}
                         </button>
-                    )}
+                    ))}
                 </div>
             </div>
 
             {visible.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-ink-300 bg-surface px-6 py-16 text-center">
                     <p className="text-base font-medium text-ink-700">{t.noMatches}</p>
-                    <button
-                        type="button"
-                        onClick={reset}
-                        className="mt-3 min-h-11 rounded-md text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
-                    >
-                        {t.clearFilters}
-                    </button>
+                    {initialContentType ? (
+                        <Link
+                            href={`/${locale}/news?section=${section}`}
+                            className="mt-3 inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
+                        >
+                            {t.clearFilters}
+                        </Link>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={reset}
+                            className="mt-3 min-h-11 rounded-md text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
+                        >
+                            {t.clearFilters}
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="space-y-12">

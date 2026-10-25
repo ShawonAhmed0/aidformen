@@ -4,9 +4,9 @@ import { formatDate, pick, type Locale } from "@/lib/i18n/config";
 /**
  * Row shapes for supabase/migrations/0010_archive.sql.
  *
- * An archive entry is one of two kinds. Both carry a heading and a paragraph;
- * what differs is the media — a photo entry has a gallery, a video entry has
- * either an external link or an uploaded file.
+ * An archive entry can be an article, photo collection, video or audio item.
+ * Every kind shares the same editorial metadata and can carry supporting
+ * photos/references; its primary media fields differ by presentation kind.
  */
 
 export const archiveKinds = ["article", "photo", "video", "audio"] as const;
@@ -27,6 +27,9 @@ export type ArchiveContentType = (typeof archiveContentTypes)[number];
 
 export const archiveEventStatuses = ["upcoming", "completed"] as const;
 export type ArchiveEventStatus = (typeof archiveEventStatuses)[number];
+
+export const archiveAttachmentKinds = ["document", "external_link"] as const;
+export type ArchiveAttachmentKind = (typeof archiveAttachmentKinds)[number];
 
 export const ARCHIVE_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -199,6 +202,9 @@ export function archiveSlugWithSequence(base: string, sequence: number): string 
  * grow into a payload that trips the action's own limits.
  */
 export const MAX_ARCHIVE_PHOTOS = 40;
+/** Supporting evidence on an article/case is intentionally concise. */
+export const MAX_ARCHIVE_REFERENCE_PHOTOS = 5;
+export const MAX_ARCHIVE_ATTACHMENTS = 12;
 
 export type ArchivePhoto = {
   id: string;
@@ -206,6 +212,17 @@ export type ArchivePhoto = {
   image_url: string;
   caption: string | null;
   caption_en: string | null;
+  sort_order: number;
+};
+
+export type ArchiveAttachment = {
+  id: string;
+  entry_id: string;
+  kind: ArchiveAttachmentKind;
+  label: string | null;
+  label_en: string | null;
+  file_url: string;
+  mime_type: string | null;
   sort_order: number;
 };
 
@@ -247,6 +264,8 @@ export type ArchiveEntry = {
   is_published: boolean;
   /** Empty for a video entry. Ordered by sort_order. */
   photos: ArchivePhoto[];
+  /** Ordered downloads and external references shown only on the detail page. */
+  attachments: ArchiveAttachment[];
 };
 
 /**
@@ -312,6 +331,13 @@ export type ArchiveItem = {
   sourceUrl: string | null;
   photoCount: number;
   photos: { id: string; url: string; caption: string }[];
+  attachments: {
+    id: string;
+    kind: ArchiveAttachmentKind;
+    label: string;
+    url: string;
+    mimeType: string | null;
+  }[];
 };
 
 /** The intentionally small shape sent to interactive listing grids. */
@@ -321,6 +347,7 @@ export type ArchiveListingItem = Pick<
   | "slug"
   | "kind"
   | "section"
+  | "contentType"
   | "heading"
   | "body"
   | "category"
@@ -338,6 +365,7 @@ export function toArchiveListingItem(item: ArchiveItem): ArchiveListingItem {
     slug: item.slug,
     kind: item.kind,
     section: item.section,
+    contentType: item.contentType,
     heading: item.heading,
     body: item.body,
     category: item.category,
@@ -435,6 +463,22 @@ export function resolveArchiveEntry(
               id: photo.id,
               url,
               caption: pick(locale, photo.caption, photo.caption_en),
+            },
+          ]
+        : [];
+    }),
+    attachments: entry.attachments.flatMap((attachment) => {
+      const url = safeHttpsUrl(attachment.file_url);
+      return url
+        ? [
+            {
+              id: attachment.id,
+              kind: attachment.kind,
+              label:
+                pick(locale, attachment.label, attachment.label_en) ||
+                (locale === "en" ? "Reference" : "রেফারেন্স"),
+              url,
+              mimeType: attachment.mime_type,
             },
           ]
         : [];

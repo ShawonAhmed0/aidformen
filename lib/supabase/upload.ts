@@ -34,6 +34,11 @@ export const ARCHIVE_AUDIO_TYPES = [
   "audio/wav",
   "audio/x-wav",
 ];
+export const ARCHIVE_DOCUMENT_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 /** Supabase's free-tier per-file ceiling, so accepting more would only fail later. */
@@ -60,6 +65,9 @@ const extensionByMime: Record<string, string> = {
   "audio/wav": "wav",
   "audio/x-wav": "wav",
   "application/pdf": "pdf",
+  "application/msword": "doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    "docx",
 };
 
 function extensionFor(file: File): string {
@@ -133,12 +141,12 @@ export async function uploadToMedia(
 }
 
 /**
- * Direct-to-storage PDF upload for the admin document picker.
+ * Direct-to-storage document upload for the admin document picker.
  *
  * Keeping this out of a Server Action avoids Next's intentionally small 1 MB
  * action body limit. Storage RLS still performs the real authorization, and a
  * short signature check prevents a renamed arbitrary file being served as a
- * public PDF.
+ * public PDF/Word document.
  */
 export async function uploadDocumentToMedia(
   file: File,
@@ -146,27 +154,64 @@ export async function uploadDocumentToMedia(
 ): Promise<UploadResult> {
   if (file.size === 0) return { ok: false, error: "কোনো ফাইল নির্বাচন করা হয়নি।" };
   if (file.size > MAX_DOCUMENT_BYTES) {
-    return { ok: false, error: "PDF ফাইলের আকার ১০ মেগাবাইটের কম হতে হবে।" };
+    return { ok: false, error: "ডকুমেন্টের আকার ১০ মেগাবাইটের কম হতে হবে।" };
   }
   if (!(mediaFolders as readonly string[]).includes(folder)) {
     return { ok: false, error: "আপলোড ফোল্ডারটি অনুমোদিত নয়।" };
   }
 
-  const looksLikePdf =
-    file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-  if (!looksLikePdf) return { ok: false, error: "শুধু PDF ফাইল আপলোড করা যাবে।" };
+  const lowerName = file.name.toLowerCase();
+  const kind =
+    file.type === "application/pdf" || lowerName.endsWith(".pdf")
+      ? "pdf"
+      : file.type === "application/msword" || lowerName.endsWith(".doc")
+        ? "doc"
+        : file.type ===
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+            lowerName.endsWith(".docx")
+          ? "docx"
+          : null;
 
-  const signature = await file.slice(0, 5).text();
-  if (signature !== "%PDF-") {
-    return { ok: false, error: "ফাইলটি সঠিক PDF নয়।" };
+  if (!kind) {
+    return { ok: false, error: "শুধু PDF, DOC অথবা DOCX ফাইল আপলোড করা যাবে।" };
+  }
+
+  const bytes = new Uint8Array(await file.slice(0, 8).arrayBuffer());
+  const isPdf =
+    bytes[0] === 0x25 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x44 &&
+    bytes[3] === 0x46 &&
+    bytes[4] === 0x2d;
+  const isDoc = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1].every(
+    (byte, index) => bytes[index] === byte
+  );
+  const isDocx =
+    bytes[0] === 0x50 &&
+    bytes[1] === 0x4b &&
+    bytes[2] === 0x03 &&
+    bytes[3] === 0x04;
+
+  if (
+    (kind === "pdf" && !isPdf) ||
+    (kind === "doc" && !isDoc) ||
+    (kind === "docx" && !isDocx)
+  ) {
+    return { ok: false, error: "ফাইলটির ধরন ও ভেতরের ফরম্যাট মিলছে না।" };
   }
 
   const supabase = createClient();
   const unique = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
-  const path = `${folder}/${unique}.pdf`;
+  const path = `${folder}/${unique}.${kind}`;
+  const contentType =
+    kind === "pdf"
+      ? "application/pdf"
+      : kind === "doc"
+        ? "application/msword"
+        : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
     cacheControl: "31536000",
-    contentType: "application/pdf",
+    contentType,
     upsert: false,
   });
 

@@ -8,6 +8,7 @@
 
 export type HeroContent = {
   id: string;
+  about_audio_url: string | null;
   title: string | null;
   description: string | null;
   eyebrow: string | null;

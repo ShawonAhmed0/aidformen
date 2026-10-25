@@ -1,16 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Archive, Cloud, ShieldCheck } from "lucide-react";
+import { Archive, Cloud, Images, ShieldCheck } from "lucide-react";
 
 import { ArchiveExplorer } from "@/components/archive/ArchiveExplorer";
+import { getMediaLibraryLabels } from "@/components/media-library/labels";
 import { PageHero } from "@/components/PageHero";
 import { buttonVariants } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
 import { getArchiveEntries } from "@/lib/content/archive";
 import { formatYear, isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionary";
-import { resolveArchiveEntry, toArchiveListingItem } from "@/lib/types/archive";
+import {
+  archiveContentTypes,
+  resolveArchiveEntry,
+  toArchiveListingItem,
+  type ArchiveContentType,
+  type ArchiveSection,
+} from "@/lib/types/archive";
+
+const contentTypesBySection: Record<
+  ArchiveSection,
+  readonly ArchiveContentType[]
+> = {
+  press_media: ["event", "press_release"],
+  news_archive: [
+    "media_coverage",
+    "mens_rights_news",
+    "case_study",
+    "report",
+  ],
+};
 
 export async function generateMetadata({
   params,
@@ -42,18 +62,34 @@ export default async function NewsPage({
   searchParams,
 }: {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ section?: string | string[] }>;
+  searchParams: Promise<{
+    section?: string | string[];
+    type?: string | string[];
+  }>;
 }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
-  const requestedSection = (await searchParams).section;
+  const requested = await searchParams;
+  const requestedSection = requested.section;
   const initialSection =
     requestedSection === "news_archive" ? "news_archive" : "press_media";
+  const requestedType = Array.isArray(requested.type)
+    ? requested.type[0]
+    : requested.type;
+  const initialContentType =
+    requestedType &&
+    archiveContentTypes.includes(requestedType as ArchiveContentType) &&
+    contentTypesBySection[initialSection].includes(
+      requestedType as ArchiveContentType,
+    )
+      ? (requestedType as ArchiveContentType)
+      : null;
 
   const [t, entries] = await Promise.all([
     getDictionary(lang),
     getArchiveEntries(),
   ]);
+  const mediaLibrary = getMediaLibraryLabels(lang);
 
   const items = entries.map((entry) =>
     toArchiveListingItem(resolveArchiveEntry(lang, entry))
@@ -98,6 +134,24 @@ export default async function NewsPage({
               <p className="mt-1.5 text-sm text-ink-700">{t.archive.usageBody}</p>
             </div>
           </div>
+
+          <Link
+            href={`/${lang}/media-archive`}
+            className="group flex gap-4 rounded-2xl border border-ochre-200 bg-ochre-50 p-5 transition-ui hover:-translate-y-0.5 hover:border-ochre-400 hover:shadow-sm sm:col-span-2 sm:p-6"
+          >
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-ochre-700 text-white">
+              <Images className="size-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg text-ochre-900">{mediaLibrary.title}</h2>
+              <p className="mt-1.5 text-sm text-ink-700">
+                {mediaLibrary.description}
+              </p>
+              <span className="mt-3 inline-flex text-sm font-semibold text-ochre-800 underline-offset-4 group-hover:underline">
+                {mediaLibrary.openOriginal}
+              </span>
+            </div>
+          </Link>
         </div>
 
         {items.length === 0 ? (
@@ -123,13 +177,14 @@ export default async function NewsPage({
           </div>
         ) : (
           <ArchiveExplorer
-            key={initialSection}
+            key={`${initialSection}:${initialContentType ?? "all"}`}
             items={items}
             categories={categories}
             years={years}
             t={t.archive}
             locale={lang}
             initialSection={initialSection}
+            initialContentType={initialContentType}
           />
         )}
       </Section>

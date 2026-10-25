@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { legacyMarkdownToHtml } from "@/lib/editorial/legacy";
+import { sanitizeOptionalEditorialHtml } from "@/lib/editorial/sanitize";
 import {
+  archiveAttachmentKinds,
   archiveContentTypes,
   archiveEventStatuses,
   archiveKinds,
@@ -11,7 +14,9 @@ import {
   archiveSlugFromTitle,
   archiveSlugWithSequence,
   isArchiveSlug,
+  MAX_ARCHIVE_ATTACHMENTS,
   MAX_ARCHIVE_PHOTOS,
+  MAX_ARCHIVE_REFERENCE_PHOTOS,
 } from "@/lib/types/archive";
 import { deleteMediaByUrls } from "./media";
 import {
@@ -28,6 +33,20 @@ import {
   requireAdmin,
   FieldError,
 } from "./shared";
+
+function editorialField(
+  formData: FormData,
+  key: string,
+  maxLength: number,
+  label: string,
+) {
+  const value = optionalText(formData, key, maxLength, label);
+  if (!value) return null;
+
+  // Existing records may still contain the previous Markdown subset. Upgrade
+  // them before applying the same server-side HTML policy used for new copy.
+  return sanitizeOptionalEditorialHtml(legacyMarkdownToHtml(value));
+}
 
 function slugField(title: string) {
   const slug = archiveSlugFromTitle(title);
@@ -56,29 +75,42 @@ function secureMediaHref(formData: FormData, key: string, label: string) {
 function fieldsFrom(formData: FormData) {
   const heading = requiredText(formData, "heading", "শিরোনাম", 200);
   const headingEn = optionalText(formData, "heading_en", 200);
+  const section = enumField(
+    formData,
+    "section",
+    archiveSections,
+    "press_media"
+  );
+  const contentType = enumField(
+    formData,
+    "content_type",
+    archiveContentTypes,
+    "event"
+  );
+  const sectionMatchesType =
+    (section === "press_media" &&
+      (contentType === "event" || contentType === "press_release")) ||
+    (section === "news_archive" &&
+      ["media_coverage", "mens_rights_news", "case_study", "report"].includes(
+        contentType
+      ));
+
+  if (!sectionMatchesType) {
+    throw new FieldError("নির্বাচিত সেকশনের সঙ্গে কনটেন্ট টাইপটি মেলে না।");
+  }
 
   return {
     // The server derives this independently instead of trusting a client URL.
     // Updates replace it with the stored slug so published links stay stable.
     slug: slugField(headingEn || heading),
     kind: enumField(formData, "kind", archiveKinds, "article"),
-    section: enumField(
-      formData,
-      "section",
-      archiveSections,
-      "press_media"
-    ),
-    content_type: enumField(
-      formData,
-      "content_type",
-      archiveContentTypes,
-      "event"
-    ),
+    section,
+    content_type: contentType,
     event_status: optionalEventStatus(formData),
     heading,
     heading_en: headingEn,
-    body: optionalText(formData, "body", 20000, "বিবরণ"),
-    body_en: optionalText(formData, "body_en", 20000, "ইংরেজি বিবরণ"),
+    body: editorialField(formData, "body", 120000, "বিবরণ"),
+    body_en: editorialField(formData, "body_en", 120000, "ইংরেজি বিবরণ"),
     category: optionalText(formData, "category", 80),
     category_en: optionalText(formData, "category_en", 80),
     location: optionalText(formData, "location", 160),
@@ -89,35 +121,35 @@ function fieldsFrom(formData: FormData) {
     cover_image_url: secureMediaHref(formData, "cover_image_url", "কভার ছবি"),
     video_url: httpsUrlField(formData, "video_url", "ভিডিওর লিঙ্ক"),
     video_file_url: httpsUrlField(formData, "video_file_url", "ভিডিও ফাইল"),
-    notice_body: optionalText(formData, "notice_body", 12000, "ইভেন্ট নোটিশ"),
-    notice_body_en: optionalText(
+    notice_body: editorialField(formData, "notice_body", 80000, "ইভেন্ট নোটিশ"),
+    notice_body_en: editorialField(
       formData,
       "notice_body_en",
-      12000,
+      80000,
       "ইংরেজি ইভেন্ট নোটিশ"
     ),
-    post_event_body: optionalText(
+    post_event_body: editorialField(
       formData,
       "post_event_body",
-      12000,
+      80000,
       "ইভেন্ট-পরবর্তী সারসংক্ষেপ"
     ),
-    post_event_body_en: optionalText(
+    post_event_body_en: editorialField(
       formData,
       "post_event_body_en",
-      12000,
+      80000,
       "ইংরেজি ইভেন্ট-পরবর্তী সারসংক্ষেপ"
     ),
-    press_release_body: optionalText(
+    press_release_body: editorialField(
       formData,
       "press_release_body",
-      20000,
+      120000,
       "প্রেস রিলিজ"
     ),
-    press_release_body_en: optionalText(
+    press_release_body_en: editorialField(
       formData,
       "press_release_body_en",
-      20000,
+      120000,
       "ইংরেজি প্রেস রিলিজ"
     ),
     press_release_url: httpsUrlField(
@@ -139,6 +171,15 @@ type PhotoInput = {
   image_url: string;
   caption: string | null;
   caption_en: string | null;
+  sort_order: number;
+};
+
+type AttachmentInput = {
+  kind: (typeof archiveAttachmentKinds)[number];
+  label: string | null;
+  label_en: string | null;
+  file_url: string;
+  mime_type: string | null;
   sort_order: number;
 };
 
@@ -173,14 +214,15 @@ function validatePublishedEntry(fields: PublishableArchiveFields, photos: PhotoI
  * Each URL is re-validated here even though the client produced it: this action
  * is reachable with any payload, and these strings end up in an image `src`.
  */
-function photosFrom(formData: FormData): PhotoInput[] {
+function photosFrom(formData: FormData, kind: (typeof archiveKinds)[number]): PhotoInput[] {
   const urls = formData.getAll("photo_url").map(String);
   const captions = formData.getAll("photo_caption").map(String);
   const captionsEn = formData.getAll("photo_caption_en").map(String);
 
-  if (urls.length > MAX_ARCHIVE_PHOTOS) {
+  const max = kind === "photo" ? MAX_ARCHIVE_PHOTOS : MAX_ARCHIVE_REFERENCE_PHOTOS;
+  if (urls.length > max) {
     throw new FieldError(
-      `একটি আর্কাইভে সর্বোচ্চ ${MAX_ARCHIVE_PHOTOS}টি ছবি দেওয়া যাবে।`
+      `এই এন্ট্রিতে সর্বোচ্চ ${max}টি ছবি দেওয়া যাবে।`
     );
   }
 
@@ -212,25 +254,159 @@ function photosFrom(formData: FormData): PhotoInput[] {
     .filter((p): p is PhotoInput => p !== null);
 }
 
+function attachmentsFrom(formData: FormData): AttachmentInput[] {
+  const urls = formData.getAll("attachment_url").map(String);
+  const kinds = formData.getAll("attachment_kind").map(String);
+  const labels = formData.getAll("attachment_label").map(String);
+  const labelsEn = formData.getAll("attachment_label_en").map(String);
+  const mimeTypes = formData.getAll("attachment_mime_type").map(String);
+
+  if (urls.length > MAX_ARCHIVE_ATTACHMENTS) {
+    throw new FieldError(
+      `একটি এন্ট্রিতে সর্বোচ্চ ${MAX_ARCHIVE_ATTACHMENTS}টি রেফারেন্স দেওয়া যাবে।`
+    );
+  }
+
+  return urls
+    .map((raw, index) => {
+      const fileUrl = raw.trim();
+      if (!fileUrl) return null;
+
+      let parsed: URL;
+      try {
+        parsed = new URL(fileUrl);
+      } catch {
+        throw new FieldError("রেফারেন্সের লিঙ্কটি সঠিক নয়।");
+      }
+      if (parsed.protocol !== "https:") {
+        throw new FieldError("রেফারেন্সের লিঙ্কে https:// ব্যবহার করুন।");
+      }
+
+      const label = labels[index]?.trim() || null;
+      const labelEn = labelsEn[index]?.trim() || null;
+      const mimeType = mimeTypes[index]?.trim() || null;
+      if ((label?.length ?? 0) > 200 || (labelEn?.length ?? 0) > 200) {
+        throw new FieldError("রেফারেন্সের নাম ২০০ অক্ষরের মধ্যে রাখুন।");
+      }
+      if ((mimeType?.length ?? 0) > 160) {
+        throw new FieldError("রেফারেন্সের ফাইল টাইপটি সঠিক নয়।");
+      }
+
+      const submittedKind = kinds[index];
+      const attachmentKind = (archiveAttachmentKinds as readonly string[]).includes(
+        submittedKind
+      )
+        ? (submittedKind as (typeof archiveAttachmentKinds)[number])
+        : "external_link";
+
+      return {
+        kind: attachmentKind,
+        label,
+        label_en: labelEn,
+        file_url: parsed.toString(),
+        mime_type: mimeType,
+        sort_order: (index + 1) * 10,
+      };
+    })
+    .filter((attachment): attachment is AttachmentInput => attachment !== null);
+}
+
 async function replacePhotos(
   supabase: SupabaseClient,
   entryId: string,
   photos: PhotoInput[]
 ) {
+  const { data: existing, error: readError } = await supabase
+    .from("archive_media")
+    .select("id")
+    .eq("entry_id", entryId);
+
+  if (readError) return readError.message;
+  const oldIds = ((existing as { id: string }[] | null) ?? []).map((row) => row.id);
+
+  if (photos.length === 0) {
+    if (oldIds.length === 0) return null;
+    const { error } = await supabase.from("archive_media").delete().in("id", oldIds);
+    return error?.message ?? null;
+  }
+
+  // Insert first so a transient upload/database failure never erases the
+  // gallery that readers already have. If clearing the old rows fails, remove
+  // the new batch as a best-effort rollback and keep the original set intact.
+  const { data: inserted, error: insertError } = await supabase
+    .from("archive_media")
+    .insert(photos.map((p) => ({ ...p, entry_id: entryId })))
+    .select("id");
+
+  if (insertError) return insertError.message;
+  if (oldIds.length === 0) return null;
+
   const { error: clearError } = await supabase
     .from("archive_media")
     .delete()
+    .in("id", oldIds);
+  if (!clearError) return null;
+
+  const newIds = ((inserted as { id: string }[] | null) ?? []).map((row) => row.id);
+  if (newIds.length > 0) {
+    await supabase.from("archive_media").delete().in("id", newIds);
+  }
+  return clearError.message;
+}
+
+function attachmentTableMissing(error: { code?: string; message: string }) {
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    error.message.includes("archive_attachments")
+  );
+}
+
+async function replaceAttachments(
+  supabase: SupabaseClient,
+  entryId: string,
+  attachments: AttachmentInput[]
+) {
+  const { data: existing, error: readError } = await supabase
+    .from("archive_attachments")
+    .select("id")
     .eq("entry_id", entryId);
 
-  if (clearError) return clearError.message;
+  if (readError) {
+    if (attachments.length === 0 && attachmentTableMissing(readError)) return null;
+    return readError.message;
+  }
+  const oldIds = ((existing as { id: string }[] | null) ?? []).map((row) => row.id);
 
-  if (photos.length === 0) return null;
+  if (attachments.length === 0) {
+    if (oldIds.length === 0) return null;
+    const { error } = await supabase
+      .from("archive_attachments")
+      .delete()
+      .in("id", oldIds);
+    return error?.message ?? null;
+  }
 
-  const { error } = await supabase
-    .from("archive_media")
-    .insert(photos.map((p) => ({ ...p, entry_id: entryId })));
+  const { data: inserted, error: insertError } = await supabase
+    .from("archive_attachments")
+    .insert(
+      attachments.map((attachment) => ({ ...attachment, entry_id: entryId }))
+    )
+    .select("id");
+  if (insertError) return insertError.message;
+  if (oldIds.length === 0) return null;
 
-  return error?.message ?? null;
+  const { error: clearError } = await supabase
+    .from("archive_attachments")
+    .delete()
+    .in("id", oldIds);
+  if (!clearError) return null;
+
+  const newIds = ((inserted as { id: string }[] | null) ?? []).map((row) => row.id);
+  if (newIds.length > 0) {
+    await supabase.from("archive_attachments").delete().in("id", newIds);
+  }
+  return clearError.message;
 }
 
 /** Appends to the end of the list — ordering is a single sequence here. */
@@ -251,7 +427,8 @@ export async function createArchiveEntry(formData: FormData) {
     if (!auth.ok) return fail(auth.error);
 
     const fields = fieldsFrom(formData);
-    const photos = photosFrom(formData);
+    const photos = photosFrom(formData, fields.kind);
+    const attachments = attachmentsFrom(formData);
     validatePublishedEntry(fields, photos);
 
     const sortOrder = await nextSortOrder(auth.supabase);
@@ -283,7 +460,20 @@ export async function createArchiveEntry(formData: FormData) {
     }
 
     const photoError = await replacePhotos(auth.supabase, entryId, photos);
-    if (photoError) return fail(photoError);
+    if (photoError) {
+      await auth.supabase.from("archive_entries").delete().eq("id", entryId);
+      return fail(photoError);
+    }
+
+    const attachmentError = await replaceAttachments(
+      auth.supabase,
+      entryId,
+      attachments
+    );
+    if (attachmentError) {
+      await auth.supabase.from("archive_entries").delete().eq("id", entryId);
+      return fail(attachmentError);
+    }
 
     revalidatePath("/", "layout");
     return ok();
@@ -297,7 +487,8 @@ export async function updateArchiveEntry(formData: FormData) {
 
     const id = requiredText(formData, "id", "আইডি", 64);
     const submitted = fieldsFrom(formData);
-    const photos = photosFrom(formData);
+    const photos = photosFrom(formData, submitted.kind);
+    const attachments = attachmentsFrom(formData);
 
     const { data: existing, error: existingError } = await auth.supabase
       .from("archive_entries")
@@ -312,10 +503,17 @@ export async function updateArchiveEntry(formData: FormData) {
     const next = { ...submitted, slug: existing.slug as string };
     validatePublishedEntry(next, photos);
 
-    const { data: existingPhotos } = await auth.supabase
-      .from("archive_media")
-      .select("image_url")
-      .eq("entry_id", id);
+    const [{ data: existingPhotos }, { data: existingAttachments }] =
+      await Promise.all([
+        auth.supabase
+          .from("archive_media")
+          .select("image_url")
+          .eq("entry_id", id),
+        auth.supabase
+          .from("archive_attachments")
+          .select("file_url")
+          .eq("entry_id", id),
+      ]);
 
     const { error } = await auth.supabase
       .from("archive_entries")
@@ -333,6 +531,13 @@ export async function updateArchiveEntry(formData: FormData) {
     const photoError = await replacePhotos(auth.supabase, id, photos);
     if (photoError) return fail(photoError);
 
+    const attachmentError = await replaceAttachments(
+      auth.supabase,
+      id,
+      attachments
+    );
+    if (attachmentError) return fail(attachmentError);
+
     // Storage cleanup last, and only for files this entry no longer refers to.
     // A failed cleanup leaves an orphaned object, which is far cheaper than
     // deleting a file the saved row still points at.
@@ -340,9 +545,16 @@ export async function updateArchiveEntry(formData: FormData) {
     const droppedPhotos = ((existingPhotos as { image_url: string }[] | null) ?? [])
       .map((p) => p.image_url)
       .filter((url) => !keptPhotos.has(url));
+    const keptAttachments = new Set(attachments.map((attachment) => attachment.file_url));
+    const droppedAttachments = (
+      (existingAttachments as { file_url: string }[] | null) ?? []
+    )
+      .map((attachment) => attachment.file_url)
+      .filter((url) => !keptAttachments.has(url));
 
     await deleteMediaByUrls([
       ...droppedPhotos,
+      ...droppedAttachments,
       existing?.cover_image_url !== next.cover_image_url
         ? (existing?.cover_image_url as string | undefined)
         : null,
@@ -377,16 +589,25 @@ export async function deleteArchiveEntry(formData: FormData) {
       .eq("id", id)
       .maybeSingle();
 
-    const { data: photos } = await auth.supabase
-      .from("archive_media")
-      .select("image_url")
-      .eq("entry_id", id);
+    const [{ data: photos }, { data: attachments }] = await Promise.all([
+      auth.supabase
+        .from("archive_media")
+        .select("image_url")
+        .eq("entry_id", id),
+      auth.supabase
+        .from("archive_attachments")
+        .select("file_url")
+        .eq("entry_id", id),
+    ]);
 
     const { error } = await auth.supabase.from("archive_entries").delete().eq("id", id);
     if (error) return fail(error.message);
 
     await deleteMediaByUrls([
       ...((photos as { image_url: string }[] | null) ?? []).map((p) => p.image_url),
+      ...((attachments as { file_url: string }[] | null) ?? []).map(
+        (attachment) => attachment.file_url
+      ),
       entry?.cover_image_url as string | undefined,
       entry?.video_file_url as string | undefined,
       entry?.audio_url as string | undefined,

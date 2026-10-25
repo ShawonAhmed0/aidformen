@@ -35,6 +35,7 @@ const navGroups = [
             { title: 'Our Team', href: '/admin/team', icon: Users },
             { title: 'Activities', href: '/admin/activities', icon: FileText },
             { title: 'News & Media', href: '/admin/archive', icon: Images },
+            { title: 'Media Library', href: '/admin/media', icon: ImageIcon },
             { title: 'Videos', href: '/admin/videos', icon: Video },
         ],
     },
@@ -53,7 +54,6 @@ const navGroups = [
         label: 'Coming soon',
         items: [
             { title: 'Forum moderation', href: '/admin/forum', icon: MessagesSquare },
-            { title: 'Media Library', href: '/admin/media', icon: ImageIcon },
         ],
     },
 ]

@@ -39,7 +39,9 @@ import {
     archiveSections,
     archiveSlugFromTitle,
     isArchiveSlug,
+    MAX_ARCHIVE_ATTACHMENTS,
     MAX_ARCHIVE_PHOTOS,
+    MAX_ARCHIVE_REFERENCE_PHOTOS,
     type ArchiveContentType,
     type ArchiveEntry,
     type ArchiveEventStatus,
@@ -55,6 +57,10 @@ import { EditorialTextField } from "./EditorialTextField";
 import { MediaField } from "./MediaField";
 import { DocumentPicker } from "./DocumentPicker";
 import { ArchiveGalleryEditor, type GalleryPhoto } from "./ArchiveGalleryEditor";
+import {
+    ArchiveAttachmentsEditor,
+    type AttachmentDraft,
+} from "./ArchiveAttachmentsEditor";
 import { cn } from "@/lib/utils";
 
 const s = (v: string | null | undefined) => v ?? "";
@@ -148,6 +154,7 @@ type Draft = {
     source_url: string;
     is_published: boolean;
     photos: GalleryPhoto[];
+    attachments: AttachmentDraft[];
 };
 
 const emptyDraft = (kind: ArchiveKind): Draft => ({
@@ -186,6 +193,7 @@ const emptyDraft = (kind: ArchiveKind): Draft => ({
     // after the required title and primary media have been checked.
     is_published: false,
     photos: [],
+    attachments: [],
 });
 
 const toDraft = (entry: ArchiveEntry): Draft => ({
@@ -225,6 +233,13 @@ const toDraft = (entry: ArchiveEntry): Draft => ({
         url: photo.image_url,
         caption: s(photo.caption),
         caption_en: s(photo.caption_en),
+    })),
+    attachments: entry.attachments.map((attachment) => ({
+        kind: attachment.kind,
+        label: s(attachment.label),
+        label_en: s(attachment.label_en),
+        url: attachment.file_url,
+        mime_type: s(attachment.mime_type),
     })),
 });
 
@@ -300,6 +315,27 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
             );
             return;
         }
+        const photoLimit =
+            draft.kind === "photo"
+                ? MAX_ARCHIVE_PHOTOS
+                : MAX_ARCHIVE_REFERENCE_PHOTOS;
+        if (draft.photos.length > photoLimit) {
+            toast.error(
+                `এই উপস্থাপনার ধরনে সর্বোচ্চ ${photoLimit}টি ছবি রাখা যাবে। অতিরিক্ত ছবি সরান।`
+            );
+            return;
+        }
+        const hasInvalidAttachment = draft.attachments.some((attachment) => {
+            try {
+                return new URL(attachment.url).protocol !== "https:";
+            } catch {
+                return true;
+            }
+        });
+        if (hasInvalidAttachment) {
+            toast.error("প্রতিটি রেফারেন্সে একটি সঠিক https:// লিঙ্ক দিন অথবা অসম্পূর্ণটি সরান।");
+            return;
+        }
         if (draft.is_published) {
             const error = publicationError(draft);
             if (error) {
@@ -348,6 +384,14 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
             body.append("photo_url", photo.url);
             body.append("photo_caption", photo.caption);
             body.append("photo_caption_en", photo.caption_en);
+        });
+
+        draft.attachments.forEach((attachment) => {
+            body.append("attachment_kind", attachment.kind);
+            body.append("attachment_label", attachment.label);
+            body.append("attachment_label_en", attachment.label_en);
+            body.append("attachment_url", attachment.url);
+            body.append("attachment_mime_type", attachment.mime_type);
         });
 
         body.append("is_published", String(draft.is_published));
@@ -1106,15 +1150,26 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                 </section>
                             )}
 
-                            {draft.kind === "photo" && (
-                                <section className="rounded-xl border border-ink-200 p-5">
-                                    <ArchiveGalleryEditor
-                                        photos={draft.photos}
-                                        onChange={(photos) => patch({ photos })}
-                                        max={MAX_ARCHIVE_PHOTOS}
-                                    />
-                                </section>
-                            )}
+                            <section className="rounded-xl border border-ink-200 p-5">
+                                <ArchiveGalleryEditor
+                                    photos={draft.photos}
+                                    onChange={(photos) => patch({ photos })}
+                                    max={
+                                        draft.kind === "photo"
+                                            ? MAX_ARCHIVE_PHOTOS
+                                            : MAX_ARCHIVE_REFERENCE_PHOTOS
+                                    }
+                                    mode={draft.kind === "photo" ? "gallery" : "references"}
+                                />
+                            </section>
+
+                            <section className="rounded-xl border border-ink-200 p-5">
+                                <ArchiveAttachmentsEditor
+                                    attachments={draft.attachments}
+                                    onChange={(attachments) => patch({ attachments })}
+                                    max={MAX_ARCHIVE_ATTACHMENTS}
+                                />
+                            </section>
 
                             {draft.kind === "video" && (
                                 <section className="space-y-5 rounded-xl border border-ink-200 bg-surface-sunken p-5">

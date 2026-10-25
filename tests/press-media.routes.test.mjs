@@ -125,7 +125,9 @@ test("article typography and the related-news rail stay editorial instead of car
 test("archive long-form editing supports safe formatting and centred inline images", () => {
   assert.match(archiveManager, /<EditorialTextField\b/);
   assert.match(editorialField, /uploadToMedia\(file,\s*["']archive["']\)/);
-  assert.match(editorialField, /\*\*|Heading2|ListOrdered/);
+  assert.match(editorialField, /className=["']ql-bold["']/);
+  assert.match(editorialField, /className=["']ql-table-better["']/);
+  assert.match(editorialField, /getSemanticHTML\(\)/);
   assert.match(editorialContent, /safeMediaUrl\(/);
   assert.match(editorialContent, /safeEditorialLink\(/);
   assert.match(editorialContent, /["'][^"']*mx-auto\s+w-full[^"']*["']/);
@@ -133,7 +135,11 @@ test("archive long-form editing supports safe formatting and centred inline imag
     editorialContent,
     /article\s*\?\s*["']max-w-full text-left["']\s*:\s*["']max-w-2xl text-center["']/,
   );
-  assert.doesNotMatch(editorialContent, /dangerouslySetInnerHTML/);
+  assert.match(editorialContent, /const safeHtml = sanitizeEditorialHtml\(content\)/);
+  assert.match(
+    editorialContent,
+    /dangerouslySetInnerHTML=\{\{ __html: safeHtml \}\}/,
+  );
   assert.match(route, /<EditorialContent\s+content=\{item\.body\}/);
 });
 

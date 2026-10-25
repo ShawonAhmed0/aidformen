@@ -1,7 +1,11 @@
 import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
-import type { ArchiveEntry, ArchivePhoto } from "@/lib/types/archive";
+import type {
+  ArchiveAttachment,
+  ArchiveEntry,
+  ArchivePhoto,
+} from "@/lib/types/archive";
 
 /**
  * Read side of the archive.
@@ -20,7 +24,7 @@ function warn(scope: string, error: { message: string } | null) {
   if (error) console.warn(`[archive] ${scope}: ${error.message}`);
 }
 
-type EntryRow = Omit<ArchiveEntry, "photos">;
+type EntryRow = Omit<ArchiveEntry, "photos" | "attachments">;
 
 /**
  * New application code can be deployed a few minutes before migration 0012 is
@@ -51,34 +55,51 @@ function normalizeEntryRow(row: EntryRow): EntryRow {
   };
 }
 
-async function withPhotos(rows: EntryRow[]): Promise<ArchiveEntry[]> {
+async function withRelations(rows: EntryRow[]): Promise<ArchiveEntry[]> {
   if (rows.length === 0) return [];
 
   const normalizedRows = rows.map(normalizeEntryRow);
 
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("archive_media")
-    .select("*")
-    .in(
-      "entry_id",
-      normalizedRows.map((r) => r.id)
-    )
-    .order("sort_order", { ascending: true });
+  const ids = normalizedRows.map((row) => row.id);
+  const [photosResult, attachmentsResult] = await Promise.all([
+    supabase
+      .from("archive_media")
+      .select("*")
+      .in("entry_id", ids)
+      .order("sort_order", { ascending: true }),
+    // Migration 0016 can land shortly after the application during a rolling
+    // deploy. A missing relation deliberately degrades to no attachments.
+    supabase
+      .from("archive_attachments")
+      .select("*")
+      .in("entry_id", ids)
+      .order("sort_order", { ascending: true }),
+  ]);
 
-  warn("archive_media", error);
+  warn("archive_media", photosResult.error);
+  warn("archive_attachments", attachmentsResult.error);
 
   const byEntry = new Map<string, ArchivePhoto[]>();
-  for (const photo of (data as ArchivePhoto[] | null) ?? []) {
+  for (const photo of (photosResult.data as ArchivePhoto[] | null) ?? []) {
     const list = byEntry.get(photo.entry_id);
     if (list) list.push(photo);
     else byEntry.set(photo.entry_id, [photo]);
   }
 
+  const attachmentsByEntry = new Map<string, ArchiveAttachment[]>();
+  for (const attachment of
+    (attachmentsResult.data as ArchiveAttachment[] | null) ?? []) {
+    const list = attachmentsByEntry.get(attachment.entry_id);
+    if (list) list.push(attachment);
+    else attachmentsByEntry.set(attachment.entry_id, [attachment]);
+  }
+
   return normalizedRows.map((row) => ({
     ...row,
     photos: byEntry.get(row.id) ?? [],
+    attachments: attachmentsByEntry.get(row.id) ?? [],
   }));
 }
 
@@ -93,7 +114,7 @@ export const getArchiveEntries = cache(async (): Promise<ArchiveEntry[]> => {
     .order("created_at", { ascending: true });
 
   warn("archive_entries", error);
-  return withPhotos((data as EntryRow[] | null) ?? []);
+  return withRelations((data as EntryRow[] | null) ?? []);
 });
 
 /**
@@ -120,7 +141,7 @@ export async function getRelatedArchiveEntries(
     .limit(candidateLimit);
 
   warn("related_archive_entries", error);
-  const candidates = await withPhotos((data as EntryRow[] | null) ?? []);
+  const candidates = await withRelations((data as EntryRow[] | null) ?? []);
 
   return candidates
     .map((entry, index) => ({
@@ -150,7 +171,7 @@ export const getAllArchiveEntries = cache(async (): Promise<ArchiveEntry[]> => {
     .order("created_at", { ascending: true });
 
   warn("admin:archive_entries", error);
-  return withPhotos((data as EntryRow[] | null) ?? []);
+  return withRelations((data as EntryRow[] | null) ?? []);
 });
 
 /** One published entry for the server-rendered, shareable detail route. */
@@ -184,7 +205,7 @@ export const getArchiveEntryBySlug = cache(
 
     if (!data) return null;
 
-    const [entry] = await withPhotos([data as EntryRow]);
+    const [entry] = await withRelations([data as EntryRow]);
     return entry ?? null;
   }
 );

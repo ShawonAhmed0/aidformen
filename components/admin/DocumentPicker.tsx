@@ -8,7 +8,7 @@ import type { MediaFolder } from "@/lib/types/media";
 import { cn } from "@/lib/utils";
 
 type DocumentPickerProps = {
-    /** Current PDF URL, or null for empty. */
+    /** Current PDF/Word URL, or null for empty. */
     value: string | null;
     onChange: (url: string | null) => void;
     folder: MediaFolder;
@@ -22,23 +22,23 @@ const MAX_BYTES = 10 * 1024 * 1024;
 /** Stored names are generated, so show the tail of the object key, not a guess. */
 function fileNameFrom(url: string) {
     try {
-        return decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "") || "PDF";
+        return decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "") || "Document";
     } catch {
-        return "PDF";
+        return "Document";
     }
 }
 
 /**
- * Drag-and-drop PDF field, mirroring ImagePicker so the two read the same in a
+ * Drag-and-drop PDF/Word field, mirroring ImagePicker so the two read the same in a
  * form. Files go directly to Supabase Storage so Next's 1 MB Server Action
  * body ceiling is never in the upload path; Storage RLS still requires an
- * authenticated administrator and the upload helper re-checks the PDF.
+ * authenticated administrator and the upload helper re-checks its signature.
  */
 export function DocumentPicker({
     value,
     onChange,
     folder,
-    label = "PDF",
+    label = "ডকুমেন্ট",
     helper,
     className,
 }: DocumentPickerProps) {
@@ -53,10 +53,15 @@ export function DocumentPicker({
         setError(null);
         if (!file) return;
 
-        const looksLikePdf =
-            file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-        if (!looksLikePdf) {
-            setError("শুধু PDF ফাইল দেওয়া যাবে।");
+        const lowerName = file.name.toLowerCase();
+        const supported =
+            file.type === "application/pdf" ||
+            file.type === "application/msword" ||
+            file.type ===
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+            /\.(pdf|doc|docx)$/.test(lowerName);
+        if (!supported) {
+            setError("শুধু PDF, DOC অথবা DOCX ফাইল দেওয়া যাবে।");
             return;
         }
         if (file.size > MAX_BYTES) {
@@ -151,10 +156,10 @@ export function DocumentPicker({
                             <FileText className="size-5" aria-hidden="true" />
                         </span>
                         <span className="text-sm font-medium text-ink-700">
-                            PDF টেনে আনুন বা ক্লিক করুন
+                            ডকুমেন্ট টেনে আনুন বা ক্লিক করুন
                         </span>
                         <span className="text-xs text-ink-500">
-                            শুধু PDF · সর্বোচ্চ ১০ MB
+                            PDF, DOC, DOCX · সর্বোচ্চ ১০ MB
                         </span>
                     </button>
                 )}
@@ -170,7 +175,7 @@ export function DocumentPicker({
             <input
                 ref={inputRef}
                 type="file"
-                accept="application/pdf,.pdf"
+                accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,.doc,.docx"
                 className="sr-only"
                 aria-label={label}
                 onChange={(e) => {

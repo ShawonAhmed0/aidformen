@@ -30,10 +30,12 @@ export function ArchiveGalleryEditor({
     photos,
     onChange,
     max,
+    mode = "gallery",
 }: {
     photos: GalleryPhoto[];
     onChange: (photos: GalleryPhoto[]) => void;
     max: number;
+    mode?: "gallery" | "references";
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [progress, setProgress] = useState<{ done: number; total: number } | null>(
@@ -115,16 +117,20 @@ export function ArchiveGalleryEditor({
     };
 
     const busy = progress !== null;
+    const isReferenceGallery = mode === "references";
+    const overLimit = photos.length > max;
 
     return (
         <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <span className="flex text-sm font-medium text-ink-700">
-                        গ্যালারির ছবি
+                        {isReferenceGallery ? "সহায়ক / রেফারেন্স ছবি" : "গ্যালারির ছবি"}
                     </span>
                     <p className="mt-0.5 text-xs text-ink-500">
-                        প্রথম ছবিটি কভার হিসেবে ব্যবহৃত হবে যদি আলাদা কভার না দেওয়া হয়।
+                        {isReferenceGallery
+                            ? `সর্বোচ্চ ${max}টি। আলাদা কভার না দিলে প্রথম ছবিটি কার্ডে দেখাবে; বাকিগুলো শুধু বিস্তারিত পাতায় থাকবে।`
+                            : "প্রথম ছবিটি কভার হিসেবে ব্যবহৃত হবে যদি আলাদা কভার না দেওয়া হয়।"}
                     </p>
                 </div>
 
@@ -154,7 +160,7 @@ export function ArchiveGalleryEditor({
                 multiple
                 accept={ARCHIVE_IMAGE_TYPES.join(",")}
                 className="sr-only"
-                aria-label="গ্যালারির ছবি"
+                aria-label={isReferenceGallery ? "রেফারেন্স ছবি" : "গ্যালারির ছবি"}
                 onChange={(event) => {
                     void addFiles(event.target.files);
                     event.target.value = "";
@@ -167,9 +173,18 @@ export function ArchiveGalleryEditor({
                 </p>
             )}
 
+            {overLimit && (
+                <p role="alert" className="text-xs font-medium text-warning">
+                    এই ধরনের এন্ট্রিতে সর্বোচ্চ {max}টি ছবি রাখা যাবে। সংরক্ষণের আগে
+                    অতিরিক্ত {photos.length - max}টি ছবি সরান।
+                </p>
+            )}
+
             {photos.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-ink-300 px-6 py-8 text-center text-sm text-ink-500">
-                    এখনো কোনো ছবি যোগ করা হয়নি।
+                    {isReferenceGallery
+                        ? "এখনো কোনো সহায়ক ছবি যোগ করা হয়নি।"
+                        : "এখনো কোনো ছবি যোগ করা হয়নি।"}
                 </p>
             ) : (
                 <ul className="space-y-3">
@@ -196,7 +211,11 @@ export function ArchiveGalleryEditor({
                                     onChange={(v) => update(index, { caption: v })}
                                     valueEn={photo.caption_en}
                                     onChangeEn={(v) => update(index, { caption_en: v })}
-                                    placeholder="ঐচ্ছিক — ছবিটি কী দেখাচ্ছে"
+                                    placeholder={
+                                        isReferenceGallery
+                                            ? "ঐচ্ছিক — ছবিটির প্রাসঙ্গিকতা"
+                                            : "ঐচ্ছিক — ছবিটি কী দেখাচ্ছে"
+                                    }
                                 />
                             </div>
 
