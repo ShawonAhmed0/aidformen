@@ -24,13 +24,13 @@ export function HomeAboutSection({
   const copy =
     locale === "en"
       ? {
-          history: "Our journey",
+          history: "How we began",
           more: "Read our full story",
           less: "Show less",
           contents: "Contents",
         }
       : {
-          history: "আমাদের পথচলা",
+          history: "আমাদের সূচনা",
           more: "সম্পূর্ণ ইতিহাস পড়ুন",
           less: "কম দেখান",
           contents: "সূচিপত্র",

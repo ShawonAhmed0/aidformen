@@ -19,7 +19,7 @@ const bn = {
   },
   nav: {
     home: "হোম",
-    about: "সম্পর্কে",
+    about: "আমাদের পথচলা",
     mediaCenter: "মিডিয়া সেন্টার",
     research: "গবেষণা ও কেস স্টাডি",
     contact: "যোগাযোগ",
@@ -293,7 +293,7 @@ const en = {
   },
   nav: {
     home: "Home",
-    about: "About",
+    about: "Our journey",
     mediaCenter: "Media Center",
     research: "Research & Case Studies",
     contact: "Contact",

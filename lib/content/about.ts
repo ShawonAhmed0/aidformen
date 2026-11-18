@@ -42,17 +42,17 @@ export type AboutContent = {
 
 const bn: AboutContent = {
   meta: {
-    title: "আমাদের সম্পর্কে",
+    title: "আমাদের পথচলা",
     description: "এইড ফর মেন ফাউন্ডেশন — আমাদের পথচলা, দীর্ঘ সংগ্রামের অর্জন এবং পুরুষের মানবাধিকার ও আইনি সমতার ১৩ দফা দাবি।",
   },
   hero: {
     eyebrow: "এইড ফর মেন ফাউন্ডেশন (Aid For Men Foundation)",
-    title: "আমাদের সম্পর্কে",
+    title: "আমাদের পথচলা",
     subtitle: "আমাদের অবদান, পুরুষ আন্দোলনের অবদান এবং আমাদের দাবি",
   },
   contentsLabel: "সূচিপত্র",
   journey: {
-    nav: "আমাদের পথচলা",
+    nav: "সংগ্রামের পথচলা",
     title: "এক যুগান্তকারী সংগ্রামের পথচলা",
     paragraphs: [
       "সমাজে নারী ও শিশুর অধিকার নিয়ে বহু আলোচনা হলেও, পুরুষের মানবাধিকার, আইনি সুরক্ষা এবং পারিবারিক সমতা নিশ্চিত করার বিষয়টি দীর্ঘকাল উপেক্ষিত ছিল। ২০১২-১৩ সালের দিকে এই অবহেলিত জনগোষ্ঠীর অধিকার ও আইনি সুরক্ষার পক্ষে যখন প্রাতিষ্ঠানিক উদ্যোগ শুরু হয়, তখন বিষয়টি সমাজে একরকম অস্পৃশ্য বা ট্যাবু হিসেবে দেখা হতো। তবে অদম্য মনোবল ও সুনির্দিষ্ট যৌক্তিক অবস্থানের ফলে ২০১৭-১৮ সালের মধ্যে এই আন্দোলন একটি শক্তিশালী সাংগঠনিক ভিত্তি লাভ করে এবং সারা দেশের পুরুষ অধিকারকর্মী ও সচেতন মানুষ এই প্ল্যাটফর্মে সমবেত হন। দীর্ঘ সংগ্রাম ও ধারাবাহিক কার্যক্রমের পর ২০২০ সালে ‘এইড ফর মেন ফাউন্ডেশন’ সরকারিভাবে রেজিস্ট্রেশন লাভ করে এবং আইনি কাঠামোর ভেতর থেকে আরও জোরালোভাবে কার্যক্রম পরিচালনা করে যাচ্ছে।",
@@ -181,17 +181,17 @@ const bn: AboutContent = {
 
 const en: AboutContent = {
   meta: {
-    title: "About us",
+    title: "Our journey",
     description: "Aid For Men Foundation — our journey, the milestones of a long struggle, and our 13-point demands for men’s human rights and legal equality.",
   },
   hero: {
     eyebrow: "Aid For Men Foundation",
-    title: "About us",
+    title: "Our journey",
     subtitle: "Our Contributions, the Men’s Rights Movement, and Our Demands",
   },
   contentsLabel: "Contents",
   journey: {
-    nav: "Our journey",
+    nav: "A journey of struggle",
     title: "A Groundbreaking Journey of Struggle",
     paragraphs: [
       "While the rights of women and children have long been widely discussed in society, the issue of ensuring men’s human rights, legal protection, and family equality remained neglected for decades. When institutional initiatives began around 2012–2013 to advocate for the rights and legal protections of this overlooked demographic, the topic was treated almost as an untouchable taboo in society. However, driven by unwavering determination and clear, logical arguments, the movement gained a strong organizational footing by 2017–2018, bringing together men’s rights activists and conscious citizens from across the country onto a single platform. Following years of persistent struggle and continuous advocacy, Aid For Men Foundation received official government registration in 2020 and has since been operating with even greater momentum within the legal framework.",

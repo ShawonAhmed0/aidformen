@@ -100,7 +100,7 @@ export default async function Hero({ locale }: { locale: Locale }) {
   const description = pick(locale, hero?.description, hero?.description_en);
   const primaryLabel =
     pick(locale, hero?.primary_cta_label, hero?.primary_cta_label_en) ||
-    (locale === "en" ? "Learn about us" : "আমাদের সম্পর্কে জানুন");
+    (locale === "en" ? "Our journey" : "আমাদের পথচলা");
   const secondaryLabel =
     pick(locale, hero?.secondary_cta_label, hero?.secondary_cta_label_en) ||
     (locale === "en" ? "Join as a volunteer" : "স্বেচ্ছাসেবী হিসেবে যোগ দিন");
