@@ -24,13 +24,15 @@ export function HomeAboutSection({
   const copy =
     locale === "en"
       ? {
-          history: "How we began",
+          title: "About us",
+          history: "Our Journey",
           more: "Read our full story",
           less: "Show less",
           contents: "Contents",
         }
       : {
-          history: "আমাদের সূচনা",
+          title: "আমাদের সম্পর্কে",
+          history: "আমাদের পথচলা",
           more: "সম্পূর্ণ ইতিহাস পড়ুন",
           less: "কম দেখান",
           contents: "সূচিপত্র",
@@ -47,7 +49,7 @@ export function HomeAboutSection({
             {about.hero.eyebrow}
           </p>
           <h2 id="home-about-title" className="mt-2 text-2xl text-brand-950 sm:text-3xl">
-            {about.hero.title}
+            {copy.title}
           </h2>
 
           <HomeAboutBody

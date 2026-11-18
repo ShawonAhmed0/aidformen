@@ -6,7 +6,6 @@ import {
     Bot,
     LayoutDashboard,
     Users,
-    FileText,
     Video,
     Image as ImageIcon,
     Images,
@@ -31,7 +30,6 @@ const navGroups = [
         items: [
             { title: 'Hero & Carousel', href: '/admin/hero', icon: PanelsTopLeft },
             { title: 'Our Team', href: '/admin/team', icon: Users },
-            { title: 'Activities', href: '/admin/activities', icon: FileText },
             { title: 'News & Media', href: '/admin/archive', icon: Images },
             { title: 'Media Library', href: '/admin/media', icon: ImageIcon },
             { title: 'Videos', href: '/admin/videos', icon: Video },

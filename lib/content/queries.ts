@@ -2,8 +2,6 @@ import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
 import type {
-  Activity,
-  ActivityPlacement,
   CarouselImage,
   HeroContent,
   SiteSettings,
@@ -82,25 +80,6 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings | null> => {
   return (data as SiteSettings | null) ?? null;
 });
 
-export const getActivities = cache(
-  async (placement?: ActivityPlacement): Promise<Activity[]> => {
-    const supabase = await createClient();
-
-    let query = supabase
-      .from("activities")
-      .select("*")
-      .eq("is_published", true)
-      .order("sort_order", { ascending: true });
-
-    if (placement) query = query.eq("placement", placement);
-
-    const { data, error } = await query;
-
-    warn(`activities${placement ? `:${placement}` : ""}`, error);
-    return (data as Activity[] | null) ?? [];
-  }
-);
-
 export const getVideos = cache(async (): Promise<Video[]> => {
   const supabase = await createClient();
 
@@ -142,19 +121,6 @@ export const getAllTeamMembers = cache(async (): Promise<TeamMember[]> => {
 
   warn("admin:team_members", error);
   return (data as TeamMember[] | null) ?? [];
-});
-
-export const getAllActivities = cache(async (): Promise<Activity[]> => {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("activities")
-    .select("*")
-    .order("placement", { ascending: true })
-    .order("sort_order", { ascending: true });
-
-  warn("admin:activities", error);
-  return (data as Activity[] | null) ?? [];
 });
 
 export const getAllVideos = cache(async (): Promise<Video[]> => {

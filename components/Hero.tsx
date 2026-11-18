@@ -87,6 +87,17 @@ function HeroCopy({
   );
 }
 
+/** Earlier labels for the button that now leads to "Our Journey". */
+const staleAboutLabels = new Set([
+  "আমাদের সম্পর্কে জানুন",
+  "আমাদের সম্পর্কে",
+  "know about us",
+  "learn about us",
+  "about us",
+  // Same name, earlier capitalisation.
+  "our journey",
+]);
+
 export default async function Hero({ locale }: { locale: Locale }) {
   const [images, hero] = await Promise.all([
     getCarouselImages(),
@@ -98,9 +109,15 @@ export default async function Hero({ locale }: { locale: Locale }) {
     (locale === "en" ? "Aid For Men Foundation" : "এইড ফর মেন ফাউন্ডেশন");
   const eyebrow = pick(locale, hero?.eyebrow, hero?.eyebrow_en);
   const description = pick(locale, hero?.description, hero?.description_en);
+  // The About page is now "Our Journey". The stored button text still reads
+  // "About us" until it is edited in /admin/hero (or migration 0018 runs), so
+  // those old wordings — and only those — give way to the page's new name.
+  const journeyLabel = locale === "en" ? "Our Journey" : "আমাদের পথচলা";
+  const storedPrimary = pick(locale, hero?.primary_cta_label, hero?.primary_cta_label_en);
   const primaryLabel =
-    pick(locale, hero?.primary_cta_label, hero?.primary_cta_label_en) ||
-    (locale === "en" ? "Our journey" : "আমাদের পথচলা");
+    !storedPrimary || staleAboutLabels.has(storedPrimary.trim().toLowerCase())
+      ? journeyLabel
+      : storedPrimary;
   const secondaryLabel =
     pick(locale, hero?.secondary_cta_label, hero?.secondary_cta_label_en) ||
     (locale === "en" ? "Join as a volunteer" : "স্বেচ্ছাসেবী হিসেবে যোগ দিন");

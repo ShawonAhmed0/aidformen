@@ -181,12 +181,12 @@ const bn: AboutContent = {
 
 const en: AboutContent = {
   meta: {
-    title: "Our journey",
+    title: "Our Journey",
     description: "Aid For Men Foundation — our journey, the milestones of a long struggle, and our 13-point demands for men’s human rights and legal equality.",
   },
   hero: {
     eyebrow: "Aid For Men Foundation",
-    title: "Our journey",
+    title: "Our Journey",
     subtitle: "Our Contributions, the Men’s Rights Movement, and Our Demands",
   },
   contentsLabel: "Contents",

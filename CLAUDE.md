@@ -77,7 +77,7 @@ proxy.ts                locale detection/redirect + admin auth gate
 - Cookie writes from Server Components are swallowed on purpose; the proxy is
   what persists sessions, and this client only reads.
 - **RLS is the real access control.** Tables: `hero_content`, `carousel_images`,
-  `site_settings`, `team_members`, `activities`, `videos`, `archive_entries` /
+  `site_settings`, `team_members`, `videos`, `archive_entries` /
   `archive_media`, `newsletter_subscribers`, `profiles`, `chatbot_settings`.
   Public read, admin write. `archive_media` is the
   exception to "public read published rows": it has no `is_published` of its own
@@ -109,9 +109,8 @@ proxy.ts                locale detection/redirect + admin auth gate
 - An external video link is framed **only** if `toEmbedUrl` (`lib/embed.ts`)
   recognises the host — YouTube and Facebook. Anything
   else is offered as a link out instead of an iframe.
-- `activities` no longer has an `archive` placement. Migration 0010 moved those
-  rows into `archive_entries` and dropped it from the CHECK constraint; two
-  screens both filing "archive" content was the whole problem.
+- The homepage "Our recent work" section and the `activities` table are gone;
+  migration 0019 drops the table. Recent work is published as archive entries.
 
 ### Homepage videos come from YouTube
 

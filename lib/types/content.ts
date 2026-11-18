@@ -101,37 +101,6 @@ export type SiteSettings = {
   announcement_cta_label_en: string | null;
 };
 
-/**
- * Where a homepage activity card surfaces.
- *
- * 'archive' was a fourth placement here until migration 0010. The archive is now
- * its own table with its own kinds, galleries and filters — leaving the
- * placement in place meant two unrelated screens both filed "archive" content.
- */
-export const activityPlacements = ["feature", "advisory", "secondary"] as const;
-
-export type ActivityPlacement = (typeof activityPlacements)[number];
-
-export type Activity = {
-  id: string;
-  placement: ActivityPlacement;
-  category: string | null;
-  title: string;
-  excerpt: string | null;
-  image_url: string | null;
-  event_date: string | null;
-  location: string | null;
-  href: string | null;
-  action_label: string | null;
-  category_en: string | null;
-  title_en: string | null;
-  excerpt_en: string | null;
-  location_en: string | null;
-  action_label_en: string | null;
-  sort_order: number;
-  is_published: boolean;
-};
-
 export type Video = {
   id: string;
   title: string;

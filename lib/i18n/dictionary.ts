@@ -32,14 +32,7 @@ const bn = {
     switchLanguage: "ভাষা পরিবর্তন করুন",
   },
   home: {
-    activitiesEyebrow: "কার্যক্রম",
-    activitiesTitle: "আমাদের সাম্প্রতিক কার্যক্রম",
-    viewAllActivities: "সব কার্যক্রম দেখুন",
     readMore: "বিস্তারিত পড়ুন",
-    legalHelpTitle: "আপনি কি আইনি সাহায্য চান?",
-    legalHelpBody:
-      "আমাদের বিশেষজ্ঞ আইনজীবী দল আপনাকে সঠিক দিকনির্দেশনা প্রদান করবে।",
-    legalHelpCta: "আবেদন করুন",
     archiveEyebrow: "মিডিয়া সেন্টার",
     archiveTitle: "প্রেস ও আর্কাইভ থেকে",
     archiveBody:
@@ -160,9 +153,7 @@ const bn = {
     nextPhoto: "পরের ছবি",
     // Empty states
     emptyTitle: "আর্কাইভ প্রস্তুত করা হচ্ছে",
-    emptyBody:
-      "পুরনো কার্যক্রমের ছবি ও ভিডিও গুছিয়ে তোলা হচ্ছে। ইতিমধ্যে হোমপেজে সাম্প্রতিক কার্যক্রমের একটি সংক্ষিপ্ত চিত্র দেখতে পারেন।",
-    viewRecent: "সাম্প্রতিক কার্যক্রম দেখুন",
+    viewRecent: "হোমপেজে ফিরুন",
     noMatches: "এই ফিল্টারে কিছু পাওয়া যায়নি।",
     sectionEmpty: "এই বিভাগে এখনো কিছু প্রকাশিত হয়নি।",
     undated: "তারিখবিহীন",
@@ -301,7 +292,7 @@ const en = {
   },
   nav: {
     home: "Home",
-    about: "Our journey",
+    about: "Our Journey",
     mediaCenter: "Media Center",
     research: "Research & Case Studies",
     contact: "Contact",
@@ -314,14 +305,7 @@ const en = {
     switchLanguage: "Change language",
   },
   home: {
-    activitiesEyebrow: "Activities",
-    activitiesTitle: "Our recent work",
-    viewAllActivities: "View all activities",
     readMore: "Read more",
-    legalHelpTitle: "Do you need legal help?",
-    legalHelpBody:
-      "Our panel of experienced lawyers will guide you through the right steps.",
-    legalHelpCta: "Request help",
     archiveEyebrow: "Media Center",
     archiveTitle: "From the press and archive",
     archiveBody:
@@ -441,9 +425,7 @@ const en = {
     nextPhoto: "Next photo",
     // Empty states
     emptyTitle: "The archive is being prepared",
-    emptyBody:
-      "We are organising photographs and video from past activities. In the meantime, the homepage has a short overview of recent work.",
-    viewRecent: "See recent activities",
+    viewRecent: "Back to the homepage",
     noMatches: "Nothing matches these filters.",
     sectionEmpty: "Nothing has been published in this section yet.",
     undated: "Undated",

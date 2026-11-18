@@ -13,7 +13,6 @@ export const mediaFolders = [
   "team",
   "signatures",
   "documents",
-  "activities",
   "videos",
   "archive",
   "audio",

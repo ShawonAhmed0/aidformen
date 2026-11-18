@@ -4,7 +4,6 @@ import Announcement from "@/components/Announcement";
 import ArchivePreview from "@/components/ArchivePreview";
 import Hero from "@/components/Hero";
 import { HomeAboutSection } from "@/components/HomeAboutSection";
-import LatestActivities from "@/components/LatestActivities";
 import MediaSection from "@/components/MediaSection";
 import NewsletterCTA from "@/components/Newsletter";
 import { getHeroContent, getSiteSettings } from "@/lib/content/queries";
@@ -30,7 +29,6 @@ export default async function Home({
       <Hero locale={lang} />
       <HomeAboutSection locale={lang} hero={hero} />
       <Announcement locale={lang} settings={settings} />
-      <LatestActivities locale={lang} t={t} />
       <ArchivePreview locale={lang} t={t} />
       <MediaSection locale={lang} t={t} />
       <NewsletterCTA t={t} />
