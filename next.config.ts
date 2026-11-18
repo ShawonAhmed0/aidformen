@@ -80,6 +80,12 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "picsum.photos",
       },
+      // YouTube thumbnails for the homepage media section.
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+        pathname: "/vi/**",
+      },
       {
         protocol: "https",
         hostname: "www.svgrepo.com",

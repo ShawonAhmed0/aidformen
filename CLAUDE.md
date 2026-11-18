@@ -113,6 +113,14 @@ proxy.ts                locale detection/redirect + admin auth gate
   rows into `archive_entries` and dropped it from the CHECK constraint; two
   screens both filing "archive" content was the whole problem.
 
+### Homepage videos come from YouTube
+
+`MediaSection` reads the channel's public Atom feed (`lib/content/youtube.ts`,
+channel id `UCT-h0SZCzed5jHC-Daw1RCQ` = @AIDforMEN) — no API key, cached for an
+hour, 4s timeout. Videos play in an in-page `<dialog>` (youtube-nocookie). The
+admin `videos` table is now only the fallback when the feed is unreachable.
+`i.ytimg.com` is allow-listed in `next.config.ts` for the thumbnails.
+
 ### Uploads have a 1MB ceiling through Server Actions
 
 A Server Action request body is capped at **1MB** by default, so `ImagePicker` →
