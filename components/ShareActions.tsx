@@ -9,12 +9,18 @@ import { cn } from "@/lib/utils";
 type ShareActionsProps = {
   title: string;
   locale: "bn" | "en";
+  /**
+   * What to share, as a path ("/en?about=full#about") resolved against the
+   * current origin at click time. Defaults to the page itself, minus its hash.
+   */
+  url?: string;
+  /**
+   * Prints only part of the page: set on <html> as data-print-scope for the
+   * duration of the print, where globals.css hides everything outside it.
+   */
+  printScope?: string;
   className?: string;
 };
-
-function currentUrl() {
-  return window.location.href.split("#")[0];
-}
 
 function openShare(url: string) {
   window.open(url, "_blank", "noopener,noreferrer,width=720,height=620");
@@ -27,26 +33,51 @@ function openShare(url: string) {
  * preview deployments, language routes and canonical production URLs all work
  * without exposing request headers to a Client Component.
  */
-export function ShareActions({ title, locale, className }: ShareActionsProps) {
+export function ShareActions({
+  title,
+  locale,
+  url,
+  printScope,
+  className,
+}: ShareActionsProps) {
   const [copied, setCopied] = useState(false);
+
+  const currentUrl = () =>
+    url
+      ? new URL(url, window.location.origin).href
+      : window.location.href.split("#")[0];
+
+  const print = () => {
+    if (!printScope) {
+      window.print();
+      return;
+    }
+
+    const root = document.documentElement;
+    root.dataset.printScope = printScope;
+    window.addEventListener("afterprint", () => delete root.dataset.printScope, {
+      once: true,
+    });
+    window.print();
+  };
   const labels =
     locale === "en"
       ? {
           share: "Share",
           native: "Share this page",
           copy: "Copy link",
-          copied: "Link copied",
-          print: "Print or save as PDF",
+          copied: "Copied",
+          print: "Print / PDF",
           facebook: "Share on Facebook",
           whatsapp: "Share on WhatsApp",
           linkedin: "Share on LinkedIn",
         }
       : {
-          share: "শেয়ার করুন",
+          share: "শেয়ার",
           native: "এই পেজটি শেয়ার করুন",
-          copy: "লিঙ্ক কপি করুন",
-          copied: "লিঙ্ক কপি হয়েছে",
-          print: "প্রিন্ট বা PDF হিসেবে সংরক্ষণ",
+          copy: "লিঙ্ক কপি",
+          copied: "কপি হয়েছে",
+          print: "প্রিন্ট / PDF",
           facebook: "Facebook-এ শেয়ার করুন",
           whatsapp: "WhatsApp-এ শেয়ার করুন",
           linkedin: "LinkedIn-এ শেয়ার করুন",
@@ -101,7 +132,9 @@ export function ShareActions({ title, locale, className }: ShareActionsProps) {
     <div
       data-print-hide
       className={cn(
-        "flex max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto overscroll-x-contain sm:flex-wrap sm:overflow-visible",
+        // One row, always. It scrolls sideways on the narrowest phones; it
+        // used to wrap on tablets and laptops, leaving "Print" alone below.
+        "flex max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto overscroll-x-contain sm:overflow-visible",
         className,
       )}
       aria-label={labels.share}
@@ -164,7 +197,7 @@ export function ShareActions({ title, locale, className }: ShareActionsProps) {
 
       <button
         type="button"
-        onClick={() => window.print()}
+        onClick={print}
         className={buttonClass}
         aria-label={labels.print}
         title={labels.print}

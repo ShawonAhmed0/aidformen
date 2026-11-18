@@ -9,13 +9,13 @@ import {
   archiveAttachmentKinds,
   archiveContentTypes,
   archiveEventStatuses,
-  archiveKinds,
   archiveSlugFromTitle,
   archiveSlugWithSequence,
   isArchiveSlug,
   MAX_ARCHIVE_ATTACHMENTS,
   MAX_ARCHIVE_PHOTOS,
   MAX_ARCHIVE_REFERENCE_PHOTOS,
+  postKinds,
   sectionForContentType,
 } from "@/lib/types/archive";
 import { deleteMediaByUrls } from "./media";
@@ -89,7 +89,8 @@ function fieldsFrom(formData: FormData) {
     // The server derives this independently instead of trusting a client URL.
     // Updates replace it with the stored slug so published links stay stable.
     slug: slugField(headingEn || heading),
-    kind: enumField(formData, "kind", archiveKinds, "article"),
+    // Audio is an attachment on any post now, not a kind of post.
+    kind: enumField(formData, "kind", postKinds, "article"),
     section,
     content_type: contentType,
     event_status: optionalEventStatus(formData),
@@ -188,9 +189,6 @@ function validatePublishedEntry(fields: PublishableArchiveFields, photos: PhotoI
   if (fields.kind === "video" && !fields.video_url && !fields.video_file_url) {
     throw new FieldError("প্রকাশিত ভিডিও এন্ট্রিতে ভিডিও লিঙ্ক বা ফাইল দিন।");
   }
-  if (fields.kind === "audio" && !fields.audio_url) {
-    throw new FieldError("প্রকাশিত অডিও এন্ট্রিতে অডিও লিঙ্ক বা ফাইল দিন।");
-  }
 }
 
 /**
@@ -200,7 +198,7 @@ function validatePublishedEntry(fields: PublishableArchiveFields, photos: PhotoI
  * Each URL is re-validated here even though the client produced it: this action
  * is reachable with any payload, and these strings end up in an image `src`.
  */
-function photosFrom(formData: FormData, kind: (typeof archiveKinds)[number]): PhotoInput[] {
+function photosFrom(formData: FormData, kind: (typeof postKinds)[number]): PhotoInput[] {
   const urls = formData.getAll("photo_url").map(String);
   const captions = formData.getAll("photo_caption").map(String);
   const captionsEn = formData.getAll("photo_caption_en").map(String);

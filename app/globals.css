@@ -749,6 +749,26 @@
     display: none !important;
   }
 
+  /* "Print" on the homepage About card (ShareActions printScope) prints that
+     essay alone: every other homepage section drops out, and the card loses
+     its tinted panel so the text sits on plain paper. */
+  html[data-print-scope="home-about"] main > :not(#about) {
+    display: none !important;
+  }
+
+  html[data-print-scope="home-about"] #about {
+    padding: 0 !important;
+    background: none !important;
+  }
+
+  html[data-print-scope="home-about"] #about > div,
+  html[data-print-scope="home-about"] #about article {
+    max-width: none !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: none !important;
+  }
+
   [data-print-document],
   main,
   article,

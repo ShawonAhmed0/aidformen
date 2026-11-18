@@ -111,6 +111,10 @@ const bn = {
     researchTitle: "গবেষণা ও কেস স্টাডি",
     researchDescription:
       "পুরুষ অধিকার বিষয়ে কেস স্টাডি, পরিসংখ্যান ও গবেষণা প্রতিবেদন।",
+    researchCtaTitle: "কোনো ঘটনা নথিভুক্ত হওয়া দরকার?",
+    researchCtaBody:
+      "আপনার জানা কোনো ঘটনা বা তথ্য আমাদের গবেষণায় যুক্ত হতে পারে। গোপনীয়তা রক্ষা করে আমরা যাচাই করে প্রকাশ করি।",
+    researchCtaButton: "আমাদের জানান",
     // Filters
     pressMediaTab: "মিডিয়া সেন্টার",
     newsArchiveTab: "গবেষণা ও কেস স্টাডি",
@@ -180,6 +184,7 @@ const bn = {
     openReference: "রেফারেন্স খুলুন",
     officialPressRelease: "অফিসিয়াল প্রেস রিলিজ",
     audioRecording: "অডিও রেকর্ডিং",
+    listenToPost: "এই পোস্টটি শুনুন",
     openAudio: "অডিও খুলুন",
     mediaKitTitle: "Media Kit for Journalists",
     mediaKitBody:
@@ -383,6 +388,10 @@ const en = {
     researchTitle: "Research & Case Studies",
     researchDescription:
       "Case studies, statistics and research reports on men's rights.",
+    researchCtaTitle: "Know of a case that should be documented?",
+    researchCtaBody:
+      "A case or data you know of could become part of our research. We verify every account and protect the people involved before publishing.",
+    researchCtaButton: "Tell us about it",
     // Filters
     pressMediaTab: "Media Center",
     newsArchiveTab: "Research & Case Studies",
@@ -452,6 +461,7 @@ const en = {
     openReference: "Open reference",
     officialPressRelease: "Official press release",
     audioRecording: "Audio recording",
+    listenToPost: "Listen to this post",
     openAudio: "Open audio",
     mediaKitTitle: "Media Kit for Journalists",
     mediaKitBody:

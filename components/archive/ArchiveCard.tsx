@@ -7,7 +7,6 @@ import {
     FileText,
     Images,
     ImageOff,
-    Mic2,
     Play,
 } from "lucide-react";
 
@@ -35,19 +34,13 @@ export function ArchiveCard({
     className?: string;
 }) {
     const isVideo = item.kind === "video";
-    const isAudio = item.kind === "audio";
     const isArticle = item.kind === "article";
     const photoCount = item.photoCount;
 
-    const kindLabel = isVideo
-        ? t.videoKind
-        : isAudio
-          ? t.audioKind
-          : isArticle
-            ? t.articleKind
-            : t.photoKind;
-
-    const KindIcon = isVideo ? Play : isAudio ? Mic2 : isArticle ? FileText : Images;
+    // No audio tag: a recording is an optional extra on any post, not a kind
+    // of post, so the card shows what the post is — article, photos, video.
+    const kindLabel = isVideo ? t.videoKind : isArticle ? t.articleKind : t.photoKind;
+    const KindIcon = isVideo ? Play : isArticle ? FileText : Images;
 
     return (
         <Link
@@ -73,7 +66,7 @@ export function ArchiveCard({
 
                 {/* Play affordance for a video entry. The scrim underneath is what
                     keeps the white glyph legible over an arbitrary photograph. */}
-                {(isVideo || isAudio) && (
+                {isVideo && (
                     <span
                         aria-hidden="true"
                         className="absolute inset-0 flex items-center justify-center bg-ink-950/35 transition-ui group-hover:bg-ink-950/25"
@@ -90,7 +83,7 @@ export function ArchiveCard({
                 )}
 
                 <span className="absolute left-3 top-3">
-                    <Badge tone={isVideo || isAudio ? "solid" : "onDark"} size="sm">
+                    <Badge tone={isVideo ? "solid" : "onDark"} size="sm">
                         <KindIcon
                             aria-hidden="true"
                             className={cn(isVideo && "fill-current")}
@@ -128,11 +121,9 @@ export function ArchiveCard({
                 <span className="mt-auto pt-4 text-sm font-semibold text-brand-700">
                     {isVideo
                         ? t.watchVideo
-                        : isAudio
-                          ? t.listenAudio
-                          : item.kind === "photo"
-                            ? t.viewGallery
-                            : t.readArticle}
+                        : item.kind === "photo"
+                          ? t.viewGallery
+                          : t.readArticle}
                 </span>
             </span>
         </Link>

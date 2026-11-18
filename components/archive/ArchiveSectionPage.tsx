@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Archive } from "lucide-react";
+import { Archive, ArrowRight } from "lucide-react";
 
 import { ArchiveExplorer } from "@/components/archive/ArchiveExplorer";
 import { PageHero } from "@/components/PageHero";
@@ -157,6 +157,26 @@ export async function ArchiveSectionPage({
             basePath={basePath}
             subsection={requested}
           />
+        )}
+
+        {/* Research grows from cases people bring to the foundation, so the
+            page ends by asking for them. */}
+        {section === "news_archive" && (
+          <div className="mt-14 flex flex-col gap-5 rounded-2xl bg-brand-900 p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-8">
+            <div className="max-w-2xl">
+              <h2 className="text-xl text-white sm:text-2xl">{t.archive.researchCtaTitle}</h2>
+              <p className="mt-2 text-sm leading-6 text-brand-100 sm:text-base">
+                {t.archive.researchCtaBody}
+              </p>
+            </div>
+            <Link
+              href={`/${lang}/contact`}
+              className={buttonVariants({ variant: "onDark", className: "shrink-0 gap-2" })}
+            >
+              {t.archive.researchCtaButton}
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </div>
         )}
       </Section>
     </main>

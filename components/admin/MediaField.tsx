@@ -35,9 +35,9 @@ type MediaFieldProps = {
 /**
  * Single-file field that uploads straight to storage.
  *
- * The sibling `ImagePicker` posts the file through a Server Action, which caps
- * the request body at 1MB — fine for a small logo, not for a photograph off a
- * phone or a video. See lib/supabase/upload.ts for why this route is safe.
+ * Like `ImagePicker`, it never routes the file through a Server Action, whose
+ * 1 MB body cap a phone photo or a video would exceed. See
+ * lib/supabase/upload.ts for why this route is safe.
  */
 export function MediaField({
     value,

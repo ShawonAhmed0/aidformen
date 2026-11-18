@@ -11,6 +11,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { BilingualField } from "./BilingualField";
 import { MediaField } from "./MediaField";
+import { heroPrimaryLabel } from "@/lib/content/hero-labels";
 import type { HeroContent } from "@/lib/types/content";
 
 const s = (v: string | null | undefined) => v ?? "";
@@ -27,8 +28,12 @@ export function HeroEditor({ hero }: { hero: HeroContent | null }) {
         description_en: s(hero?.description_en),
         eyebrow: s(hero?.eyebrow),
         eyebrow_en: s(hero?.eyebrow_en),
-        primary_cta_label: s(hero?.primary_cta_label),
-        primary_cta_label_en: s(hero?.primary_cta_label_en),
+        // What the homepage shows, not the raw row: an old "About us" label
+        // is displayed as "Our Journey", and the form must not disagree.
+        primary_cta_label: heroPrimaryLabel(hero?.primary_cta_label, "bn"),
+        primary_cta_label_en: hero?.primary_cta_label_en?.trim()
+            ? heroPrimaryLabel(hero.primary_cta_label_en, "en")
+            : "",
         primary_cta_href: s(hero?.primary_cta_href),
         secondary_cta_label: s(hero?.secondary_cta_label),
         secondary_cta_label_en: s(hero?.secondary_cta_label_en),
@@ -164,6 +169,30 @@ export function HeroEditor({ hero }: { hero: HeroContent | null }) {
                     হিরোর পরের “আমাদের সম্পর্কে” অংশে দর্শনার্থীরা এই রেকর্ডিংটি
                     শুনতে পারবেন।
                 </p>
+                {/* The field below is empty by default, yet the homepage plays
+                    audio: the two built-in recordings. Say so, or an editor
+                    reasonably concludes the player is unlinked. */}
+                {!form.about_audio_url && (
+                    <p className="mt-3 rounded-lg bg-surface-sunken px-3 py-2 text-sm text-ink-600">
+                        এখন সাইটে নিজস্ব দুটি রেকর্ডিং বাজছে —{" "}
+                        <a
+                            href="/audio/about-bn.mp3"
+                            target="_blank"
+                            className="font-medium text-brand-700 underline underline-offset-2"
+                        >
+                            বাংলা
+                        </a>{" "}
+                        ও{" "}
+                        <a
+                            href="/audio/about-en.mp3"
+                            target="_blank"
+                            className="font-medium text-brand-700 underline underline-offset-2"
+                        >
+                            ইংরেজি
+                        </a>
+                        । এখানে নতুন অডিও আপলোড করলে দুই ভাষার পাতাতেই সেটি বাজবে।
+                    </p>
+                )}
 
                 <MediaField
                     accept="audio"

@@ -5,6 +5,7 @@ import { FaFacebookF, FaYoutube } from "react-icons/fa6";
 
 import { Container } from "./ui/container";
 import { getMediaLibraryLabels } from "@/components/media-library/labels";
+import { youtubeChannel } from "@/lib/content/youtube";
 import { pick, pickBrand, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { SiteSettings } from "@/lib/types/content";
@@ -37,6 +38,9 @@ export default function Footer({
     });
     const address = pick(locale, settings?.address, settings?.address_en);
     const phone = settings?.contact_phone?.trim();
+    // The homepage already plays this channel; the footer shouldn't need the
+    // same link typed into /admin/settings before it shows the YouTube icon.
+    const youtubeUrl = settings?.youtube_url?.trim() || youtubeChannel.url;
     const email = settings?.contact_email?.trim();
 
     const quickLinks = [
@@ -99,9 +103,9 @@ export default function Footer({
                                     <FaFacebookF className="size-[18px]" aria-hidden="true" />
                                 </a>
                             )}
-                            {settings?.youtube_url && (
+                            {youtubeUrl && (
                                 <a
-                                    href={settings.youtube_url}
+                                    href={youtubeUrl}
                                     className={socialClass}
                                     aria-label="YouTube"
                                     target="_blank"

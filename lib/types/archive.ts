@@ -13,6 +13,20 @@ export const archiveKinds = ["article", "photo", "video", "audio"] as const;
 export type ArchiveKind = (typeof archiveKinds)[number];
 
 /**
+ * The presentations an editor chooses from. Audio is no longer one of them:
+ * any post — article, photo or video — can carry a recording (`audio_url`)
+ * instead. "audio" stays in `archiveKinds` only because stored rows and the
+ * CHECK constraint still use it; such rows are shown as articles.
+ */
+export const postKinds = ["article", "photo", "video"] as const satisfies readonly ArchiveKind[];
+export type PostKind = (typeof postKinds)[number];
+
+/** The presentation a stored row is shown with. */
+export function postKind(kind: ArchiveKind): PostKind {
+  return kind === "audio" ? "article" : kind;
+}
+
+/**
  * The two public sections, as stored in `archive_entries.section`. The stored
  * ids predate the current names: `press_media` is the Media Center (/news) and
  * `news_archive` is Research & Case Studies (/research).
@@ -355,7 +369,7 @@ export function hasPlayableVideo(entry: ArchiveEntry): boolean {
 export type ArchiveItem = {
   id: string;
   slug: string;
-  kind: ArchiveKind;
+  kind: PostKind;
   section: ArchiveSection;
   contentType: ArchiveContentType;
   eventStatus: ArchiveEventStatus | null;
@@ -478,7 +492,7 @@ export function resolveArchiveEntry(
   return {
     id: entry.id,
     slug: entry.slug || `archive-${entry.id.slice(0, 8)}`,
-    kind: entry.kind,
+    kind: postKind(entry.kind),
     section: sectionForContentType[entry.content_type || "event"],
     contentType: entry.content_type || "event",
     eventStatus: entry.event_status || null,

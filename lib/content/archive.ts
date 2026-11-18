@@ -121,9 +121,10 @@ export const getArchiveEntries = cache(async (): Promise<ArchiveEntry[]> => {
 /**
  * A small, server-only set for the detail-page suggestions rail.
  *
- * Fetching a bounded candidate set keeps the article response light. Entries
- * from the same editorial section and content type are preferred, while the
- * database's newest-first order remains the tie-breaker.
+ * Fetching a bounded candidate set keeps the article response light. Only
+ * entries from the same public section qualify; within it the same content
+ * type and category rank first, and the database's newest-first order is the
+ * tie-breaker.
  */
 export async function getRelatedArchiveEntries(
   current: ArchiveEntry,
@@ -144,15 +145,17 @@ export async function getRelatedArchiveEntries(
   warn("related_archive_entries", error);
   const candidates = await withRelations((data as EntryRow[] | null) ?? []);
 
+  // Same public section only: the aside's "view all" link points at this
+  // entry's section, and a Media Center item under "View all research" read
+  // as a mistake.
+  const section = sectionForContentType[current.content_type];
+
   return candidates
+    .filter((entry) => sectionForContentType[entry.content_type] === section)
     .map((entry, index) => ({
       entry,
       index,
       score:
-        (sectionForContentType[entry.content_type] ===
-        sectionForContentType[current.content_type]
-          ? 4
-          : 0) +
         (entry.content_type === current.content_type ? 2 : 0) +
         (entry.category && entry.category === current.category ? 1 : 0),
     }))

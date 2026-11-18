@@ -6,13 +6,13 @@ import { Search, SlidersHorizontal, X } from "lucide-react";
 
 import { formatCount } from "@/lib/i18n/config";
 import {
-    archiveKinds,
+    postKinds,
     archiveSubsections,
     sortArchiveItemsNewestFirst,
     subsectionsBySection,
     type ArchiveContentType,
     type ArchiveListingItem,
-    type ArchiveKind,
+    type PostKind,
     type ArchiveSection,
     type ArchiveSubsection,
 } from "@/lib/types/archive";
@@ -20,7 +20,7 @@ import type { ArchiveLabels } from "./labels";
 import { ArchiveGrid } from "./ArchiveGrid";
 import { cn } from "@/lib/utils";
 
-type KindFilter = ArchiveKind | "all";
+type KindFilter = PostKind | "all";
 
 const inSubsection = (item: ArchiveListingItem, subsection: ArchiveSubsection) =>
     (archiveSubsections[subsection] as readonly ArchiveContentType[]).includes(
@@ -89,7 +89,7 @@ export function ArchiveExplorer({
     const activeCategories = categories.filter((value) =>
         items.some((item) => inView(item) && item.category === value)
     );
-    const activeKinds = archiveKinds.filter((value) =>
+    const activeKinds = postKinds.filter((value) =>
         items.some((item) => inView(item) && item.kind === value)
     );
     const activeYears = years.filter((option) =>
@@ -103,11 +103,10 @@ export function ArchiveExplorer({
         setQuery("");
     };
 
-    const kindLabel: Record<ArchiveKind, string> = {
+    const kindLabel: Record<PostKind, string> = {
         article: t.articleKind,
         photo: t.photoKind,
         video: t.videoKind,
-        audio: t.audioKind,
     };
 
     const subsectionLabel: Record<ArchiveSubsection, string> = {
@@ -196,7 +195,7 @@ export function ArchiveExplorer({
                                 value,
                                 label: kindLabel[value],
                             }))}
-                            onChange={(value) => setKind((value as ArchiveKind | null) ?? "all")}
+                            onChange={(value) => setKind((value as PostKind | null) ?? "all")}
                         />
                     )}
 

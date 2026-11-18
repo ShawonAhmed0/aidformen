@@ -14,6 +14,12 @@ type Block =
   | { kind: "image"; alt: string; url: string };
 
 const IMAGE_LINE = /^!\[([^\]]*)\]\(([^)\s]+)\)$/;
+/**
+ * A short label and colon opening a line, followed by more text. Capped at 70
+ * characters and barred from crossing a sentence end, so an ordinary sentence
+ * that happens to contain a colon is left alone.
+ */
+const LEAD_LABEL = /^([^:।.!?*_`[\]]{3,70}:)\s+\S/;
 const INLINE =
   /(\*\*|__)(.+?)\1|(\*|_)(.+?)\3|`([^`]+)`|\[([^\]]+)\]\(([^)\s]+)\)/g;
 
@@ -136,7 +142,16 @@ function parse(source: string): Block[] {
       continue;
     }
 
-    if (previous?.kind === "paragraph" && previous.lines.length > 0) {
+    // A single newline inside prose is usually a paragraph break that was
+    // typed without the blank line. Joining those with <br> produced one
+    // unbroken wall of text, so once the line before reads as finished prose
+    // — a full sentence, or long enough to be one — start a new paragraph.
+    // Short unpunctuated lines (an address, a signature) still stay together.
+    const last = previous?.kind === "paragraph" ? previous.lines.at(-1) : undefined;
+    const lastEndsProse =
+      last !== undefined && (/[।.!?:;]["'”’)]*$/.test(last) || last.length > 120);
+
+    if (previous?.kind === "paragraph" && previous.lines.length > 0 && !lastEndsProse) {
       previous.lines.push(line);
     } else {
       blocks.push({ kind: "paragraph", lines: [line] });
@@ -161,8 +176,11 @@ export function EditorialContent({
   locale?: "bn" | "en";
 }) {
   const article = variant === "article";
+  // Set by the text itself, not the page: an entry not yet translated shows
+  // its Bengali on /en, and Bengali needs the taller line for its matras.
+  const bengali = locale === "bn" || /[\u0980-\u09FF]/.test(content);
   const typographyClass = article
-    ? locale === "bn"
+    ? bengali
       ? "font-display text-[1.125rem] leading-[1.75] text-ink-800"
       : "font-display text-[1.125rem] leading-[1.55] text-ink-800"
     : "text-base leading-8 text-ink-700 sm:text-lg";
@@ -230,12 +248,25 @@ export function EditorialContent({
                 article && index === firstParagraph && "text-ink-950",
               )}
             >
-              {block.lines.map((line, lineIndex) => (
-                <Fragment key={lineIndex}>
-                  {lineIndex > 0 && <br />}
-                  {inline(line, `p${index}-${lineIndex}`)}
-                </Fragment>
-              ))}
+              {block.lines.map((line, lineIndex) => {
+                // Case write-ups lead many paragraphs with a short "Label:" —
+                // "রাজপথে প্রতিবাদ (২৫ জানুয়ারি ২০২০): …". Setting the label in
+                // bold lets a reader scan the case by its parts.
+                const lead = article ? LEAD_LABEL.exec(line) : null;
+                return (
+                  <Fragment key={lineIndex}>
+                    {lineIndex > 0 && <br />}
+                    {lead ? (
+                      <>
+                        <strong className="font-semibold text-ink-950">{lead[1]}</strong>
+                        {inline(line.slice(lead[1].length), `p${index}-${lineIndex}`)}
+                      </>
+                    ) : (
+                      inline(line, `p${index}-${lineIndex}`)
+                    )}
+                  </Fragment>
+                );
+              })}
             </p>
           );
         }

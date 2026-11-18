@@ -35,19 +35,20 @@ import { toEmbedUrl } from "@/lib/embed";
 import {
     archiveCover,
     archiveEventStatuses,
-    archiveKinds,
     archiveSections,
     archiveSlugFromTitle,
     isArchiveSlug,
     MAX_ARCHIVE_ATTACHMENTS,
     MAX_ARCHIVE_PHOTOS,
     MAX_ARCHIVE_REFERENCE_PHOTOS,
+    postKind,
+    postKinds,
     sectionForContentType,
     type ArchiveContentType,
     type ArchiveEntry,
     type ArchiveEventStatus,
-    type ArchiveKind,
     type ArchiveSection,
+    type PostKind,
 } from "@/lib/types/archive";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +68,7 @@ import { cn } from "@/lib/utils";
 const s = (v: string | null | undefined) => v ?? "";
 
 /** What each kind is for, so the choice is not a guess. */
-const kindInfo: Record<ArchiveKind, { label: string; description: string }> = {
+const kindInfo: Record<PostKind, { label: string; description: string }> = {
     article: {
         label: "লেখা / রিপোর্ট",
         description: "প্রেস রিলিজ, সংবাদ, কেস স্টাডি বা রিপোর্টের লেখা।",
@@ -79,10 +80,6 @@ const kindInfo: Record<ArchiveKind, { label: string; description: string }> = {
     video: {
         label: "ভিডিও আর্কাইভ",
         description: "ভিডিও প্রিভিউ বা প্রকাশিত ভিডিওর লিঙ্কসহ একটি এন্ট্রি।",
-    },
-    audio: {
-        label: "অডিও আর্কাইভ",
-        description: "বক্তব্য, সাক্ষাৎকার বা সংবাদমাধ্যমের জন্য অডিও ক্লিপ।",
     },
 };
 
@@ -120,7 +117,7 @@ const contentTypesBySection: Record<ArchiveSection, readonly ArchiveContentType[
 type Draft = {
     id: string | null;
     slug: string;
-    kind: ArchiveKind;
+    kind: PostKind;
     section: ArchiveSection;
     content_type: ArchiveContentType;
     event_status: ArchiveEventStatus | "";
@@ -154,13 +151,13 @@ type Draft = {
     attachments: AttachmentDraft[];
 };
 
-const emptyDraft = (kind: ArchiveKind): Draft => ({
+const emptyDraft = (kind: PostKind, section: ArchiveSection): Draft => ({
     id: null,
     slug: "",
     kind,
-    section: "press_media",
-    content_type: "event",
-    event_status: "upcoming",
+    section,
+    content_type: contentTypesBySection[section][0],
+    event_status: section === "press_media" ? "upcoming" : "",
     heading: "",
     heading_en: "",
     body: "",
@@ -196,7 +193,8 @@ const emptyDraft = (kind: ArchiveKind): Draft => ({
 const toDraft = (entry: ArchiveEntry): Draft => ({
     id: entry.id,
     slug: entry.slug,
-    kind: entry.kind,
+    // A stored "audio" post opens as an article; its recording carries over.
+    kind: postKind(entry.kind),
     // Rows saved under the old pairing keep a stale section; the type decides.
     section: sectionForContentType[entry.content_type],
     content_type: entry.content_type,
@@ -241,7 +239,19 @@ const toDraft = (entry: ArchiveEntry): Draft => ({
     })),
 });
 
-export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
+/**
+ * Editor for one public section's entries — the Media Center or Research &
+ * Case Studies. The page hands over only that section's rows, and new entries
+ * start in it; an entry whose type moves it to the other section leaves this
+ * list on the next refresh and appears on the other page.
+ */
+export function ArchiveManager({
+    entries,
+    section,
+}: {
+    entries: ArchiveEntry[];
+    section: ArchiveSection;
+}) {
     const router = useRouter();
     const [pending, startTransition] = useTransition();
     const [draft, setDraft] = useState<Draft | null>(null);
@@ -424,22 +434,22 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                         <h2 className="text-base font-semibold text-ink-900">
-                            আর্কাইভ এন্ট্রি
+                            {sectionInfo[section].label} — এন্ট্রি
                         </h2>
                         <p className="mt-1 text-sm text-ink-500">
-                            প্রেস, মিডিয়া ও নিউজ আর্কাইভের তালিকা। বড় Raw ফাইল সাইটে না তুলে
+                            {sectionInfo[section].description} বড় Raw ফাইল সাইটে না তুলে
                             Drive/Cloud-এর HTTPS লিঙ্ক দিন।
                         </p>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        {archiveKinds.map((kind) => (
+                        {postKinds.map((kind) => (
                             <Button
                                 key={kind}
                                 type="button"
                                 size="sm"
                                 variant={kind === "article" ? "primary" : "outline"}
-                                onClick={() => setDraft(emptyDraft(kind))}
+                                onClick={() => setDraft(emptyDraft(kind, section))}
                                 disabled={pending}
                             >
                                 <Plus aria-hidden="true" />
@@ -451,17 +461,16 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
 
                 {rows.length === 0 ? (
                     <p className="mt-6 rounded-xl border border-dashed border-ink-300 px-6 py-12 text-center text-sm text-ink-500">
-                        এখনো কোনো আর্কাইভ যোগ করা হয়নি।
+                        এই বিভাগে এখনো কিছু যোগ করা হয়নি। উপরের বোতাম দিয়ে প্রথম এন্ট্রি যোগ করুন।
                     </p>
                 ) : (
                     <ul className="mt-6 space-y-3">
                         {rows.map((entry, index) => {
                             const cover = archiveCover(entry);
-                            const isVideo = entry.kind === "video";
-                            const isAudio = entry.kind === "audio";
+                            const kind = postKind(entry.kind);
+                            const isVideo = kind === "video";
                             const missingVideo =
                                 isVideo && !entry.video_url && !entry.video_file_url;
-                            const missingAudio = isAudio && !entry.audio_url;
 
                             return (
                                 <li
@@ -501,12 +510,7 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                                         className="size-3.5 fill-current"
                                                         aria-hidden="true"
                                                     />
-                                                ) : isAudio ? (
-                                                    <Music2
-                                                        className="size-3.5"
-                                                        aria-hidden="true"
-                                                    />
-                                                ) : entry.kind === "article" ? (
+                                                ) : kind === "article" ? (
                                                     <FileText
                                                         className="size-3.5"
                                                         aria-hidden="true"
@@ -517,9 +521,9 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                                         aria-hidden="true"
                                                     />
                                                 )}
-                                                {entry.kind === "photo"
+                                                {kind === "photo"
                                                     ? `${entry.photos.length} ছবি`
-                                                    : kindInfo[entry.kind].label}
+                                                    : kindInfo[kind].label}
                                             </span>
 
                                             <span>{sectionInfo[sectionForContentType[entry.content_type]].label}</span>
@@ -562,9 +566,10 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                                     ভিডিও নেই
                                                 </Badge>
                                             )}
-                                            {missingAudio && (
-                                                <Badge tone="warning" size="sm">
-                                                    অডিও নেই
+                                            {entry.audio_url && (
+                                                <Badge tone="brand" size="sm">
+                                                    <Music2 aria-hidden="true" />
+                                                    অডিও যুক্ত
                                                 </Badge>
                                             )}
                                             {entry.kind === "photo" &&
@@ -869,7 +874,7 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                         aria-label="আর্কাইভের ধরন"
                                         className="mt-2 grid grid-cols-2 gap-2 lg:grid-cols-4"
                                     >
-                                        {archiveKinds.map((kind) => {
+                                        {postKinds.map((kind) => {
                                             const active = draft.kind === kind;
                                             return (
                                                 <button
@@ -888,11 +893,6 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                                     {kind === "video" ? (
                                                         <Play
                                                             className="size-4 fill-current"
-                                                            aria-hidden="true"
-                                                        />
-                                                    ) : kind === "audio" ? (
-                                                        <Music2
-                                                            className="size-4"
                                                             aria-hidden="true"
                                                         />
                                                     ) : kind === "article" ? (
@@ -1213,15 +1213,20 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                 </section>
                             )}
 
-                            {draft.kind === "audio" && (
-                                <section className="space-y-5 rounded-xl border border-ink-200 bg-surface-sunken p-5">
+                            {/* Any post can carry a recording — a statement, an
+                                interview, a narrated version of the article. It
+                                plays in the site's audio player above the text. */}
+                            <section className="space-y-5 rounded-xl border border-ink-200 bg-surface-sunken p-5">
                                     <div>
-                                        <h4 className="font-semibold text-ink-900">
-                                            অডিও বক্তব্য / সাক্ষাৎকার
+                                        <h4 className="flex items-center gap-2 font-semibold text-ink-900">
+                                            <Music2 className="size-4 text-brand-700" aria-hidden="true" />
+                                            অডিও (ঐচ্ছিক)
                                         </h4>
                                         <p className="mt-1 text-sm text-ink-600">
-                                            একটি public HTTPS অডিও লিঙ্ক দিন, অথবা সর্বোচ্চ ২৫ MB
-                                            ফাইল আপলোড করুন। আপলোড করলে লিঙ্কটি প্রতিস্থাপিত হবে।
+                                            যেকোনো পোস্টের সঙ্গে একটি অডিও যুক্ত করা যায় — বক্তব্য,
+                                            সাক্ষাৎকার বা লেখাটির পাঠ। পাতার লেখার উপরে প্লেয়ারে বাজবে।
+                                            একটি public HTTPS লিঙ্ক দিন, অথবা সর্বোচ্চ ২৫ MB ফাইল আপলোড
+                                            করুন; আপলোড করলে লিঙ্কটি প্রতিস্থাপিত হবে।
                                         </p>
                                     </div>
 
@@ -1250,8 +1255,7 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                         }
                                         helper="MP3, M4A, OGG বা WAV · সর্বোচ্চ ২৫ MB"
                                     />
-                                </section>
-                            )}
+                            </section>
 
                             <div className="rounded-xl border border-ink-200 bg-surface-sunken p-4">
                                 <label className="flex items-center gap-2.5 text-sm font-medium text-ink-800">
@@ -1341,9 +1345,6 @@ function publicationError(entry: PublishableEntry): string | null {
     }
     if (entry.kind === "video" && !entry.video_url && !entry.video_file_url) {
         return "ভিডিও এন্ট্রিতে ভিডিওর লিঙ্ক বা ছোট ভিডিও ফাইল দিন।";
-    }
-    if (entry.kind === "audio" && !entry.audio_url) {
-        return "অডিও এন্ট্রিতে HTTPS লিঙ্ক বা অডিও ফাইল দিন।";
     }
     return null;
 }

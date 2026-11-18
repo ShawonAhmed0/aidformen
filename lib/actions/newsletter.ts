@@ -1,7 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { createClient } from "@/lib/supabase/server";
-import { fail, guarded, ok } from "./shared";
+import { fail, guarded, ok, requireAdmin } from "./shared";
 
 /**
  * Public newsletter signup.
@@ -34,6 +36,24 @@ export async function subscribeToNewsletter(formData: FormData) {
       return fail("সাবস্ক্রাইব করা যায়নি। পরে আবার চেষ্টা করুন।");
     }
 
+    return ok();
+  });
+}
+
+/** Removes one address — for an unsubscribe request, or an obvious typo. */
+export async function deleteNewsletterSubscriber(id: string) {
+  return guarded(async () => {
+    const auth = await requireAdmin();
+    if (!auth.ok) return fail(auth.error);
+
+    const { error } = await auth.supabase
+      .from("newsletter_subscribers")
+      .delete()
+      .eq("id", id);
+
+    if (error) return fail(error.message);
+
+    revalidatePath("/admin/newsletter");
     return ok();
   });
 }

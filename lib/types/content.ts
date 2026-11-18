@@ -112,3 +112,10 @@ export type Video = {
   sort_order: number;
   is_published: boolean;
 };
+
+/** A newsletter signup, as an admin reads it back (migration 0002). */
+export type NewsletterSubscriber = {
+  id: string;
+  email: string;
+  created_at: string;
+};

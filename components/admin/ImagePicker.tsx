@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { ImagePlus, Loader2, Trash2, UploadCloud } from "lucide-react";
 
-import { uploadImage } from "@/lib/actions/media";
+import { uploadToMedia } from "@/lib/supabase/upload";
 import type { MediaFolder } from "@/lib/types/media";
 import { cn } from "@/lib/utils";
 
@@ -23,8 +23,9 @@ type ImagePickerProps = {
     helper?: string;
 };
 
-const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"];
+const MAX_BYTES = 8 * 1024 * 1024;
+// Matches what lib/supabase/upload.ts accepts for images.
+const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 
 const aspects = {
     video: "aspect-video",
@@ -33,11 +34,13 @@ const aspects = {
 } as const;
 
 /**
- * Drag-and-drop image field used by every admin editor.
+ * Drag-and-drop image field used by the hero, team and video editors.
  *
- * Validates type and size on the client before spending an upload round trip,
- * then hands the file to the `uploadImage` action which re-checks both — the
- * client check is for speed and feedback, not for trust.
+ * Uploads straight from the browser to Supabase Storage. It used to post the
+ * file through a Server Action, whose request body is capped at 1 MB — so any
+ * real photograph (hero slides, team portraits) failed to upload. Storage RLS
+ * (`media_admin_insert`) is what authorises the write; the checks here are
+ * for fast feedback, not for trust.
  */
 export function ImagePicker({
     value,
@@ -59,22 +62,18 @@ export function ImagePicker({
         if (!file) return;
 
         if (!ALLOWED.includes(file.type)) {
-            setError("শুধু JPG, PNG, WEBP, AVIF বা GIF ফাইল দেওয়া যাবে।");
+            setError("শুধু JPG, PNG, WEBP বা AVIF ফাইল দেওয়া যাবে।");
             return;
         }
         if (file.size > MAX_BYTES) {
-            setError("ছবির আকার ৫ মেগাবাইটের কম হতে হবে।");
+            setError("ছবির আকার ৮ মেগাবাইটের কম হতে হবে।");
             return;
         }
 
-        const body = new FormData();
-        body.append("file", file);
-        body.append("folder", folder);
-
         startTransition(async () => {
-            const result = await uploadImage(body);
+            const result = await uploadToMedia(file, folder);
             if (result.ok) {
-                onChange(result.data?.url ?? null);
+                onChange(result.url);
             } else {
                 setError(result.error);
             }
@@ -156,7 +155,7 @@ export function ImagePicker({
                             ছবি টেনে আনুন বা ক্লিক করুন
                         </span>
                         <span className="text-xs text-ink-500">
-                            JPG, PNG, WEBP · সর্বোচ্চ ৫ MB
+                            JPG, PNG, WEBP · সর্বোচ্চ ৮ MB
                         </span>
                     </button>
                 )}

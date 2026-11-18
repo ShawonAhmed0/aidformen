@@ -19,6 +19,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { HomeAboutAudioPlayer } from "@/components/HomeAboutAudioPlayer";
 import { ShareActions } from "@/components/ShareActions";
 import { EditorialContent } from "@/components/content/EditorialContent";
 import { Badge } from "@/components/ui/badge";
@@ -131,11 +132,10 @@ export default async function NewsDetailPage({ params }: Props) {
     case_study: t.archive.typeCaseStudy,
     report: t.archive.typeReport,
   } as const;
+  // The recording alone doesn't make a media kit: it already plays at the
+  // top of the post. It is still offered for download inside a real kit.
   const hasMediaKit = Boolean(
-    item.pressReleaseUrl ||
-    item.hdPhotosUrl ||
-    item.rawVideoUrl ||
-    item.audioUrl,
+    item.pressReleaseUrl || item.hdPhotosUrl || item.rawVideoUrl,
   );
   const audioInline = item.audioUrl && canPlayAudioInline(item.audioUrl);
   const coverCaption = item.cover
@@ -194,7 +194,10 @@ export default async function NewsDetailPage({ params }: Props) {
                 {item.heading}
               </h1>
 
-              <div className="mt-6 border-y border-ink-300 py-3 sm:flex sm:min-h-16 sm:items-center sm:justify-between sm:gap-6">
+              {/* The share bar never wraps internally; when it doesn't fit
+                  beside the date and place it drops below them as one row.
+                  Wrapping inside it stranded "Print" on a line of its own. */}
+              <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-y border-ink-300 py-3">
                 <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink-600">
                   {item.date && (
                     <span className="inline-flex items-center gap-1.5">
@@ -215,26 +218,28 @@ export default async function NewsDetailPage({ params }: Props) {
                 <ShareActions
                   title={item.heading}
                   locale={lang}
-                  className="-mx-2 mt-2 sm:mx-0 sm:mt-0 sm:justify-end"
+                  className="-mx-2"
                 />
               </div>
             </div>
           </header>
 
           {item.cover && (
-            <figure className="mx-auto mt-8 max-w-5xl sm:mt-10" data-print-keep>
+            // Shares the title's left edge (lg:pl-12) instead of starting
+            // further left and overhanging it.
+            <figure className="mx-auto mt-8 max-w-5xl sm:mt-10 lg:pl-12" data-print-keep>
               <div className="relative aspect-16/9 overflow-hidden rounded-sm bg-brand-50">
                 <Image
                   src={item.cover}
                   alt={item.heading}
                   fill
                   preload
-                  sizes="(min-width: 1024px) 1024px, 100vw"
+                  sizes="(min-width: 1024px) 976px, 100vw"
                   className="object-cover"
                 />
               </div>
               {coverCaption && (
-                <figcaption className="mt-2 max-w-3xl text-sm leading-6 text-ink-500 lg:pl-12">
+                <figcaption className="mt-2 max-w-3xl text-sm leading-6 text-ink-500">
                   {coverCaption}
                 </figcaption>
               )}
@@ -246,14 +251,26 @@ export default async function NewsDetailPage({ params }: Props) {
             className="mx-auto mt-8 grid max-w-5xl gap-10 sm:mt-10 lg:grid-cols-[minmax(0,42rem)_16.5rem] lg:items-start lg:gap-10 lg:pl-12"
           >
             <div className="min-w-0 space-y-8">
-              {item.audioUrl && (
-                <AudioRecording
-                  url={item.audioUrl}
-                  inline={Boolean(audioInline)}
-                  title={t.archive.audioRecording}
-                  openLabel={t.archive.openAudio}
-                />
-              )}
+              {/* Any post can carry a recording; it plays in the same player
+                  as the homepage story rather than the browser's bare one. */}
+              {item.audioUrl &&
+                (audioInline ? (
+                  <div data-print-hide>
+                    <HomeAboutAudioPlayer
+                      src={item.audioUrl}
+                      locale={lang}
+                      label={t.archive.audioRecording}
+                      title={t.archive.listenToPost}
+                      subtitle={item.heading}
+                    />
+                  </div>
+                ) : (
+                  <AudioRecording
+                    url={item.audioUrl}
+                    title={t.archive.audioRecording}
+                    openLabel={t.archive.openAudio}
+                  />
+                ))}
 
               {item.body && (
                 <section aria-label={t.archive.overview}>
@@ -560,14 +577,13 @@ export default async function NewsDetailPage({ params }: Props) {
   );
 }
 
+/** A recording the browser can't play inline (a Drive or SoundCloud page). */
 function AudioRecording({
   url,
-  inline,
   title,
   openLabel,
 }: {
   url: string;
-  inline: boolean;
   title: string;
   openLabel: string;
 }) {
@@ -584,21 +600,15 @@ function AudioRecording({
         <FileAudio className="size-5" aria-hidden="true" />
         {title}
       </h2>
-      {inline ? (
-        <audio controls preload="metadata" className="mt-3 w-full" src={url}>
-          <a href={url}>{openLabel}</a>
-        </audio>
-      ) : (
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer external"
-          className={buttonVariants({ variant: "outline", className: "mt-4" })}
-        >
-          <ExternalLink className="size-4" aria-hidden="true" />
-          {openLabel}
-        </a>
-      )}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer external"
+        className={buttonVariants({ variant: "outline", className: "mt-4" })}
+      >
+        <ExternalLink className="size-4" aria-hidden="true" />
+        {openLabel}
+      </a>
     </section>
   );
 }

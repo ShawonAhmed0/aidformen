@@ -100,6 +100,8 @@ proxy.ts                locale detection/redirect + admin auth gate
 - **The content type decides the section** (`sectionForContentType` in
   `lib/types/archive.ts`). The stored `section` column is written from it and
   never trusted on read; the old ids are kept so no CHECK constraint changes.
+- Admin mirrors the split: `/admin/archive` is the Media Center and
+  `/admin/research` is Research & Case Studies (`ArchiveSectionAdmin`).
 - Both routes render `ArchiveSectionPage`; detail pages live at
   `/news/[slug]` and `/research/[slug]` (one implementation, canonical follows
   the entry's section). Kind, category, year and text filters run client-side.
@@ -120,14 +122,13 @@ hour, 4s timeout. Videos play in an in-page `<dialog>` (youtube-nocookie). The
 admin `videos` table is now only the fallback when the feed is unreachable.
 `i.ytimg.com` is allow-listed in `next.config.ts` for the thumbnails.
 
-### Uploads have a 1MB ceiling through Server Actions
+### Uploads never go through Server Actions
 
-A Server Action request body is capped at **1MB** by default, so `ImagePicker` →
-`uploadImage` silently fails on any real photograph. The archive editors upload
-**browser-direct to Supabase Storage** instead (`lib/supabase/upload.ts`), which
-has no such limit; the `media_admin_insert` storage policy is still what
-authorises the write. `next.config.ts` sets no `serverActions.bodySizeLimit`, so
-`ImagePicker` remains limited to 1MB.
+A Server Action request body is capped at **1MB**, which any real photograph
+exceeds. Every admin uploader (`ImagePicker`, `MediaField`, `DocumentPicker`,
+the archive editors) uploads **browser-direct to Supabase Storage** via
+`lib/supabase/upload.ts`; the `media_admin_insert` storage policy is what
+authorises the write. Don't reintroduce a server-side upload action.
 
 ## Server actions
 

@@ -121,13 +121,25 @@ const iconButton =
 export function HomeAboutAudioPlayer({
     src,
     locale,
+    title,
+    subtitle,
+    label,
 }: {
     src: string | null;
     locale: Locale;
+    /** Overrides for when the player isn't the foundation's own story — a post's recording. */
+    title?: string;
+    subtitle?: string;
+    label?: string;
 }) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const headingId = useId();
-    const copy = playerCopy[locale];
+    const copy = {
+        ...playerCopy[locale],
+        ...(title ? { title } : {}),
+        ...(subtitle ? { subtitle } : {}),
+        ...(label ? { label } : {}),
+    };
     const [duration, setDuration] = useState(0);
     const [elapsed, setElapsed] = useState(0);
     const [playing, setPlaying] = useState(false);

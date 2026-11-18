@@ -128,7 +128,9 @@ export function LoginForm({ locale, t }: { locale: Locale; t: Dictionary }) {
                             action={
                                 <Link
                                     href={`/${locale}/forgot-password`}
-                                    className="rounded-sm text-xs font-medium text-brand-700 transition-ui hover:text-brand-800 hover:underline"
+                                    // 44px tall to the finger, but the negative margin keeps it
+                                    // from pushing the label row apart.
+                                    className="-my-3 inline-flex min-h-11 items-center rounded-sm text-xs font-medium text-brand-700 transition-ui hover:text-brand-800 hover:underline"
                                 >
                                     {t.auth.forgot}
                                 </Link>

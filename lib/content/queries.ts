@@ -5,6 +5,7 @@ import type {
   CarouselImage,
   HeroContent,
   SiteSettings,
+  NewsletterSubscriber,
   TeamMember,
   Video,
 } from "@/lib/types/content";
@@ -134,3 +135,18 @@ export const getAllVideos = cache(async (): Promise<Video[]> => {
   warn("admin:videos", error);
   return (data as Video[] | null) ?? [];
 });
+
+/** Admin only: RLS lets nobody else read the list back. Newest first. */
+export const getNewsletterSubscribers = cache(
+  async (): Promise<NewsletterSubscriber[]> => {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("newsletter_subscribers")
+      .select("id, email, created_at")
+      .order("created_at", { ascending: false });
+
+    warn("admin:newsletter", error);
+    return (data as NewsletterSubscriber[] | null) ?? [];
+  }
+);

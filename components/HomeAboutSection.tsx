@@ -12,12 +12,18 @@ const aboutVoiceOver: Record<Locale, string> = {
   en: "/audio/about-en.mp3",
 };
 
+/** Where a shared "About us" link lands: this section, essay expanded. */
+export const homeAboutAnchor = "about";
+
 export function HomeAboutSection({
   locale,
   hero,
+  expanded = false,
 }: {
   locale: Locale;
   hero: HeroContent | null;
+  /** Open the full essay on arrival — set by a shared ?about=full link. */
+  expanded?: boolean;
 }) {
   const about = getAboutContent(locale);
   const doc = getHomeAboutDoc(locale);
@@ -39,7 +45,11 @@ export function HomeAboutSection({
         };
 
   return (
-    <section className="bg-surface py-10 sm:py-14" aria-labelledby="home-about-title">
+    <section
+      id={homeAboutAnchor}
+      className="bg-surface py-10 sm:py-14"
+      aria-labelledby="home-about-title"
+    >
       <Container>
         {/* One full-width card: copy on top, clamped until expanded, and the
             audio story as a player bar along the bottom. The audio used to
@@ -58,9 +68,16 @@ export function HomeAboutSection({
             moreLabel={copy.more}
             lessLabel={copy.less}
             contentsLabel={copy.contents}
+            defaultExpanded={expanded}
+            locale={locale}
+            share={{
+              title: `${copy.title} — ${about.hero.eyebrow}`,
+              url: `/${locale}?about=full#${homeAboutAnchor}`,
+              printScope: "home-about",
+            }}
           />
 
-          <div className="mt-6 sm:mt-8">
+          <div className="mt-6 sm:mt-8" data-print-hide>
             {/* An audio URL set in /admin replaces both voice-overs; until
                 then each locale plays its own recording from /public. */}
             <HomeAboutAudioPlayer

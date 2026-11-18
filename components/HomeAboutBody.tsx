@@ -1,9 +1,11 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { ContentsNav } from "@/components/ContentsNav";
+import { ShareActions } from "@/components/ShareActions";
 import { buttonVariants } from "@/components/ui/button";
 import type { AboutDocBlock, HomeAboutDoc } from "@/lib/content/home-about";
 import { cn } from "@/lib/utils";
@@ -41,6 +43,9 @@ function DocBlock({ block }: { block: AboutDocBlock }) {
  * The homepage "About" essay. Collapsed, it previews the opening paragraph
  * beside the foundation's own story; expanded, it becomes the full essay with
  * a contents list that stays in view on laptops while the reader scrolls.
+ *
+ * A shared link (`?about=full#about`) renders it already expanded, so the
+ * reader lands on the essay, not on a preview they then have to open.
  */
 export function HomeAboutBody({
   doc,
@@ -48,16 +53,62 @@ export function HomeAboutBody({
   moreLabel,
   lessLabel,
   contentsLabel,
+  defaultExpanded = false,
+  locale,
+  share,
 }: {
   doc: HomeAboutDoc;
   journeyTitle: string;
   moreLabel: string;
   lessLabel: string;
   contentsLabel: string;
+  defaultExpanded?: boolean;
+  locale: "bn" | "en";
+  share: { title: string; url: string; printScope: string };
 }) {
   const regionId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  // A printout of a three-line preview is useless, so whatever prints the
+  // page — the Print button or Ctrl+P — gets the full essay, and the reader
+  // gets their own view back afterwards. flushSync because the browser takes
+  // its snapshot as soon as the beforeprint handlers return.
+  // Arriving from a shared link: land on the section at once. The browser's
+  // own #fragment jump fights the page still streaming in and, with smooth
+  // scrolling on, only arrived seconds later — after the reader had started
+  // scrolling the hero themselves.
+  useEffect(() => {
+    if (!defaultExpanded) return;
+    const hash = new URL(share.url, window.location.origin).hash;
+    if (!hash || window.location.hash !== hash) return;
+    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "instant", block: "start" });
+  }, [defaultExpanded, share.url]);
+
+  const expandedRef = useRef(expanded);
+  useEffect(() => {
+    expandedRef.current = expanded;
+  }, [expanded]);
+
+  useEffect(() => {
+    let restoreTo: boolean | null = null;
+
+    const beforePrint = () => {
+      restoreTo = expandedRef.current;
+      flushSync(() => setExpanded(true));
+    };
+    const afterPrint = () => {
+      if (restoreTo !== null) setExpanded(restoreTo);
+      restoreTo = null;
+    };
+
+    window.addEventListener("beforeprint", beforePrint);
+    window.addEventListener("afterprint", afterPrint);
+    return () => {
+      window.removeEventListener("beforeprint", beforePrint);
+      window.removeEventListener("afterprint", afterPrint);
+    };
+  }, []);
 
   const [opening] = doc.sections;
   const intro = opening.blocks.find((block) => block.type === "p")?.text ?? "";
@@ -87,7 +138,7 @@ export function HomeAboutBody({
           id={regionId}
           className="mt-8 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12"
         >
-          <div className="hidden lg:block">
+          <div className="hidden lg:block" data-print-hide>
             <ContentsNav
               label={contentsLabel}
               items={doc.sections.map((section, index) => ({
@@ -131,17 +182,34 @@ export function HomeAboutBody({
         </div>
       )}
 
-      {/* One control, on the right: the outline button is what reads as
-          "open the essay". A small text toggle on the left beside it looked
-          like a second, lesser action for the same thing. */}
-      <div className="mt-6 flex justify-end">
+      {/* Sharing on the left, the one control that opens the essay on the
+          right. The shared link always points at the expanded essay, whatever
+          state this reader happens to be in. */}
+      <div
+        className="mt-6 flex flex-wrap items-center justify-between gap-3"
+        data-print-hide
+      >
+        <ShareActions
+          title={share.title}
+          locale={locale}
+          url={share.url}
+          printScope={share.printScope}
+          className="-ms-2"
+        />
+
         <button
           ref={toggleRef}
           type="button"
           onClick={toggle}
           aria-expanded={expanded}
           aria-controls={regionId}
-          className={buttonVariants({ variant: "outline", size: "md", className: "gap-2" })}
+          className={buttonVariants({
+            variant: "outline",
+            size: "md",
+            // Wraps under the share icons on phones; full width keeps it the
+            // obvious next step rather than a stray button at the left edge.
+            className: "gap-2 max-sm:w-full sm:ms-auto",
+          })}
         >
           {expanded ? lessLabel : moreLabel}
           <ChevronDown
