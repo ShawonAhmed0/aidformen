@@ -2,8 +2,15 @@ import { HomeAboutAudioPlayer } from "@/components/HomeAboutAudioPlayer";
 import { HomeAboutBody } from "@/components/HomeAboutBody";
 import { Container } from "@/components/ui/container";
 import { getAboutContent } from "@/lib/content/about";
+import { getHomeAboutDoc } from "@/lib/content/home-about";
 import type { Locale } from "@/lib/i18n/config";
 import type { HeroContent } from "@/lib/types/content";
+
+/** The foundation's narrated introduction, one recording per language. */
+const aboutVoiceOver: Record<Locale, string> = {
+  bn: "/audio/about-bn.mp3",
+  en: "/audio/about-en.mp3",
+};
 
 export function HomeAboutSection({
   locale,
@@ -13,18 +20,21 @@ export function HomeAboutSection({
   hero: HeroContent | null;
 }) {
   const about = getAboutContent(locale);
+  const doc = getHomeAboutDoc(locale);
   const copy =
     locale === "en"
       ? {
           history: "Our journey",
           more: "Read more",
           less: "Show less",
+          contents: "Contents",
           link: "Read our full story",
         }
       : {
           history: "আমাদের পথচলা",
           more: "আরও পড়ুন",
           less: "কম দেখান",
+          contents: "সূচিপত্র",
           link: "সম্পূর্ণ ইতিহাস পড়ুন",
         };
 
@@ -43,17 +53,22 @@ export function HomeAboutSection({
           </h2>
 
           <HomeAboutBody
-            intro={about.intro[0]}
+            doc={doc}
             journeyTitle={copy.history}
-            journey={about.inception.paragraphs[1]}
             moreLabel={copy.more}
             lessLabel={copy.less}
+            contentsLabel={copy.contents}
             storyHref={`/${locale}/about`}
             storyLabel={copy.link}
           />
 
           <div className="mt-6 sm:mt-8">
-            <HomeAboutAudioPlayer src={hero?.about_audio_url || null} locale={locale} />
+            {/* An audio URL set in /admin replaces both voice-overs; until
+                then each locale plays its own recording from /public. */}
+            <HomeAboutAudioPlayer
+              src={hero?.about_audio_url || aboutVoiceOver[locale]}
+              locale={locale}
+            />
           </div>
         </article>
       </Container>
