@@ -9,9 +9,7 @@ import type { Locale } from "@/lib/i18n/config";
  * the route it belongs to rather than polluting the dictionary.
  *
  * The text is the foundation's own document ("Our contributions, the men's
- * rights movement and our demands"), Bengali and English as supplied. Only the
- * timeline is restated from it: its dates, pulled out of the opening prose so
- * they can be scanned.
+ * rights movement and our demands"), Bengali and English as supplied.
  */
 
 /** Photo paths are locale-independent; only alt text and captions translate. */
@@ -27,23 +25,15 @@ export type PhotoId = keyof typeof aboutPhotos;
 
 type Photo = { alt: string; caption: string };
 
-/** A court outcome the document reports, shown as a badge on the item. */
-export type AboutStatus = "won" | "ongoing";
+type LabelledItem = { label: string; text: string };
 
-type LabelledItem = { label: string; text: string; status?: AboutStatus };
-
-type Part = { /** Short label for the in-page contents. */ nav: string; title: string };
+type Part = { /** Short label for the contents list. */ nav: string; title: string };
 
 export type AboutContent = {
   meta: { title: string; description: string };
   hero: { eyebrow: string; title: string; subtitle: string };
-  sectionsLabel: string;
-  status: Record<AboutStatus, string>;
-  journey: Part & {
-    paragraphs: string[];
-    timelineLabel: string;
-    timeline: { when: string; text: string }[];
-  };
+  contentsLabel: string;
+  journey: Part & { paragraphs: string[] };
   achievements: Part & { intro: string; items: LabelledItem[] };
   demands: Part & { intro: string; items: LabelledItem[] };
   commitment: Part & { body: string; contact: string; mediaCenter: string };
@@ -60,21 +50,13 @@ const bn: AboutContent = {
     title: "আমাদের সম্পর্কে",
     subtitle: "আমাদের অবদান, পুরুষ আন্দোলনের অবদান এবং আমাদের দাবি",
   },
-  sectionsLabel: "এই পাতায়",
-  status: { won: "রিটে বিজয়", ongoing: "আইনি লড়াই চলমান" },
+  contentsLabel: "সূচিপত্র",
   journey: {
     nav: "আমাদের পথচলা",
     title: "এক যুগান্তকারী সংগ্রামের পথচলা",
     paragraphs: [
       "সমাজে নারী ও শিশুর অধিকার নিয়ে বহু আলোচনা হলেও, পুরুষের মানবাধিকার, আইনি সুরক্ষা এবং পারিবারিক সমতা নিশ্চিত করার বিষয়টি দীর্ঘকাল উপেক্ষিত ছিল। ২০১২-১৩ সালের দিকে এই অবহেলিত জনগোষ্ঠীর অধিকার ও আইনি সুরক্ষার পক্ষে যখন প্রাতিষ্ঠানিক উদ্যোগ শুরু হয়, তখন বিষয়টি সমাজে একরকম অস্পৃশ্য বা ট্যাবু হিসেবে দেখা হতো। তবে অদম্য মনোবল ও সুনির্দিষ্ট যৌক্তিক অবস্থানের ফলে ২০১৭-১৮ সালের মধ্যে এই আন্দোলন একটি শক্তিশালী সাংগঠনিক ভিত্তি লাভ করে এবং সারা দেশের পুরুষ অধিকারকর্মী ও সচেতন মানুষ এই প্ল্যাটফর্মে সমবেত হন। দীর্ঘ সংগ্রাম ও ধারাবাহিক কার্যক্রমের পর ২০২০ সালে ‘এইড ফর মেন ফাউন্ডেশন’ সরকারিভাবে রেজিস্ট্রেশন লাভ করে এবং আইনি কাঠামোর ভেতর থেকে আরও জোরালোভাবে কার্যক্রম পরিচালনা করে যাচ্ছে।",
       "আজকের সমাজে পুরুষ অধিকার আন্দোলন আর কোনো ট্যাবু নয়; বরং সাধারণ মানুষ ও নীতিনির্ধারকরা এখন পুরুষের অধিকারের বিষয়টিকে অত্যন্ত গুরুত্বের সাথে দেখছেন, আলোচনা করছেন এবং সংগঠনের এই উদ্যোগকে ইতিবাচকভাবে মূল্যায়ন করছেন।",
-    ],
-    timelineLabel: "পথচলার মাইলফলক",
-    timeline: [
-      { when: "২০১২–১৩", text: "পুরুষের অধিকার ও আইনি সুরক্ষার পক্ষে প্রাতিষ্ঠানিক উদ্যোগের সূচনা" },
-      { when: "২০১৭–১৮", text: "আন্দোলন শক্তিশালী সাংগঠনিক ভিত্তি লাভ করে; সারা দেশের অধিকারকর্মীরা এক প্ল্যাটফর্মে" },
-      { when: "২০২০", text: "‘এইড ফর মেন ফাউন্ডেশন’ সরকারি রেজিস্ট্রেশন লাভ করে" },
-      { when: "১৯ নভেম্বর ২০২০", text: "ঢাকা রিপোর্টার্স ইউনিটিতে ১৩ দফা দাবি আনুষ্ঠানিকভাবে উপস্থাপন" },
     ],
   },
   achievements: {
@@ -92,11 +74,11 @@ const bn: AboutContent = {
       },
       {
         label: "বিবাহ ও তালাক রেজিস্ট্রেশন ডিজিটালাইজেশন",
-        text: "বিবাহ এবং তালাক রেজিস্ট্রি কার্যক্রমে অনিয়ম, বহুবিবাহ প্রতারণা ও ভুয়া কাবিন জালিয়াতি রোধে ‘এইড ফর মেন ফাউন্ডেশন’ মহামান্য হাইকোর্টে রিট দায়ের করে এবং সেই ঐতিহাসিক রিটে বিজয় লাভ করে। এর ফলে দেশজুড়ে বিবাহ ও তালাক নিবন্ধনের ডিজিটাল প্রক্রিয়া বাস্তবায়নের পথ সুগম হয়েছে, যা অসংখ্য পরিবারকে আইনি হয়রানি থেকে সুরক্ষা দিচ্ছে।", status: "won",
+        text: "বিবাহ এবং তালাক রেজিস্ট্রি কার্যক্রমে অনিয়ম, বহুবিবাহ প্রতারণা ও ভুয়া কাবিন জালিয়াতি রোধে ‘এইড ফর মেন ফাউন্ডেশন’ মহামান্য হাইকোর্টে রিট দায়ের করে এবং সেই ঐতিহাসিক রিটে বিজয় লাভ করে। এর ফলে দেশজুড়ে বিবাহ ও তালাক নিবন্ধনের ডিজিটাল প্রক্রিয়া বাস্তবায়নের পথ সুগম হয়েছে, যা অসংখ্য পরিবারকে আইনি হয়রানি থেকে সুরক্ষা দিচ্ছে।",
       },
       {
         label: "বিয়ের প্রলোভনে ধর্ষণ আইনের চ্যালেঞ্জ",
-        text: "বর্তমান আইনে প্রাপ্তবয়স্ক নর-নারীর সম্মতিতে শারীরিক সম্পর্ককে একপেশেভাবে আইনের আওতায় এনে পুরুষদের হয়রানির শিকার হওয়ার প্রবণতাকে চ্যালেঞ্জ করে উচ্চ আদালতে রিট ও আইনি লড়াই চলমান রয়েছে।", status: "ongoing",
+        text: "বর্তমান আইনে প্রাপ্তবয়স্ক নর-নারীর সম্মতিতে শারীরিক সম্পর্ককে একপেশেভাবে আইনের আওতায় এনে পুরুষদের হয়রানির শিকার হওয়ার প্রবণতাকে চ্যালেঞ্জ করে উচ্চ আদালতে রিট ও আইনি লড়াই চলমান রয়েছে।",
       },
       {
         label: "জাতীয় ও আন্তর্জাতিক গণমাধ্যমে স্বীকৃতি",
@@ -143,7 +125,7 @@ const bn: AboutContent = {
       },
       {
         label: "ডিজিটাল বিবাহ রেজিস্ট্রি",
-        text: "বহুবিবাহ প্রতারণা রোধে বিবাহ রেজিস্ট্রেশন পদ্ধতি সম্পূর্ণ ডিজিটালাইজ করা (যে দাবিতে সংগঠন ইতোমধ্যে হাইকোর্টের রিটে জয়লাভ করেছে)।", status: "won",
+        text: "বহুবিবাহ প্রতারণা রোধে বিবাহ রেজিস্ট্রেশন পদ্ধতি সম্পূর্ণ ডিজিটালাইজ করা (যে দাবিতে সংগঠন ইতোমধ্যে হাইকোর্টের রিটে জয়লাভ করেছে)।",
       },
       {
         label: "পুরুষ নির্যাতন রোধে আইন",
@@ -207,21 +189,13 @@ const en: AboutContent = {
     title: "About us",
     subtitle: "Our Contributions, the Men’s Rights Movement, and Our Demands",
   },
-  sectionsLabel: "On this page",
-  status: { won: "Writ won", ongoing: "Legal challenge ongoing" },
+  contentsLabel: "Contents",
   journey: {
     nav: "Our journey",
     title: "A Groundbreaking Journey of Struggle",
     paragraphs: [
       "While the rights of women and children have long been widely discussed in society, the issue of ensuring men’s human rights, legal protection, and family equality remained neglected for decades. When institutional initiatives began around 2012–2013 to advocate for the rights and legal protections of this overlooked demographic, the topic was treated almost as an untouchable taboo in society. However, driven by unwavering determination and clear, logical arguments, the movement gained a strong organizational footing by 2017–2018, bringing together men’s rights activists and conscious citizens from across the country onto a single platform. Following years of persistent struggle and continuous advocacy, Aid For Men Foundation received official government registration in 2020 and has since been operating with even greater momentum within the legal framework.",
       "Today, the men’s rights movement is no longer a taboo; rather, the general public and policymakers now take the issue of men’s rights seriously, engage in open discussions, and positively value the organization’s initiatives.",
-    ],
-    timelineLabel: "Milestones of the journey",
-    timeline: [
-      { when: "2012–13", text: "Institutional advocacy for men’s rights and legal protection begins" },
-      { when: "2017–18", text: "The movement gains a strong organizational footing, uniting activists nationwide" },
-      { when: "2020", text: "Aid For Men Foundation receives official government registration" },
-      { when: "19 Nov 2020", text: "The 13-point charter of demands is presented at the Dhaka Reporters Unity" },
     ],
   },
   achievements: {
@@ -239,11 +213,11 @@ const en: AboutContent = {
       },
       {
         label: "Digitalization of Marriage and Divorce Registration",
-        text: "To prevent irregularities, polygamy fraud, and fake kabin (dower) scams in marriage and divorce registration, Aid For Men Foundation filed a writ petition in the Hon’ble High Court and secured a landmark victory. This paved the way for nationwide digital marriage and divorce registration, protecting countless families from legal harassment.", status: "won",
+        text: "To prevent irregularities, polygamy fraud, and fake kabin (dower) scams in marriage and divorce registration, Aid For Men Foundation filed a writ petition in the Hon’ble High Court and secured a landmark victory. This paved the way for nationwide digital marriage and divorce registration, protecting countless families from legal harassment.",
       },
       {
         label: "Challenging the “Rape on the Pretext of Marriage” Law",
-        text: "The organization is actively pursuing a writ petition and legal battle in the higher courts to challenge the one-sided application of laws that criminalize consensual physical relationships between adults under the pretext of a marriage promise, which has frequently been used to harass men.", status: "ongoing",
+        text: "The organization is actively pursuing a writ petition and legal battle in the higher courts to challenge the one-sided application of laws that criminalize consensual physical relationships between adults under the pretext of a marriage promise, which has frequently been used to harass men.",
       },
       {
         label: "National and International Media Recognition",
@@ -290,7 +264,7 @@ const en: AboutContent = {
       },
       {
         label: "Digital Marriage Registration",
-        text: "Fully digitalize the marriage registration system to prevent polygamy fraud (a demand on which the foundation has already won a High Court writ).", status: "won",
+        text: "Fully digitalize the marriage registration system to prevent polygamy fraud (a demand on which the foundation has already won a High Court writ).",
       },
       {
         label: "Legislation Against Men’s Abuse",

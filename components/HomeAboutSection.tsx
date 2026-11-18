@@ -25,17 +25,15 @@ export function HomeAboutSection({
     locale === "en"
       ? {
           history: "Our journey",
-          more: "Read more",
+          more: "Read our full story",
           less: "Show less",
           contents: "Contents",
-          link: "Read our full story",
         }
       : {
           history: "আমাদের পথচলা",
-          more: "আরও পড়ুন",
+          more: "সম্পূর্ণ ইতিহাস পড়ুন",
           less: "কম দেখান",
           contents: "সূচিপত্র",
-          link: "সম্পূর্ণ ইতিহাস পড়ুন",
         };
 
   return (
@@ -58,8 +56,6 @@ export function HomeAboutSection({
             moreLabel={copy.more}
             lessLabel={copy.less}
             contentsLabel={copy.contents}
-            storyHref={`/${locale}/about`}
-            storyLabel={copy.link}
           />
 
           <div className="mt-6 sm:mt-8">

@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useId, useRef, useState } from "react";
 
+import { ContentsNav } from "@/components/ContentsNav";
 import { buttonVariants } from "@/components/ui/button";
 import type { AboutDocBlock, HomeAboutDoc } from "@/lib/content/home-about";
 import { cn } from "@/lib/utils";
@@ -48,16 +48,12 @@ export function HomeAboutBody({
   moreLabel,
   lessLabel,
   contentsLabel,
-  storyHref,
-  storyLabel,
 }: {
   doc: HomeAboutDoc;
   journeyTitle: string;
   moreLabel: string;
   lessLabel: string;
   contentsLabel: string;
-  storyHref: string;
-  storyLabel: string;
 }) {
   const regionId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -91,25 +87,16 @@ export function HomeAboutBody({
           id={regionId}
           className="mt-8 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12"
         >
-          <nav aria-label={contentsLabel} className="hidden lg:block">
-            <div className="sticky top-24">
-              <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-500">
-                {contentsLabel}
-              </p>
-              <ol className="mt-3 border-s border-ink-200">
-                {doc.sections.map((section, index) => (
-                  <li key={section.heading}>
-                    <a
-                      href={`#${sectionId(index)}`}
-                      className="-ms-px block border-s-2 border-transparent py-1.5 ps-3 text-sm leading-snug text-ink-600 transition-ui hover:border-brand-600 hover:text-brand-800"
-                    >
-                      {section.heading}
-                    </a>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </nav>
+          <div className="hidden lg:block">
+            <ContentsNav
+              label={contentsLabel}
+              items={doc.sections.map((section, index) => ({
+                id: sectionId(index),
+                title: section.heading,
+              }))}
+              className="sticky top-24"
+            />
+          </div>
 
           <div className="max-w-3xl">
             {doc.sections.map((section, index) => (
@@ -144,14 +131,17 @@ export function HomeAboutBody({
         </div>
       )}
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+      {/* One control, on the right: the outline button is what reads as
+          "open the essay". A small text toggle on the left beside it looked
+          like a second, lesser action for the same thing. */}
+      <div className="mt-6 flex justify-end">
         <button
           ref={toggleRef}
           type="button"
           onClick={toggle}
           aria-expanded={expanded}
           aria-controls={regionId}
-          className="-ms-3 inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-brand-700 transition-ui hover:bg-brand-50 hover:text-brand-800"
+          className={buttonVariants({ variant: "outline", size: "md", className: "gap-2" })}
         >
           {expanded ? lessLabel : moreLabel}
           <ChevronDown
@@ -159,14 +149,6 @@ export function HomeAboutBody({
             aria-hidden="true"
           />
         </button>
-
-        <Link
-          href={storyHref}
-          className={buttonVariants({ variant: "outline", size: "md", className: "gap-2" })}
-        >
-          {storyLabel}
-          <ArrowRight className="size-4" aria-hidden="true" />
-        </Link>
       </div>
     </>
   );
