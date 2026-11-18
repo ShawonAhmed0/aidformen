@@ -93,7 +93,7 @@ export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary })
                   min-height:auto makes it overflow instead of shrink — which
                   clipped the "read more" button. Which part of the portrait
                   survives the crop is set per member in the admin. */}
-              <span className="relative flex aspect-4/3 w-full shrink-0 items-center justify-center overflow-hidden bg-brand-50">
+              <span className="relative flex aspect-4/3 w-full shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950">
                 {member.photo_url ? (
                   <Image
                     src={member.photo_url}
@@ -106,7 +106,11 @@ export function TeamGrid({ members, t }: { members: TeamCard[]; t: Dictionary })
                     }}
                   />
                 ) : (
-                  <User className="size-12 text-brand-600" aria-hidden="true" />
+                  // No portrait yet: a branded frame, so a card waiting on its
+                  // photo reads as deliberate rather than as a broken image.
+                  <span className="flex size-24 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/15">
+                    <User className="size-11 text-white/70" aria-hidden="true" />
+                  </span>
                 )}
               </span>
 

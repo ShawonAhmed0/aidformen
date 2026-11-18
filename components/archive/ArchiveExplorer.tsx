@@ -115,6 +115,9 @@ export function ArchiveExplorer({
         )
     );
 
+    const sectionCount = (value: ArchiveSection) =>
+        items.filter((item) => item.section === value).length;
+
     const reset = () => {
         setKind("all");
         setCategory(null);
@@ -207,8 +210,20 @@ export function ArchiveExplorer({
                                 >
                                     <Icon className="size-5" aria-hidden="true" />
                                 </span>
-                                <span>
-                                    <span className="block font-semibold">{option.label}</span>
+                                <span className="min-w-0 flex-1">
+                                    <span className="flex items-center justify-between gap-3 font-semibold">
+                                        {option.label}
+                                        <span
+                                            className={cn(
+                                                "shrink-0 rounded-full px-2 py-0.5 text-xs tabular-nums",
+                                                active
+                                                    ? "bg-brand-800 text-white"
+                                                    : "bg-ink-100 text-ink-600"
+                                            )}
+                                        >
+                                            {formatCount(locale, sectionCount(option.value))}
+                                        </span>
+                                    </span>
                                     <span className="mt-1 block text-xs leading-relaxed">
                                         {option.description}
                                     </span>
@@ -222,12 +237,12 @@ export function ArchiveExplorer({
                     <span className="block text-xs font-semibold uppercase text-ink-500">
                         {t.filterContentType}
                     </span>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
                         <Link
                             href={`/${locale}/news?section=${section}`}
                             aria-current={!initialContentType ? "page" : undefined}
                             className={cn(
-                                "inline-flex min-h-11 items-center rounded-full border px-5 text-sm font-medium transition-ui",
+                                "inline-flex min-h-11 shrink-0 items-center rounded-full border px-5 text-sm font-medium whitespace-nowrap transition-ui",
                                 !initialContentType
                                     ? "border-brand-800 bg-brand-800 text-white"
                                     : "border-ink-200 bg-surface text-ink-600 hover:border-brand-400 hover:text-brand-800"
@@ -244,7 +259,7 @@ export function ArchiveExplorer({
                                     href={`/${locale}/news?section=${section}&type=${contentType}`}
                                     aria-current={active ? "page" : undefined}
                                     className={cn(
-                                        "inline-flex min-h-11 items-center rounded-full border px-5 text-sm font-medium transition-ui",
+                                        "inline-flex min-h-11 shrink-0 items-center rounded-full border px-5 text-sm font-medium whitespace-nowrap transition-ui",
                                         active
                                             ? "border-brand-800 bg-brand-800 text-white"
                                             : "border-ink-200 bg-surface text-ink-600 hover:border-brand-400 hover:text-brand-800"
@@ -261,7 +276,7 @@ export function ArchiveExplorer({
                     unbounded category and year facets. */}
                 <div
                     aria-label={t.filterKind}
-                    className="flex flex-wrap gap-2"
+                    className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
                 >
                     {(["all", ...archiveKinds] as const).map((value) => {
                         const isActive = kind === value;
@@ -274,7 +289,7 @@ export function ArchiveExplorer({
                                 aria-pressed={isActive}
                                 onClick={() => setKind(value)}
                                 className={cn(
-                                    "inline-flex min-h-11 items-center gap-2 rounded-full border px-5 text-sm font-medium transition-ui",
+                                    "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-5 text-sm font-medium whitespace-nowrap transition-ui",
                                     isActive
                                         ? "border-brand-800 bg-brand-800 text-white"
                                         : "border-ink-200 bg-surface text-ink-600 hover:border-brand-400 hover:text-brand-800"
@@ -379,8 +394,10 @@ export function ArchiveExplorer({
 
             {visible.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-ink-300 bg-surface px-6 py-16 text-center">
-                    <p className="text-base font-medium text-ink-700">{t.noMatches}</p>
-                    {initialContentType ? (
+                    <p className="text-base font-medium text-ink-700">
+                        {filtered ? t.noMatches : t.sectionEmpty}
+                    </p>
+                    {!filtered ? null : initialContentType ? (
                         <Link
                             href={`/${locale}/news?section=${section}`}
                             className="mt-3 inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
@@ -426,7 +443,7 @@ export function ArchiveExplorer({
                                 t={t}
                                 locale={locale}
                                 priorityFirst={groupIndex === 0}
-                                className="grid gap-5 sm:grid-cols-2"
+                                className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
                             />
                         </section>
                     ))}

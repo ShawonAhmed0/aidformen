@@ -188,7 +188,7 @@ export function RegisterForm({ locale, t }: { locale: Locale; t: Dictionary }) {
                                     {...props}
                                     name="fullName"
                                     autoComplete="name"
-                                    placeholder="আপনার পুরো নাম"
+                                    placeholder={t.auth.fullNamePlaceholder}
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
                                 />
@@ -400,7 +400,7 @@ export function RegisterForm({ locale, t }: { locale: Locale; t: Dictionary }) {
                                 </>
                             ) : (
                                 <>
-                                    নিবন্ধন করুন
+                                    {t.auth.registerCta}
                                     <ArrowLeft aria-hidden="true" className="rotate-180" />
                                 </>
                             )}

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ContactForm } from "@/components/forms/ContactForm";
 import { getDictionary } from "@/lib/i18n/dictionary";
+import { getSiteSettings } from "@/lib/content/queries";
 import { isLocale } from "@/lib/i18n/config";
 
 export async function generateMetadata({
@@ -24,7 +25,7 @@ export default async function ContactPage({
     const { lang } = await params;
     if (!isLocale(lang)) notFound();
 
-    const t = await getDictionary(lang);
+    const [t, settings] = await Promise.all([getDictionary(lang), getSiteSettings()]);
 
-    return <ContactForm locale={lang} t={t} />;
+    return <ContactForm locale={lang} t={t} settings={settings} />;
 }

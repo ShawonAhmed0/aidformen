@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Archive, Cloud, Images, ShieldCheck } from "lucide-react";
+import { Archive, ArrowRight, Cloud, Images, ShieldCheck } from "lucide-react";
 
 import { ArchiveExplorer } from "@/components/archive/ArchiveExplorer";
 import { getMediaLibraryLabels } from "@/components/media-library/labels";
@@ -71,19 +71,9 @@ export default async function NewsPage({
   if (!isLocale(lang)) notFound();
   const requested = await searchParams;
   const requestedSection = requested.section;
-  const initialSection =
-    requestedSection === "news_archive" ? "news_archive" : "press_media";
   const requestedType = Array.isArray(requested.type)
     ? requested.type[0]
     : requested.type;
-  const initialContentType =
-    requestedType &&
-    archiveContentTypes.includes(requestedType as ArchiveContentType) &&
-    contentTypesBySection[initialSection].includes(
-      requestedType as ArchiveContentType,
-    )
-      ? (requestedType as ArchiveContentType)
-      : null;
 
   const [t, entries] = await Promise.all([
     getDictionary(lang),
@@ -94,6 +84,24 @@ export default async function NewsPage({
   const items = entries.map((entry) =>
     toArchiveListingItem(resolveArchiveEntry(lang, entry))
   );
+
+  // Without an explicit ?section, open on one that has something in it —
+  // landing on an empty Press tab read as "this site has no news".
+  const initialSection: ArchiveSection =
+    requestedSection === "news_archive" || requestedSection === "press_media"
+      ? requestedSection
+      : items.some((item) => item.section === "press_media") ||
+          !items.some((item) => item.section === "news_archive")
+        ? "press_media"
+        : "news_archive";
+  const initialContentType =
+    requestedType &&
+    archiveContentTypes.includes(requestedType as ArchiveContentType) &&
+    contentTypesBySection[initialSection].includes(
+      requestedType as ArchiveContentType,
+    )
+      ? (requestedType as ArchiveContentType)
+      : null;
   const categories = Array.from(
     new Set(items.map((item) => item.category).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b, lang));
@@ -111,44 +119,52 @@ export default async function NewsPage({
         description={t.archive.description}
       />
 
-      <Section space="md" containerWidth="prose">
-        <div className="mb-8 grid gap-4 sm:grid-cols-2" data-print-keep>
-          <div className="flex gap-4 rounded-2xl border border-brand-200 bg-brand-50 p-5 sm:p-6">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-800 text-white">
+      <Section space="md">
+        {/* One compact row of context above the explorer. These used to stack
+            into three tall cards that pushed the first result a full screen
+            down on a phone. */}
+        <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-print-keep>
+          <div className="flex gap-3.5 rounded-2xl border border-brand-200 bg-brand-50 p-4 sm:p-5">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-800 text-white">
               <Cloud className="size-5" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-lg text-brand-900">{t.archive.lightweightTitle}</h2>
-              <p className="mt-1.5 text-sm text-ink-600">
+              <h2 className="text-base leading-snug text-brand-900">
+                {t.archive.lightweightTitle}
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-ink-600">
                 {t.archive.lightweightBody}
               </p>
             </div>
           </div>
 
-          <div className="flex gap-4 rounded-2xl border border-success-line bg-success-soft p-5 sm:p-6">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-success text-white">
+          <div className="flex gap-3.5 rounded-2xl border border-success-line bg-success-soft p-4 sm:p-5">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success text-white">
               <ShieldCheck className="size-5" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-lg text-success-strong">{t.archive.usageTitle}</h2>
-              <p className="mt-1.5 text-sm text-ink-700">{t.archive.usageBody}</p>
+              <h2 className="text-base leading-snug text-success-strong">
+                {t.archive.usageTitle}
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-ink-700">{t.archive.usageBody}</p>
             </div>
           </div>
 
           <Link
             href={`/${lang}/media-archive`}
-            className="group flex gap-4 rounded-2xl border border-ochre-200 bg-ochre-50 p-5 transition-ui hover:-translate-y-0.5 hover:border-ochre-400 hover:shadow-sm sm:col-span-2 sm:p-6"
+            className="group flex gap-3.5 rounded-2xl border border-ochre-200 bg-ochre-50 p-4 transition-ui hover:-translate-y-0.5 hover:border-ochre-400 hover:shadow-sm sm:col-span-2 sm:p-5 lg:col-span-1"
           >
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-ochre-700 text-white">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ochre-700 text-white">
               <Images className="size-5" aria-hidden="true" />
             </span>
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg text-ochre-900">{mediaLibrary.title}</h2>
-              <p className="mt-1.5 text-sm text-ink-700">
+              <h2 className="text-base leading-snug text-ochre-900">{mediaLibrary.title}</h2>
+              <p className="mt-1 text-sm leading-6 text-ink-700">
                 {mediaLibrary.description}
               </p>
-              <span className="mt-3 inline-flex text-sm font-semibold text-ochre-800 underline-offset-4 group-hover:underline">
-                {mediaLibrary.openOriginal}
+              <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-ochre-800 underline-offset-4 group-hover:underline">
+                {t.archive.openMediaLibrary}
+                <ArrowRight className="size-4" aria-hidden="true" />
               </span>
             </div>
           </Link>

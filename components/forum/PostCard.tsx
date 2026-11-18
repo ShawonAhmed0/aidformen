@@ -9,7 +9,7 @@ import { participationNotice } from "./ForumGate";
 import type { ViewerStatus } from "@/lib/content/forum";
 import type { ForumPost } from "@/lib/types/forum";
 import type { Dictionary } from "@/lib/i18n/dictionary";
-import type { Locale } from "@/lib/i18n/config";
+import { formatCount, type Locale } from "@/lib/i18n/config";
 
 function formatWhen(iso: string, locale: Locale) {
     const date = new Date(iso);
@@ -83,18 +83,21 @@ export function PostCard({
                 )}
             </header>
 
-            <h2 className="mt-4 text-lg text-brand-800 sm:text-xl">
-                {detail ? (
-                    post.title
-                ) : (
+            {/* On its own page the post is the document, so its title is the h1. */}
+            {detail ? (
+                <h1 className="mt-4 text-2xl leading-snug text-brand-900 sm:text-3xl">
+                    {post.title}
+                </h1>
+            ) : (
+                <h2 className="mt-4 text-lg text-brand-800 sm:text-xl">
                     <Link
                         href={`/${locale}/forum/${post.id}`}
                         className="rounded transition-ui hover:text-brand-900 hover:underline"
                     >
                         {post.title}
                     </Link>
-                )}
-            </h2>
+                </h2>
+            )}
 
             {post.body && (
                 <p
@@ -113,6 +116,7 @@ export function PostCard({
             <footer className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-ink-200 pt-4">
                 <ReactionBar
                     postId={post.id}
+                    locale={locale}
                     reactions={post.reactions}
                     myReaction={post.myReaction}
                     canParticipate={viewer.canParticipate}
@@ -125,11 +129,13 @@ export function PostCard({
                 {!detail && (
                     <Link
                         href={`/${locale}/forum/${post.id}`}
-                        className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-ink-600 transition-ui hover:bg-ink-100 hover:text-brand-800"
+                        className="flex h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-ink-600 transition-ui hover:bg-ink-100 hover:text-brand-800"
                     >
                         <MessageSquare className="size-4" aria-hidden="true" />
-                        <span className="tabular-nums">{post.commentCount}</span>
-                        <span>{t.forum.comments}</span>
+                        <span className="tabular-nums">{formatCount(locale, post.commentCount)}</span>
+                        <span>
+                            {post.commentCount === 1 ? t.forum.commentOne : t.forum.commentMany}
+                        </span>
                     </Link>
                 )}
             </footer>

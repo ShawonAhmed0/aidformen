@@ -8,7 +8,7 @@ import { Document } from "@/app/document";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getSiteSettings } from "@/lib/content/queries";
 import { getChatbotSettings } from "@/lib/content/chatbot";
-import { isLocale, locales, localeHtmlLang, pick } from "@/lib/i18n/config";
+import { isLocale, locales, localeHtmlLang, pick, pickBrand } from "@/lib/i18n/config";
 import "@/app/globals.css";
 
 /** Pre-render both locales at build time. */
@@ -29,11 +29,18 @@ export async function generateMetadata({
     getSiteSettings(),
   ]);
 
-  const name =
-    pick(lang, settings?.organisation_name, settings?.organisation_name_en) ||
-    t.meta.siteName;
-  const description =
-    pick(lang, settings?.tagline, settings?.tagline_en) || t.meta.description;
+  // pickBrand, not pick: an untranslated name or tagline would otherwise put
+  // Bengali in every English tab title and search snippet.
+  const name = pickBrand(
+    lang,
+    settings?.organisation_name,
+    settings?.organisation_name_en,
+    { bn: t.meta.siteName, en: t.meta.siteName }
+  );
+  const description = pickBrand(lang, settings?.tagline, settings?.tagline_en, {
+    bn: t.meta.description,
+    en: t.meta.description,
+  });
 
   return {
     metadataBase: new URL("https://aidformen.com"),
@@ -94,7 +101,10 @@ export default async function PublicLayout({
         {chatbot?.is_enabled && (chatbot.brief?.trim() || chatbot.brief_en?.trim()) && (
           <ChatWidget
             locale={lang}
-            botName={pick(lang, chatbot.bot_name, chatbot.bot_name_en)}
+            botName={pickBrand(lang, chatbot.bot_name, chatbot.bot_name_en, {
+              bn: "সহায়ক",
+              en: "Assistant",
+            })}
             greeting={pick(lang, chatbot.greeting, chatbot.greeting_en)}
             disclaimer={pick(lang, chatbot.disclaimer, chatbot.disclaimer_en)}
             historyRetentionDays={chatbot.history_retention_days ?? 90}

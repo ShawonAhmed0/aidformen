@@ -44,14 +44,12 @@ export function PostComposer({ t }: { t: Dictionary }) {
             const isVideo = VIDEO_TYPES.includes(file.type);
 
             if (!isImage && !isVideo) {
-                toast.error("শুধু ছবি বা ভিডিও দেওয়া যাবে।");
+                toast.error(t.forum.errMediaType);
                 continue;
             }
             if (file.size > (isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES)) {
                 toast.error(
-                    isVideo
-                        ? "ভিডিওর আকার ৫০ মেগাবাইটের কম হতে হবে।"
-                        : "ছবির আকার ৫ মেগাবাইটের কম হতে হবে।"
+                    isVideo ? t.forum.errVideoSize : t.forum.errImageSize
                 );
                 continue;
             }
@@ -80,7 +78,7 @@ export function PostComposer({ t }: { t: Dictionary }) {
         if (!value) return;
 
         if (!toEmbedUrl(value)) {
-            toast.error("ইউটিউব বা ফেসবুক ভিডিওর একটি সঠিক লিঙ্ক দিন।");
+            toast.error(t.forum.errVideoLink);
             return;
         }
 
@@ -91,7 +89,7 @@ export function PostComposer({ t }: { t: Dictionary }) {
 
     const submit = () => {
         if (!title.trim()) {
-            toast.error("শিরোনাম লিখুন।");
+            toast.error(t.forum.errTitle);
             return;
         }
 

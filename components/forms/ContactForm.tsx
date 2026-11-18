@@ -29,7 +29,7 @@ export function ContactForm({
 }) {
     // Contact details come from site settings, with the previous hardcoded
     // values as fallback so the page is never blank.
-    const email = settings?.contact_email?.trim() || "info@aidformen.org";
+    const email = settings?.contact_email?.trim() || "info@aidformen.com";
     const emergency = settings?.emergency_phone?.trim() || "01404555999";
     const address =
         pick(locale, settings?.address, settings?.address_en) ||
@@ -107,7 +107,7 @@ export function ContactForm({
     return (
         <main>
             <PageHero
-                eyebrow={t.contact.title}
+                eyebrow={t.contact.eyebrow}
                 title={t.contact.title}
                 description={t.contact.description}
             />
@@ -193,10 +193,7 @@ export function ContactForm({
                     {/* Form */}
                     <Card padded="lg" elevation="sm" className="lg:col-span-3">
                         <h2 className="text-2xl text-brand-800">{t.contact.formTitle}</h2>
-                        <p className="mt-2 text-sm text-ink-600">
-                            ফর্মটি পূরণ করলে আপনার ইমেইল অ্যাপে বার্তাটি প্রস্তুত হয়ে
-                            যাবে।
-                        </p>
+                        <p className="mt-2 text-sm text-ink-600">{t.contact.formNote}</p>
 
                         <form onSubmit={handleSubmit} noValidate className="mt-7 space-y-5">
                             <Field label={t.contact.name} required error={errors.name}>

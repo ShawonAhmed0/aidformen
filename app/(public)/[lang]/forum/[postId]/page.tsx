@@ -46,7 +46,7 @@ export default async function ForumPostPage({ params }: { params: Params }) {
             <Section space="lg" containerWidth="prose">
                 <Link
                     href={`/${lang}/forum`}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg text-sm font-medium text-ink-600 transition-ui hover:text-brand-800"
+                    className="-ms-2 inline-flex h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-ink-600 transition-ui hover:text-brand-800"
                 >
                     <ArrowLeft className="size-4" aria-hidden="true" />
                     {t.forum.backToForum}

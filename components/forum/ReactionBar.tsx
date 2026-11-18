@@ -10,10 +10,12 @@ import {
     reactionMeta,
     type ReactionKind,
 } from "@/lib/types/forum";
+import type { Locale } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
 
 type ReactionBarProps = {
     postId: string;
+    locale: Locale;
     reactions: Partial<Record<ReactionKind, number>>;
     myReaction: ReactionKind | null;
     canParticipate: boolean;
@@ -38,6 +40,7 @@ type ReactionBarProps = {
  */
 export function ReactionBar({
     postId,
+    locale,
     reactions,
     myReaction,
     canParticipate,
@@ -106,7 +109,8 @@ export function ReactionBar({
             {reactionKinds.map((kind) => {
                 const count = counts[kind] ?? 0;
                 const active = mine === kind;
-                const { emoji, label } = reactionMeta[kind];
+                const { emoji } = reactionMeta[kind];
+                const label = reactionMeta[kind].label[locale];
 
                 return (
                     <button
@@ -117,7 +121,7 @@ export function ReactionBar({
                         aria-label={`${label}${count ? ` (${count})` : ""}`}
                         title={label}
                         className={cn(
-                            "flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm transition-ui",
+                            "flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-full border px-3 text-sm transition-ui",
                             active
                                 ? "border-brand-600 bg-brand-50 font-semibold text-brand-800"
                                 : "border-ink-200 text-ink-600 hover:border-ink-400 hover:bg-ink-50"

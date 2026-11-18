@@ -2,16 +2,21 @@
  * Row shapes for supabase/migrations/0003_forum.sql.
  */
 
+import type { Locale } from "@/lib/i18n/config";
+
 export const reactionKinds = ["like", "love", "haha", "angry", "shoe"] as const;
 export type ReactionKind = (typeof reactionKinds)[number];
 
 /** Emoji and label for each reaction, in the order they appear in the picker. */
-export const reactionMeta: Record<ReactionKind, { emoji: string; label: string }> = {
-  like: { emoji: "👍", label: "লাইক" },
-  love: { emoji: "❤️", label: "ভালোবাসা" },
-  haha: { emoji: "😆", label: "হাহা" },
-  angry: { emoji: "😡", label: "রাগ" },
-  shoe: { emoji: "🥿", label: "জুতা" },
+export const reactionMeta: Record<
+  ReactionKind,
+  { emoji: string; label: Record<Locale, string> }
+> = {
+  like: { emoji: "👍", label: { bn: "লাইক", en: "Like" } },
+  love: { emoji: "❤️", label: { bn: "ভালোবাসা", en: "Love" } },
+  haha: { emoji: "😆", label: { bn: "হাহা", en: "Haha" } },
+  angry: { emoji: "😡", label: { bn: "রাগ", en: "Angry" } },
+  shoe: { emoji: "🥿", label: { bn: "জুতা", en: "Shoe" } },
 };
 
 export const memberStatuses = ["pending", "approved", "rejected"] as const;

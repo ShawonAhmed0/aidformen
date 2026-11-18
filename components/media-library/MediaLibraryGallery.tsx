@@ -23,6 +23,38 @@ import { cn } from "@/lib/utils";
 
 const tabs = ["image", "video"] as const;
 
+/**
+ * Upload date and size for a card caption. Stored names are upload stamps
+ * like "1792584476795-9cd2cf6d.jpeg" — meaningless to a visitor, so they stay
+ * in the accessible labels and the download name but off the card.
+ */
+function assetCaption(asset: MediaAsset, locale: Locale) {
+  const intlLocale = locale === "bn" ? "bn-BD" : "en-GB";
+  const date = new Date(asset.created_at);
+  const parts: string[] = [];
+
+  if (!Number.isNaN(date.getTime())) {
+    parts.push(
+      new Intl.DateTimeFormat(intlLocale, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(date)
+    );
+  }
+
+  if (asset.byte_size) {
+    const mb = asset.byte_size / 1_048_576;
+    parts.push(
+      mb >= 1
+        ? `${new Intl.NumberFormat(intlLocale, { maximumFractionDigits: 1 }).format(mb)} MB`
+        : `${new Intl.NumberFormat(intlLocale, { maximumFractionDigits: 0 }).format(asset.byte_size / 1024)} KB`
+    );
+  }
+
+  return parts.join(" · ");
+}
+
 function EmptyCollection({
   kind,
   message,
@@ -87,8 +119,8 @@ function ImageCollection({
               </a>
 
               <figcaption className="flex items-center gap-3 px-4 py-3">
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-700">
-                  {fileName}
+                <span className="min-w-0 flex-1 truncate text-sm text-ink-600 tabular-nums">
+                  {assetCaption(asset, locale)}
                 </span>
                 <a
                   href={asset.public_url}
@@ -149,12 +181,9 @@ function VideoCollection({
 
               <div className="flex items-center gap-3 px-5 py-4">
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-semibold text-ink-800">
-                    {fileName}
+                  <h3 className="truncate text-sm font-medium text-ink-700 tabular-nums">
+                    {assetCaption(asset, locale)}
                   </h3>
-                  <p className="mt-0.5 truncate text-xs text-ink-500">
-                    {asset.mime_type}
-                  </p>
                 </div>
                 <a
                   href={asset.public_url}
