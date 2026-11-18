@@ -93,7 +93,7 @@ export default async function AboutPage({
             {/* One reading column for the whole page: heading, prose, photograph,
                 repeat. Nothing here is a card, a stat or a callout — the copy is
                 the design. */}
-            <Section space="sm" containerWidth="prose">
+            <Section space="sm" containerWidth="prose" followsHero>
                 <div className="space-y-10 sm:space-y-12">
                     <Figure
                         id="rally"

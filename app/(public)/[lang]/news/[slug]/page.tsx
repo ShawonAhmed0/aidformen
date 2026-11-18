@@ -32,6 +32,8 @@ import { editorialPlainText } from "@/lib/editorial/plain-text";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import {
+  archiveEntryHref,
+  archiveSectionPath,
   isArchiveSlug,
   resolveArchiveEntry,
   type ArchiveEntry,
@@ -77,7 +79,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     item.noticeBody,
     item.postEventBody,
   );
-  const pathname = `/${lang}/news/${slug}`;
+  // Served at both /news/… and /research/…; the canonical is the entry's own
+  // section, so the duplicate URL never competes with it in search.
+  const pathname = archiveEntryHref(lang, item);
 
   return {
     title: item.heading,
@@ -85,8 +89,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: pathname,
       languages: {
-        bn: `/bn/news/${slug}`,
-        en: `/en/news/${slug}`,
+        bn: archiveEntryHref("bn", item),
+        en: archiveEntryHref("en", item),
       },
     },
     openGraph: {
@@ -147,11 +151,13 @@ export default async function NewsDetailPage({ params }: Props) {
         >
           <Container>
             <Link
-              href={`/${lang}/news`}
+              href={`/${lang}/${archiveSectionPath(item.section)}`}
               className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-semibold text-brand-700 transition-ui hover:text-brand-900"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              {t.archive.backToNews}
+              {item.section === "news_archive"
+                ? t.archive.backToResearch
+                : t.archive.backToNews}
             </Link>
           </Container>
         </div>
@@ -539,7 +545,12 @@ export default async function NewsDetailPage({ params }: Props) {
                 current={entry}
                 lang={lang}
                 title={t.archive.relatedNews}
-                viewAll={t.archive.viewAllNews}
+                viewAll={
+                  item.section === "news_archive"
+                    ? t.archive.viewAllResearch
+                    : t.archive.viewAllNews
+                }
+                viewAllHref={`/${lang}/${archiveSectionPath(item.section)}`}
               />
             </Suspense>
           </div>
@@ -597,11 +608,13 @@ async function RelatedNewsAside({
   lang,
   title,
   viewAll,
+  viewAllHref,
 }: {
   current: ArchiveEntry;
   lang: "bn" | "en";
   title: string;
   viewAll: string;
+  viewAllHref: string;
 }) {
   const entries = await getRelatedArchiveEntries(current);
   if (entries.length === 0) return null;
@@ -631,7 +644,7 @@ async function RelatedNewsAside({
           {items.map((related) => (
             <Link
               key={related.id}
-              href={`/${lang}/news/${related.slug}`}
+              href={archiveEntryHref(lang, related)}
               className="group grid min-w-0 grid-cols-[4.75rem_minmax(0,1fr)] gap-3 border-b border-ink-300 py-3 transition-ui hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
             >
               <span className="relative aspect-4/3 overflow-hidden bg-brand-50">
@@ -664,7 +677,7 @@ async function RelatedNewsAside({
         </nav>
 
         <Link
-          href={`/${lang}/news`}
+          href={viewAllHref}
           className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-700 transition-ui hover:text-brand-900"
         >
           {viewAll}

@@ -6,7 +6,6 @@ import { Menu, Phone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-import AuthButton from "./AuthButton";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { Container } from "./ui/container";
 import { buttonVariants } from "./ui/button";
@@ -55,11 +54,15 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
     const navLinks = [
         { name: t.nav.home, href: `/${locale}` },
         { name: t.nav.about, href: `/${locale}/about` },
-        { name: t.nav.archive, href: `/${locale}/news` },
+        { name: t.nav.mediaCenter, href: `/${locale}/news` },
+        { name: t.nav.research, href: `/${locale}/research` },
         { name: t.nav.contact, href: `/${locale}/contact` },
-        { name: t.nav.forum, href: `/${locale}/forum` },
         { name: t.nav.team, href: `/${locale}/team` },
     ];
+
+    // A section stays highlighted on its own detail pages; home only on itself.
+    const isCurrent = (href: string) =>
+        pathname === href || (href !== `/${locale}` && pathname.startsWith(`${href}/`));
 
     const orgName = pickBrand(
         locale,
@@ -106,7 +109,7 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                     <nav aria-label={t.nav.menu} className="hidden shrink-0 lg:block">
                         <ul className="flex items-center gap-1">
                             {navLinks.map((link) => {
-                                const isActive = pathname === link.href;
+                                const isActive = isCurrent(link.href);
 
                                 return (
                                     <li key={link.href}>
@@ -136,8 +139,6 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
 
                     <div className="hidden shrink-0 items-center gap-2 xl:flex">
                         <LocaleSwitcher locale={locale} label={t.nav.switchLanguage} />
-
-                        <AuthButton locale={locale} t={t} compact />
 
                         <a
                             href={`tel:${emergency}`}
@@ -170,7 +171,7 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                         <nav aria-label={t.nav.menu} className="lg:hidden">
                             <ul className="flex flex-col gap-1">
                                 {navLinks.map((link) => {
-                                    const isActive = pathname === link.href;
+                                    const isActive = isCurrent(link.href);
 
                                     return (
                                         <li key={link.href}>
@@ -197,12 +198,6 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                                 locale={locale}
                                 label={t.nav.switchLanguage}
                                 className="self-start"
-                            />
-
-                            <AuthButton
-                                locale={locale}
-                                t={t}
-                                className="flex-col items-stretch lg:flex-row lg:items-center"
                             />
 
                             <a

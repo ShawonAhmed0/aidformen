@@ -2,25 +2,19 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-    FileText,
-    Images,
-    Mic2,
-    Newspaper,
-    Play,
-    Search,
-    SlidersHorizontal,
-    X,
-} from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 
 import { formatCount } from "@/lib/i18n/config";
 import {
     archiveKinds,
+    archiveSubsections,
     sortArchiveItemsNewestFirst,
+    subsectionsBySection,
     type ArchiveContentType,
     type ArchiveListingItem,
     type ArchiveKind,
     type ArchiveSection,
+    type ArchiveSubsection,
 } from "@/lib/types/archive";
 import type { ArchiveLabels } from "./labels";
 import { ArchiveGrid } from "./ArchiveGrid";
@@ -28,25 +22,18 @@ import { cn } from "@/lib/utils";
 
 type KindFilter = ArchiveKind | "all";
 
-const contentTypesBySection: Record<
-    ArchiveSection,
-    readonly ArchiveContentType[]
-> = {
-    press_media: ["event", "press_release"],
-    news_archive: [
-        "media_coverage",
-        "mens_rights_news",
-        "case_study",
-        "report",
-    ],
-};
+const inSubsection = (item: ArchiveListingItem, subsection: ArchiveSubsection) =>
+    (archiveSubsections[subsection] as readonly ArchiveContentType[]).includes(
+        item.contentType
+    );
 
 /**
- * Filters plus the results grid.
+ * Filters plus the results grid for one section (Media Center or Research &
+ * Case Studies); the page hands over only that section's items.
  *
- * The section and content-type links make the primary view shareable. The
- * narrower presentation, category, year, and text filters then run in the
- * browser over the published set so those quick refinements preserve scroll.
+ * The subsection tabs are links so each view is shareable. The narrower
+ * presentation, category, year, and text filters then run in the browser over
+ * the published set so those quick refinements preserve scroll.
  */
 export function ArchiveExplorer({
     items,
@@ -54,8 +41,9 @@ export function ArchiveExplorer({
     years,
     t,
     locale,
-    initialSection,
-    initialContentType,
+    section,
+    basePath,
+    subsection,
 }: {
     items: ArchiveListingItem[];
     categories: string[];
@@ -63,11 +51,12 @@ export function ArchiveExplorer({
     years: { value: string; label: string }[];
     t: ArchiveLabels;
     locale: "bn" | "en";
-    initialSection: ArchiveSection;
-    initialContentType: ArchiveContentType | null;
+    section: ArchiveSection;
+    /** The section's own page, e.g. /en/news; subsection links hang off it. */
+    basePath: string;
+    subsection: ArchiveSubsection | null;
 }) {
     const [kind, setKind] = useState<KindFilter>("all");
-    const section = initialSection;
     const [category, setCategory] = useState<string | null>(null);
     const [year, setYear] = useState<string | null>(null);
     const [query, setQuery] = useState("");
@@ -77,10 +66,7 @@ export function ArchiveExplorer({
 
         return sortArchiveItemsNewestFirst(
             items.filter((item) => {
-                if (item.section !== section) return false;
-                if (initialContentType && item.contentType !== initialContentType) {
-                    return false;
-                }
+                if (subsection && !inSubsection(item, subsection)) return false;
                 if (kind !== "all" && item.kind !== kind) return false;
                 if (category && item.category !== category) return false;
                 if (year && item.year !== year) return false;
@@ -93,30 +79,22 @@ export function ArchiveExplorer({
                 return true;
             })
         );
-    }, [items, section, initialContentType, kind, category, year, query]);
+    }, [items, subsection, kind, category, year, query]);
 
     const filtered =
-        Boolean(initialContentType) || kind !== "all" || category || year || query.trim();
+        Boolean(subsection) || kind !== "all" || category || year || query.trim();
 
+    const inView = (item: ArchiveListingItem) =>
+        !subsection || inSubsection(item, subsection);
     const activeCategories = categories.filter((value) =>
-        items.some(
-            (item) =>
-                item.section === section &&
-                (!initialContentType || item.contentType === initialContentType) &&
-                item.category === value
-        )
+        items.some((item) => inView(item) && item.category === value)
+    );
+    const activeKinds = archiveKinds.filter((value) =>
+        items.some((item) => inView(item) && item.kind === value)
     );
     const activeYears = years.filter((option) =>
-        items.some(
-            (item) =>
-                item.section === section &&
-                (!initialContentType || item.contentType === initialContentType) &&
-                item.year === option.value
-        )
+        items.some((item) => inView(item) && item.year === option.value)
     );
-
-    const sectionCount = (value: ArchiveSection) =>
-        items.filter((item) => item.section === value).length;
 
     const reset = () => {
         setKind("all");
@@ -132,21 +110,22 @@ export function ArchiveExplorer({
         audio: t.audioKind,
     };
 
-    const contentTypeLabel: Record<ArchiveContentType, string> = {
-        event: t.typeEvent,
-        press_release: t.typePressRelease,
-        media_coverage: t.typeMediaCoverage,
-        mens_rights_news: t.typeMensRightsNews,
-        case_study: t.typeCaseStudy,
-        report: t.typeReport,
+    const subsectionLabel: Record<ArchiveSubsection, string> = {
+        news_events: t.subNewsEvents,
+        press_release: t.subPressRelease,
+        media_coverage: t.subMediaCoverage,
+        case_study: t.subCaseStudy,
+        report: t.subReport,
     };
 
-    const kindIcon = {
-        article: FileText,
-        photo: Images,
-        video: Play,
-        audio: Mic2,
-    } as const;
+    const tabs: { value: ArchiveSubsection | null; label: string; count: number }[] = [
+        { value: null, label: t.allContentTypes, count: items.length },
+        ...subsectionsBySection[section].map((value) => ({
+            value,
+            label: subsectionLabel[value],
+            count: items.filter((item) => inSubsection(item, value)).length,
+        })),
+    ];
 
     const yearLabels = new Map(years.map((item) => [item.value, item.label]));
     const groups = Array.from(
@@ -166,151 +145,61 @@ export function ArchiveExplorer({
     return (
         <>
             <div className="mb-10 space-y-5">
-                <div
-                    aria-label={t.filterSection}
-                    className="grid gap-3 rounded-2xl bg-surface-sunken p-2 sm:grid-cols-2"
-                >
-                    {(
-                        [
-                            {
-                                value: "press_media" as const,
-                                label: t.pressMediaTab,
-                                description: t.pressMediaTabDescription,
-                                icon: Newspaper,
-                            },
-                            {
-                                value: "news_archive" as const,
-                                label: t.newsArchiveTab,
-                                description: t.newsArchiveTabDescription,
-                                icon: FileText,
-                            },
-                        ]
-                    ).map((option) => {
-                        const active = section === option.value;
-                        const Icon = option.icon;
-                        return (
-                            <Link
-                                key={option.value}
-                                href={`/${locale}/news?section=${option.value}`}
-                                aria-current={active ? "page" : undefined}
-                                className={cn(
-                                    "flex min-h-24 items-start gap-3 rounded-xl border p-4 text-left transition-ui",
-                                    active
-                                        ? "border-brand-700 bg-surface text-brand-900 shadow-sm"
-                                        : "border-transparent text-ink-600 hover:border-ink-200 hover:bg-surface"
-                                )}
-                            >
-                                <span
-                                    className={cn(
-                                        "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg",
-                                        active
-                                            ? "bg-brand-800 text-white"
-                                            : "bg-brand-50 text-brand-700"
-                                    )}
-                                >
-                                    <Icon className="size-5" aria-hidden="true" />
-                                </span>
-                                <span className="min-w-0 flex-1">
-                                    <span className="flex items-center justify-between gap-3 font-semibold">
-                                        {option.label}
+                {/* The section's subsections, as tabs. Links rather than state
+                    so a subsection can be shared and survives a reload. */}
+                <nav aria-label={t.filterContentType}>
+                    <ul className="-mx-5 flex gap-1 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+                        <li className="flex min-w-max gap-1 rounded-2xl bg-surface-sunken p-1.5 ring-1 ring-ink-200/70">
+                            {tabs.map((tab) => {
+                                const active = subsection === tab.value;
+                                return (
+                                    <Link
+                                        key={tab.value ?? "all"}
+                                        href={tab.value ? `${basePath}?type=${tab.value}` : basePath}
+                                        scroll={false}
+                                        aria-current={active ? "page" : undefined}
+                                        className={cn(
+                                            "inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold whitespace-nowrap transition-ui sm:px-5",
+                                            active
+                                                ? "bg-surface text-brand-900 shadow-sm ring-1 ring-ink-200"
+                                                : "text-ink-600 hover:bg-surface/70 hover:text-brand-800"
+                                        )}
+                                    >
+                                        {tab.label}
                                         <span
                                             className={cn(
-                                                "shrink-0 rounded-full px-2 py-0.5 text-xs tabular-nums",
+                                                "rounded-full px-1.5 py-0.5 text-2xs leading-none tabular-nums",
                                                 active
                                                     ? "bg-brand-800 text-white"
-                                                    : "bg-ink-100 text-ink-600"
+                                                    : "bg-ink-200/70 text-ink-600"
                                             )}
                                         >
-                                            {formatCount(locale, sectionCount(option.value))}
+                                            {formatCount(locale, tab.count)}
                                         </span>
-                                    </span>
-                                    <span className="mt-1 block text-xs leading-relaxed">
-                                        {option.description}
-                                    </span>
-                                </span>
-                            </Link>
-                        );
-                    })}
-                </div>
-
-                <nav aria-label={t.filterContentType} className="space-y-2">
-                    <span className="block text-xs font-semibold uppercase text-ink-500">
-                        {t.filterContentType}
-                    </span>
-                    <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
-                        <Link
-                            href={`/${locale}/news?section=${section}`}
-                            aria-current={!initialContentType ? "page" : undefined}
-                            className={cn(
-                                "inline-flex min-h-11 shrink-0 items-center rounded-full border px-5 text-sm font-medium whitespace-nowrap transition-ui",
-                                !initialContentType
-                                    ? "border-brand-800 bg-brand-800 text-white"
-                                    : "border-ink-200 bg-surface text-ink-600 hover:border-brand-400 hover:text-brand-800"
-                            )}
-                        >
-                            {t.allContentTypes}
-                        </Link>
-
-                        {contentTypesBySection[section].map((contentType) => {
-                            const active = initialContentType === contentType;
-                            return (
-                                <Link
-                                    key={contentType}
-                                    href={`/${locale}/news?section=${section}&type=${contentType}`}
-                                    aria-current={active ? "page" : undefined}
-                                    className={cn(
-                                        "inline-flex min-h-11 shrink-0 items-center rounded-full border px-5 text-sm font-medium whitespace-nowrap transition-ui",
-                                        active
-                                            ? "border-brand-800 bg-brand-800 text-white"
-                                            : "border-ink-200 bg-surface text-ink-600 hover:border-brand-400 hover:text-brand-800"
-                                    )}
-                                >
-                                    {contentTypeLabel[contentType]}
-                                </Link>
-                            );
-                        })}
-                    </div>
+                                    </Link>
+                                );
+                            })}
+                        </li>
+                    </ul>
                 </nav>
 
-                {/* Presentation kind is the first in-page refinement, above the
-                    unbounded category and year facets. */}
-                <div
-                    aria-label={t.filterKind}
-                    className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
-                >
-                    {(["all", ...archiveKinds] as const).map((value) => {
-                        const isActive = kind === value;
-                        const Icon = value === "all" ? null : kindIcon[value];
-
-                        return (
-                            <button
-                                key={value}
-                                type="button"
-                                aria-pressed={isActive}
-                                onClick={() => setKind(value)}
-                                className={cn(
-                                    "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-5 text-sm font-medium whitespace-nowrap transition-ui",
-                                    isActive
-                                        ? "border-brand-800 bg-brand-800 text-white"
-                                        : "border-ink-200 bg-surface text-ink-600 hover:border-brand-400 hover:text-brand-800"
-                                )}
-                            >
-                                {Icon && (
-                                    <Icon
-                                        aria-hidden="true"
-                                        className={cn(
-                                            "size-4",
-                                            value === "video" && "fill-current"
-                                        )}
-                                    />
-                                )}
-                                {value === "all" ? t.all : kindLabel[value]}
-                            </button>
-                        );
-                    })}
-                </div>
-
+                {/* Format joins category and year as a dropdown: as a second
+                    row of chips it put two "All" rows directly under each
+                    other and read as a duplicate of the subsection tabs. */}
                 <div className="flex flex-wrap items-end gap-4">
+                    {activeKinds.length > 1 && (
+                        <Facet
+                            label={t.filterFormat}
+                            allLabel={t.allFormats}
+                            value={kind === "all" ? null : kind}
+                            options={activeKinds.map((value) => ({
+                                value,
+                                label: kindLabel[value],
+                            }))}
+                            onChange={(value) => setKind((value as ArchiveKind | null) ?? "all")}
+                        />
+                    )}
+
                     {activeCategories.length > 0 && (
                         <Facet
                             label={t.filterCategory}
@@ -368,12 +257,13 @@ export function ArchiveExplorer({
 
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-200 pt-4">
                     <p className="text-sm text-ink-500" aria-live="polite">
-                        {formatCount(locale, visible.length)} {t.resultsLabel}
+                        {formatCount(locale, visible.length)}{" "}
+                        {visible.length === 1 ? t.resultLabel : t.resultsLabel}
                     </p>
 
-                    {filtered && (initialContentType ? (
+                    {filtered && (subsection ? (
                         <Link
-                            href={`/${locale}/news?section=${section}`}
+                            href={basePath}
                             className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
                         >
                             <SlidersHorizontal className="size-4" aria-hidden="true" />
@@ -397,9 +287,9 @@ export function ArchiveExplorer({
                     <p className="text-base font-medium text-ink-700">
                         {filtered ? t.noMatches : t.sectionEmpty}
                     </p>
-                    {!filtered ? null : initialContentType ? (
+                    {!filtered ? null : subsection ? (
                         <Link
-                            href={`/${locale}/news?section=${section}`}
+                            href={basePath}
                             className="mt-3 inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
                         >
                             {t.clearFilters}

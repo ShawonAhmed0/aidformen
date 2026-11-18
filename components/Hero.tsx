@@ -112,7 +112,7 @@ export default async function Hero({ locale }: { locale: Locale }) {
     primaryLabel,
     primaryHref: localizeHref(locale, hero?.primary_cta_href, "/about"),
     secondaryLabel,
-    secondaryHref: localizeHref(locale, hero?.secondary_cta_href, "/register"),
+    secondaryHref: localizeHref(locale, hero?.secondary_cta_href, "/contact"),
   };
 
   return (

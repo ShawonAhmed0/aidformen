@@ -36,10 +36,10 @@ export function PageHero({
       {/* Soft wash so the band settles into the page instead of ending abruptly. */}
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background"
+        className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background"
       />
 
-      <Container className="relative py-16 text-center sm:py-20 lg:py-24">
+      <Container className="relative pt-12 pb-10 text-center sm:pt-16 sm:pb-12 lg:pt-20 lg:pb-14">
         {media && <div className="mb-7 flex justify-center">{media}</div>}
 
         {eyebrow && (

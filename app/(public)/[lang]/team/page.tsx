@@ -58,7 +58,7 @@ export default async function TeamPage({
         description={t.team.description}
       />
 
-      <Section space="lg" containerWidth="wide">
+      <Section space="md" containerWidth="wide" followsHero>
         {resolved.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-ink-300 bg-surface px-6 py-16 text-center">
             <p className="text-base font-medium text-ink-700">{t.team.empty}</p>

@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { editorialPlainText } from "@/lib/editorial/plain-text";
 import { formatCount } from "@/lib/i18n/config";
-import type { ArchiveListingItem } from "@/lib/types/archive";
+import { archiveEntryHref, type ArchiveListingItem } from "@/lib/types/archive";
 import type { ArchiveLabels } from "./labels";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +51,7 @@ export function ArchiveCard({
 
     return (
         <Link
-            href={`/${locale}/news/${item.slug}`}
+            href={archiveEntryHref(locale, item)}
             className={cn(
                 "group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-surface text-left shadow-xs transition-ui hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-md",
                 className

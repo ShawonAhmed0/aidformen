@@ -148,7 +148,7 @@ export function HeroEditor({ hero }: { hero: HeroContent | null }) {
                                     onChange={(e) =>
                                         set("secondary_cta_href")(e.target.value)
                                     }
-                                    placeholder="/register"
+                                    placeholder="/contact"
                                 />
                             )}
                         </Field>

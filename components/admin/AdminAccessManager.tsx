@@ -175,9 +175,10 @@ export function AdminAccessManager({
               Add an administrator
             </h2>
             <p className="mt-1 text-sm leading-6 text-ink-600">
-              The person must already have a registered account. They will be
-              able to manage site content, settings, members, media, and forum
-              moderation, but cannot add further administrators.
+              The person must already have an account — invite them from the
+              Supabase Auth dashboard first, since the site no longer has a
+              sign-up page. They will be able to manage site content, settings
+              and media, but cannot add further administrators.
             </p>
           </div>
         </div>

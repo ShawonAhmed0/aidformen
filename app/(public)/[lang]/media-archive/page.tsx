@@ -62,7 +62,7 @@ export default async function MediaArchivePage({
         }
       />
 
-      <Section space="md" containerWidth="wide">
+      <Section space="md" containerWidth="wide" followsHero>
         <MediaLibraryGallery assets={assets} locale={lang} />
       </Section>
     </main>

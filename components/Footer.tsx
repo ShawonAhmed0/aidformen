@@ -42,16 +42,13 @@ export default function Footer({
     const quickLinks = [
         { label: t.nav.about, href: `/${locale}/about` },
         { label: t.nav.team, href: `/${locale}/team` },
-        { label: t.nav.archive, href: `/${locale}/news` },
-        { label: getMediaLibraryLabels(locale).title, href: `/${locale}/media-archive` },
+        { label: t.nav.contact, href: `/${locale}/contact` },
     ];
 
-    // The privacy, terms and FAQ links that used to sit here all led to 404s;
-    // every link in this column now resolves.
-    const communityLinks = [
-        { label: t.nav.forum, href: `/${locale}/forum` },
-        { label: t.auth.registerTitle, href: `/${locale}/register` },
-        { label: t.nav.contact, href: `/${locale}/contact` },
+    const mediaLinks = [
+        { label: t.nav.mediaCenter, href: `/${locale}/news` },
+        { label: t.nav.research, href: `/${locale}/research` },
+        { label: getMediaLibraryLabels(locale).title, href: `/${locale}/media-archive` },
     ];
 
     return (
@@ -143,15 +140,15 @@ export default function Footer({
                         </ul>
                     </nav>
 
-                    <nav aria-labelledby="footer-community">
+                    <nav aria-labelledby="footer-media">
                         <h2
-                            id="footer-community"
+                            id="footer-media"
                             className="text-2xs font-semibold uppercase text-brand-300"
                         >
-                            {t.footer.community}
+                            {t.footer.media}
                         </h2>
                         <ul className="mt-4 flex flex-col text-sm sm:gap-1">
-                            {communityLinks.map((link) => (
+                            {mediaLinks.map((link) => (
                                 <li key={link.href}>
                                     <Link href={link.href} className={linkClass}>
                                         {link.label}

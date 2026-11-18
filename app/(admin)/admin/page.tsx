@@ -5,8 +5,8 @@ import {
   CircleAlert,
   Image as ImageIcon,
   LayoutPanelTop,
+  Newspaper,
   Settings2,
-  Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatsCard } from "@/components/admin/StatsCard";
@@ -24,17 +24,20 @@ function displayCount(result: CountResult) {
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
 
-  const [members, heroContent, carouselImages] = await Promise.all([
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
+  const [archiveEntries, heroContent, carouselImages] = await Promise.all([
+    supabase
+      .from("archive_entries")
+      .select("id", { count: "exact", head: true })
+      .eq("is_published", true),
     supabase.from("hero_content").select("id", { count: "exact", head: true }),
     supabase.from("carousel_images").select("id", { count: "exact", head: true }),
   ]);
 
   const metrics = [
     {
-      title: "Registered members",
-      value: displayCount(members),
-      icon: <Users className="size-[18px]" />,
+      title: "Published media entries",
+      value: displayCount(archiveEntries),
+      icon: <Newspaper className="size-[18px]" />,
     },
     {
       title: "Hero content",
@@ -62,10 +65,10 @@ export default async function AdminDashboardPage() {
       action: "Manage hero",
     },
     {
-      label: "Member records are available",
-      complete: !members.error,
-      href: "/admin/users",
-      action: "View members",
+      label: "Media Center has published entries",
+      complete: !archiveEntries.error && (archiveEntries.count ?? 0) > 0,
+      href: "/admin/archive",
+      action: "Manage entries",
     },
   ];
 

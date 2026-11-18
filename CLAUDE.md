@@ -3,7 +3,8 @@
 # Aid For Men Foundation — website
 
 Bilingual (Bengali / English) site for a Bangladeshi non-profit: public pages, a
-members' forum, an admin CMS, and a grounded chatbot. Bengali is the source
+Media Center and Research & Case Studies section, an admin CMS, and a grounded
+chatbot. There is no public sign-up; login exists for staff only. Bengali is the source
 language; English is a translation layer that falls back to Bengali.
 
 ## Stack
@@ -42,7 +43,7 @@ app/
   fonts.ts              next/font — Inter (Latin) + Kalpurush/Noto Serif Bengali
 components/
   ui/                   shared primitives — Button, Container, Card, Badge, Field…
-  admin/  forum/  chat/ feature components
+  admin/  archive/  chat/ feature components
   forms/                Login, Register, Contact
 lib/
   actions/              "use server" mutations
@@ -77,27 +78,36 @@ proxy.ts                locale detection/redirect + admin auth gate
   what persists sessions, and this client only reads.
 - **RLS is the real access control.** Tables: `hero_content`, `carousel_images`,
   `site_settings`, `team_members`, `activities`, `videos`, `archive_entries` /
-  `archive_media`, `newsletter_subscribers`, `forum_posts` / `_comments` /
-  `_reactions` / `_post_media`, `profiles`, `chatbot_settings`. Public read,
-  admin write; forum writes require an approved member. `archive_media` is the
+  `archive_media`, `newsletter_subscribers`, `profiles`, `chatbot_settings`.
+  Public read, admin write. `archive_media` is the
   exception to "public read published rows": it has no `is_published` of its own
   and tests its parent entry's instead.
 - **Schema changes ship as a new numbered `.sql` file** in
   `supabase/migrations/` for the user to paste into the SQL editor. Only the
-  anon key exists locally, so DDL cannot run from code. Migrations 0001–0009 are
-  applied; write them to be safe to re-run.
+  anon key exists locally, so DDL cannot run from code. Write them to be safe
+  to re-run. `0017_retire_forum.sql` drops the old forum tables and must be run
+  by hand; until it is, those tables just sit unused.
 
-## Archive
+## Archive (Media Center + Research & Case Studies)
 
-`archive_entries` is one row per item, `kind` either `photo` (a gallery in
-`archive_media`) or `video` (an external link **or** an uploaded file). Both
-kinds carry a bilingual heading and paragraph; `/[lang]/archive` filters them by
-kind, category, year and free text, all client-side over the published set.
+`archive_entries` is one row per item, shown in one of two public sections:
+
+| Section (stored id) | Route | Subsection tabs (`?type=`) |
+|---|---|---|
+| Media Center (`press_media`) | `/[lang]/news` | `news_events` (event + mens_rights_news), `press_release`, `media_coverage` |
+| Research & Case Studies (`news_archive`) | `/[lang]/research` | `case_study`, `report` |
+
+- **The content type decides the section** (`sectionForContentType` in
+  `lib/types/archive.ts`). The stored `section` column is written from it and
+  never trusted on read; the old ids are kept so no CHECK constraint changes.
+- Both routes render `ArchiveSectionPage`; detail pages live at
+  `/news/[slug]` and `/research/[slug]` (one implementation, canonical follows
+  the entry's section). Kind, category, year and text filters run client-side.
 
 - `resolveArchiveEntry()` in `lib/types/archive.ts` applies the locale on the
   server so the filter component only ever sees display strings.
-- An external video link is framed **only** if `toEmbedUrl` (`lib/embed.ts`,
-  shared with the forum) recognises the host — YouTube and Facebook. Anything
+- An external video link is framed **only** if `toEmbedUrl` (`lib/embed.ts`)
+  recognises the host — YouTube and Facebook. Anything
   else is offered as a link out instead of an iframe.
 - `activities` no longer has an `archive` placement. Migration 0010 moved those
   rows into `archive_entries` and dropped it from the CHECK constraint; two
@@ -110,7 +120,7 @@ A Server Action request body is capped at **1MB** by default, so `ImagePicker` �
 **browser-direct to Supabase Storage** instead (`lib/supabase/upload.ts`), which
 has no such limit; the `media_admin_insert` storage policy is still what
 authorises the write. `next.config.ts` sets no `serverActions.bodySizeLimit`, so
-the forum's 50MB video path and `ImagePicker` remain limited to 1MB.
+`ImagePicker` remains limited to 1MB.
 
 ## Server actions
 
@@ -120,7 +130,7 @@ Every mutation lives in `lib/actions/`, is gated, and returns one shape:
 type ActionResult<T> = { ok: true; data?: T } | { ok: false; error: string }
 ```
 
-- Gate with `requireAdmin()` or `requireApprovedMember()` from
+- Gate with `requireAdmin()` (or `requireAdminManager()`) from
   `lib/actions/shared.ts` — defence in depth on top of RLS, and it turns an
   opaque RLS rejection into a message the user can act on.
 - Wrap the body in `guarded()` so a `FieldError` becomes `{ ok: false }` instead

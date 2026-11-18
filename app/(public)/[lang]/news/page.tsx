@@ -1,37 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Archive, ArrowRight, Cloud, Images, ShieldCheck } from "lucide-react";
 
-import { ArchiveExplorer } from "@/components/archive/ArchiveExplorer";
-import { getMediaLibraryLabels } from "@/components/media-library/labels";
-import { PageHero } from "@/components/PageHero";
-import { buttonVariants } from "@/components/ui/button";
-import { Section } from "@/components/ui/section";
-import { getArchiveEntries } from "@/lib/content/archive";
-import { formatYear, isLocale } from "@/lib/i18n/config";
-import { getDictionary } from "@/lib/i18n/dictionary";
 import {
-  archiveContentTypes,
-  resolveArchiveEntry,
-  toArchiveListingItem,
-  type ArchiveContentType,
-  type ArchiveSection,
-} from "@/lib/types/archive";
+  ArchiveSectionPage,
+  archiveSectionMetadata,
+} from "@/components/archive/ArchiveSectionPage";
+import { isLocale } from "@/lib/i18n/config";
 
-const contentTypesBySection: Record<
-  ArchiveSection,
-  readonly ArchiveContentType[]
-> = {
-  press_media: ["event", "press_release"],
-  news_archive: [
-    "media_coverage",
-    "mens_rights_news",
-    "case_study",
-    "report",
-  ],
-};
-
+/** Media Center: News & Events, Press Release and Media Coverage. */
 export async function generateMetadata({
   params,
 }: {
@@ -39,171 +15,24 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
-  const t = await getDictionary(lang);
-
-  return {
-    title: t.archive.title,
-    description: t.archive.description,
-    alternates: {
-      canonical: `/${lang}/news`,
-      languages: { bn: "/bn/news", en: "/en/news" },
-    },
-    openGraph: {
-      type: "website",
-      url: `/${lang}/news`,
-      title: t.archive.title,
-      description: t.archive.description,
-    },
-  };
+  return archiveSectionMetadata(lang, "press_media");
 }
 
-export default async function NewsPage({
+export default async function MediaCenterPage({
   params,
   searchParams,
 }: {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{
-    section?: string | string[];
-    type?: string | string[];
-  }>;
+  searchParams: Promise<{ section?: string | string[]; type?: string | string[] }>;
 }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
-  const requested = await searchParams;
-  const requestedSection = requested.section;
-  const requestedType = Array.isArray(requested.type)
-    ? requested.type[0]
-    : requested.type;
-
-  const [t, entries] = await Promise.all([
-    getDictionary(lang),
-    getArchiveEntries(),
-  ]);
-  const mediaLibrary = getMediaLibraryLabels(lang);
-
-  const items = entries.map((entry) =>
-    toArchiveListingItem(resolveArchiveEntry(lang, entry))
-  );
-
-  // Without an explicit ?section, open on one that has something in it —
-  // landing on an empty Press tab read as "this site has no news".
-  const initialSection: ArchiveSection =
-    requestedSection === "news_archive" || requestedSection === "press_media"
-      ? requestedSection
-      : items.some((item) => item.section === "press_media") ||
-          !items.some((item) => item.section === "news_archive")
-        ? "press_media"
-        : "news_archive";
-  const initialContentType =
-    requestedType &&
-    archiveContentTypes.includes(requestedType as ArchiveContentType) &&
-    contentTypesBySection[initialSection].includes(
-      requestedType as ArchiveContentType,
-    )
-      ? (requestedType as ArchiveContentType)
-      : null;
-  const categories = Array.from(
-    new Set(items.map((item) => item.category).filter(Boolean))
-  ).sort((a, b) => a.localeCompare(b, lang));
-  const years = Array.from(
-    new Set(items.map((item) => item.year).filter((value): value is string => Boolean(value)))
-  )
-    .sort((a, b) => b.localeCompare(a))
-    .map((year) => ({ value: year, label: formatYear(lang, year) }));
 
   return (
-    <main data-print-document>
-      <PageHero
-        eyebrow={t.archive.eyebrow}
-        title={t.archive.title}
-        description={t.archive.description}
-      />
-
-      <Section space="md">
-        {/* One compact row of context above the explorer. These used to stack
-            into three tall cards that pushed the first result a full screen
-            down on a phone. */}
-        <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-print-keep>
-          <div className="flex gap-3.5 rounded-2xl border border-brand-200 bg-brand-50 p-4 sm:p-5">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-800 text-white">
-              <Cloud className="size-5" aria-hidden="true" />
-            </span>
-            <div>
-              <h2 className="text-base leading-snug text-brand-900">
-                {t.archive.lightweightTitle}
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-ink-600">
-                {t.archive.lightweightBody}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3.5 rounded-2xl border border-success-line bg-success-soft p-4 sm:p-5">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success text-white">
-              <ShieldCheck className="size-5" aria-hidden="true" />
-            </span>
-            <div>
-              <h2 className="text-base leading-snug text-success-strong">
-                {t.archive.usageTitle}
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-ink-700">{t.archive.usageBody}</p>
-            </div>
-          </div>
-
-          <Link
-            href={`/${lang}/media-archive`}
-            className="group flex gap-3.5 rounded-2xl border border-ochre-200 bg-ochre-50 p-4 transition-ui hover:-translate-y-0.5 hover:border-ochre-400 hover:shadow-sm sm:col-span-2 sm:p-5 lg:col-span-1"
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ochre-700 text-white">
-              <Images className="size-5" aria-hidden="true" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-base leading-snug text-ochre-900">{mediaLibrary.title}</h2>
-              <p className="mt-1 text-sm leading-6 text-ink-700">
-                {mediaLibrary.description}
-              </p>
-              <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-ochre-800 underline-offset-4 group-hover:underline">
-                {t.archive.openMediaLibrary}
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </span>
-            </div>
-          </Link>
-        </div>
-
-        {items.length === 0 ? (
-          <div className="mx-auto max-w-2xl rounded-2xl border border-dashed border-ink-300 bg-surface px-6 py-16 text-center">
-            <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
-              <Archive className="size-7" aria-hidden="true" />
-            </span>
-            <h2 className="mt-6 text-2xl text-brand-800">{t.archive.emptyTitle}</h2>
-            <p className="mx-auto mt-3 max-w-md text-base text-ink-600">
-              {t.archive.emptyBody}
-            </p>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link href={`/${lang}`} className={buttonVariants()}>
-                {t.archive.viewRecent}
-              </Link>
-              <Link
-                href={`/${lang}/contact`}
-                className={buttonVariants({ variant: "outline" })}
-              >
-                {t.nav.contact}
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <ArchiveExplorer
-            key={`${initialSection}:${initialContentType ?? "all"}`}
-            items={items}
-            categories={categories}
-            years={years}
-            t={t.archive}
-            locale={lang}
-            initialSection={initialSection}
-            initialContentType={initialContentType}
-          />
-        )}
-      </Section>
-    </main>
+    <ArchiveSectionPage
+      lang={lang}
+      section="press_media"
+      searchParams={await searchParams}
+    />
   );
 }

@@ -12,6 +12,11 @@ import { formatDate, pick, type Locale } from "@/lib/i18n/config";
 export const archiveKinds = ["article", "photo", "video", "audio"] as const;
 export type ArchiveKind = (typeof archiveKinds)[number];
 
+/**
+ * The two public sections, as stored in `archive_entries.section`. The stored
+ * ids predate the current names: `press_media` is the Media Center (/news) and
+ * `news_archive` is Research & Case Studies (/research).
+ */
 export const archiveSections = ["press_media", "news_archive"] as const;
 export type ArchiveSection = (typeof archiveSections)[number];
 
@@ -24,6 +29,55 @@ export const archiveContentTypes = [
   "report",
 ] as const;
 export type ArchiveContentType = (typeof archiveContentTypes)[number];
+
+/**
+ * The section is decided by the content type, never chosen separately. Rows
+ * saved under the old pairing (coverage and news under the documentation
+ * section) are read through this, so they land in the right place before
+ * migration 0017 realigns the stored column.
+ */
+export const sectionForContentType: Record<ArchiveContentType, ArchiveSection> = {
+  event: "press_media",
+  mens_rights_news: "press_media",
+  press_release: "press_media",
+  media_coverage: "press_media",
+  case_study: "news_archive",
+  report: "news_archive",
+};
+
+/** The filter tabs inside a section; one tab can cover several content types. */
+export const archiveSubsections = {
+  news_events: ["event", "mens_rights_news"],
+  press_release: ["press_release"],
+  media_coverage: ["media_coverage"],
+  case_study: ["case_study"],
+  report: ["report"],
+} as const satisfies Record<string, readonly ArchiveContentType[]>;
+export type ArchiveSubsection = keyof typeof archiveSubsections;
+
+export const subsectionsBySection: Record<
+  ArchiveSection,
+  readonly ArchiveSubsection[]
+> = {
+  press_media: ["news_events", "press_release", "media_coverage"],
+  news_archive: ["case_study", "report"],
+};
+
+export function isArchiveSubsection(value: unknown): value is ArchiveSubsection {
+  return typeof value === "string" && Object.hasOwn(archiveSubsections, value);
+}
+
+/** Public path segment for a section: /news or /research. */
+export function archiveSectionPath(section: ArchiveSection): "news" | "research" {
+  return section === "news_archive" ? "research" : "news";
+}
+
+export function archiveEntryHref(
+  locale: Locale,
+  item: { section: ArchiveSection; slug: string }
+): string {
+  return `/${locale}/${archiveSectionPath(item.section)}/${item.slug}`;
+}
 
 export const archiveEventStatuses = ["upcoming", "completed"] as const;
 export type ArchiveEventStatus = (typeof archiveEventStatuses)[number];
@@ -425,7 +479,7 @@ export function resolveArchiveEntry(
     id: entry.id,
     slug: entry.slug || `archive-${entry.id.slice(0, 8)}`,
     kind: entry.kind,
-    section: entry.section || "press_media",
+    section: sectionForContentType[entry.content_type || "event"],
     contentType: entry.content_type || "event",
     eventStatus: entry.event_status || null,
     heading: pick(locale, entry.heading, entry.heading_en),

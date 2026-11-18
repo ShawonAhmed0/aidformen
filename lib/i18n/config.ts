@@ -141,6 +141,13 @@ export function localizeHref(
   const segments = path.split("/").filter(Boolean);
   if (isLocale(segments[0])) segments.shift();
 
-  if (segments[0] === "archive") segments[0] = "news";
+  // Stored CMS links can predate a route's removal. Sign-up and the forum are
+  // gone; "join as a volunteer" style buttons now land on the contact page.
+  const retired: Record<string, string> = {
+    archive: "news",
+    register: "contact",
+    forum: "contact",
+  };
+  if (segments[0] && retired[segments[0]]) segments[0] = retired[segments[0]];
   return `/${locale}/${segments.join("/")}${suffix}`.replace(/\/$/, "");
 }

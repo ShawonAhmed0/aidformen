@@ -112,7 +112,7 @@ export function ContactForm({
                 description={t.contact.description}
             />
 
-            <Section space="lg">
+            <Section space="md" followsHero>
                 <div className="grid gap-8 lg:grid-cols-5 lg:gap-10">
                     {/* Details */}
                     <div className="space-y-4 lg:col-span-2">

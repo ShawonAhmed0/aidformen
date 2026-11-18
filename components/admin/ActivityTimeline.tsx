@@ -1,19 +1,10 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { UserPlus, ImagePlus, FileEdit, MessageSquare } from 'lucide-react'
+import { ImagePlus, FileEdit } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const activities = [
-    {
-        id: 1,
-        type: 'member',
-        title: 'New member registered',
-        description: 'Rahim Ahmed joined the foundation',
-        time: '2 hours ago',
-        icon: UserPlus,
-        color: 'bg-success',
-    },
     {
         id: 2,
         type: 'hero',
@@ -31,15 +22,6 @@ const activities = [
         time: '1 day ago',
         icon: ImagePlus,
         color: 'bg-ochre-600',
-    },
-    {
-        id: 4,
-        type: 'forum',
-        title: 'New forum discussion',
-        description: '“Mental Health Awareness” started by Admin',
-        time: '2 days ago',
-        icon: MessageSquare,
-        color: 'bg-ink-500',
     },
 ]
 

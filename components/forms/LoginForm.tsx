@@ -61,11 +61,12 @@ export function LoginForm({ locale, t }: { locale: Locale; t: Dictionary }) {
             .eq("id", user.id)
             .single();
 
-        // Redirect target is unchanged.
+        // Only staff sign in now that member accounts are gone; anyone else
+        // goes back to the site rather than to a dashboard that doesn't exist.
         if (profile?.role === "admin") {
             router.push("/admin");
         } else {
-            router.push(`/${locale}/dashboard`);
+            router.push(`/${locale}`);
         }
     };
 
@@ -194,45 +195,6 @@ export function LoginForm({ locale, t }: { locale: Locale; t: Dictionary }) {
                         </Button>
                     </form>
 
-                    <div className="my-7 flex items-center gap-3">
-                        <span className="h-px flex-1 bg-ink-200" />
-                        <span className="text-xs text-ink-500">{t.auth.or}</span>
-                        <span className="h-px flex-1 bg-ink-200" />
-                    </div>
-
-                    <div className="space-y-3">
-                        <Button variant="outline" size="lg" className="w-full">
-                            <Image
-                                src="https://www.svgrepo.com/show/475656/google-color.svg"
-                                alt=""
-                                width={20}
-                                height={20}
-                                className="size-5"
-                            />
-                            {t.auth.googleLogin}
-                        </Button>
-
-                        <Button variant="outline" size="lg" className="w-full">
-                            <Image
-                                src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg"
-                                alt=""
-                                width={20}
-                                height={20}
-                                className="size-5"
-                            />
-                            {t.auth.facebookLogin}
-                        </Button>
-                    </div>
-
-                    <p className="mt-8 text-center text-sm text-ink-600">
-                        {t.auth.noAccount}{" "}
-                        <Link
-                            href={`/${locale}/register`}
-                            className="rounded-sm font-semibold text-brand-700 transition-ui hover:text-brand-800 hover:underline"
-                        >
-                            {t.auth.registerCta}
-                        </Link>
-                    </p>
                 </Card>
             </Container>
         </main>

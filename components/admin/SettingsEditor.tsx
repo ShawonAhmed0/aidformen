@@ -267,7 +267,7 @@ export function SettingsEditor({ settings }: { settings: SiteSettings | null }) 
                         />
 
                         {text("announcement_cta_href", "বোতামের লিঙ্ক", {
-                            placeholder: "/register",
+                            placeholder: "/contact",
                             helper: "ভেতরের ঠিকানা '/' দিয়ে শুরু করুন।",
                         })}
                     </div>

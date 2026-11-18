@@ -42,6 +42,7 @@ import {
     MAX_ARCHIVE_ATTACHMENTS,
     MAX_ARCHIVE_PHOTOS,
     MAX_ARCHIVE_REFERENCE_PHOTOS,
+    sectionForContentType,
     type ArchiveContentType,
     type ArchiveEntry,
     type ArchiveEventStatus,
@@ -87,12 +88,12 @@ const kindInfo: Record<ArchiveKind, { label: string; description: string }> = {
 
 const sectionInfo: Record<ArchiveSection, { label: string; description: string }> = {
     press_media: {
-        label: "Press & Media Center",
-        description: "নিজস্ব ইভেন্ট, প্রেস রিলিজ এবং সাংবাদিকদের মিডিয়া কিট।",
+        label: "Media Center",
+        description: "নিউজ ও ইভেন্ট, প্রেস রিলিজ এবং মিডিয়া কভারেজ।",
     },
     news_archive: {
-        label: "News Archive & Documentation",
-        description: "বাইরের সংবাদ, পুরুষ অধিকার আর্কাইভ, কেস স্টাডি ও রিপোর্ট।",
+        label: "Research & Case Studies",
+        description: "কেস স্টাডি, রিপোর্ট ও গবেষণা।",
     },
 };
 
@@ -110,14 +111,10 @@ const eventStatusLabels: Record<ArchiveEventStatus, string> = {
     completed: "সম্পন্ন",
 };
 
+// Grouped by the section each type now belongs to (sectionForContentType).
 const contentTypesBySection: Record<ArchiveSection, readonly ArchiveContentType[]> = {
-    press_media: ["event", "press_release"],
-    news_archive: [
-        "media_coverage",
-        "mens_rights_news",
-        "case_study",
-        "report",
-    ],
+    press_media: ["event", "mens_rights_news", "press_release", "media_coverage"],
+    news_archive: ["case_study", "report"],
 };
 
 type Draft = {
@@ -200,7 +197,8 @@ const toDraft = (entry: ArchiveEntry): Draft => ({
     id: entry.id,
     slug: entry.slug,
     kind: entry.kind,
-    section: entry.section,
+    // Rows saved under the old pairing keep a stale section; the type decides.
+    section: sectionForContentType[entry.content_type],
     content_type: entry.content_type,
     event_status: entry.event_status ?? "",
     heading: entry.heading,
@@ -524,7 +522,7 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                                     : kindInfo[entry.kind].label}
                                             </span>
 
-                                            <span>{sectionInfo[entry.section].label}</span>
+                                            <span>{sectionInfo[sectionForContentType[entry.content_type]].label}</span>
 
                                             <span>
                                                 {contentTypeLabels[entry.content_type]}
@@ -737,15 +735,16 @@ export function ArchiveManager({ entries }: { entries: ArchiveEntry[] }) {
                                                 onClick={() => {
                                                     const allowed =
                                                         contentTypesBySection[section];
+                                                    const nextType = allowed.includes(
+                                                        draft.content_type
+                                                    )
+                                                        ? draft.content_type
+                                                        : allowed[0];
                                                     patch({
                                                         section,
-                                                        content_type: allowed.includes(
-                                                            draft.content_type
-                                                        )
-                                                            ? draft.content_type
-                                                            : allowed[0],
+                                                        content_type: nextType,
                                                         event_status:
-                                                            section === "press_media"
+                                                            nextType === "event"
                                                                 ? draft.event_status || "upcoming"
                                                                 : "",
                                                     });

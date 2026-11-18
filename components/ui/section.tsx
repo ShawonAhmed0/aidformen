@@ -11,6 +11,11 @@ type SectionProps = React.ComponentProps<"section"> & {
   containerWidth?: React.ComponentProps<typeof Container>["width"];
   /** Opt out of the built-in Container when a section needs to bleed. */
   bare?: boolean;
+  /**
+   * Sits directly under a PageHero. The hero's own padding already separates
+   * them, so a full section step on top doubled the gap to ~200px on laptops.
+   */
+  followsHero?: boolean;
   containerClassName?: string;
 };
 
@@ -40,12 +45,18 @@ export function Section({
   space = "md",
   containerWidth = "default",
   bare = false,
+  followsHero = false,
   children,
   ...props
 }: SectionProps) {
   return (
     <section
-      className={cn(tones[tone], spaces[space], className)}
+      className={cn(
+        tones[tone],
+        spaces[space],
+        followsHero && "pt-10 sm:pt-12 lg:pt-14",
+        className
+      )}
       {...props}
     >
       {bare ? (

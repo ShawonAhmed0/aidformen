@@ -6,10 +6,8 @@ import {
     Bot,
     LayoutDashboard,
     Users,
-    HeartHandshake,
     FileText,
     Video,
-    MessagesSquare,
     Image as ImageIcon,
     Images,
     Settings,
@@ -40,20 +38,10 @@ const navGroups = [
         ],
     },
     {
-        label: 'Community',
-        items: [{ title: 'Members', href: '/admin/users', icon: HeartHandshake }],
-    },
-    {
         label: 'Configuration',
         items: [
             { title: 'Site Settings', href: '/admin/settings', icon: Settings },
             { title: 'Chatbot', href: '/admin/chatbot', icon: Bot },
-        ],
-    },
-    {
-        label: 'Coming soon',
-        items: [
-            { title: 'Forum moderation', href: '/admin/forum', icon: MessagesSquare },
         ],
     },
 ]

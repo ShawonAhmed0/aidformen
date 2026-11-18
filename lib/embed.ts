@@ -5,9 +5,9 @@
  * rendered in an iframe when we know the shape of it — an arbitrary URL in a
  * frame would let whoever stored it embed anything at all.
  *
- * Lives here rather than beside one feature's types: the forum and the archive
- * both frame admin- or member-supplied links, and an allowlist this
- * load-bearing must not exist in two copies that can drift apart.
+ * Lives in its own module rather than beside the archive types so that any
+ * future feature framing stored links shares this one allowlist instead of
+ * growing a second copy that can drift apart.
  */
 export function toEmbedUrl(raw: string): string | null {
   let url: URL;

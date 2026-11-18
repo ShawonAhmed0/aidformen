@@ -1,10 +1,11 @@
 import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
-import type {
-  ArchiveAttachment,
-  ArchiveEntry,
-  ArchivePhoto,
+import {
+  sectionForContentType,
+  type ArchiveAttachment,
+  type ArchiveEntry,
+  type ArchivePhoto,
 } from "@/lib/types/archive";
 
 /**
@@ -148,7 +149,10 @@ export async function getRelatedArchiveEntries(
       entry,
       index,
       score:
-        (entry.section === current.section ? 4 : 0) +
+        (sectionForContentType[entry.content_type] ===
+        sectionForContentType[current.content_type]
+          ? 4
+          : 0) +
         (entry.content_type === current.content_type ? 2 : 0) +
         (entry.category && entry.category === current.category ? 1 : 0),
     }))

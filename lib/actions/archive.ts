@@ -10,13 +10,13 @@ import {
   archiveContentTypes,
   archiveEventStatuses,
   archiveKinds,
-  archiveSections,
   archiveSlugFromTitle,
   archiveSlugWithSequence,
   isArchiveSlug,
   MAX_ARCHIVE_ATTACHMENTS,
   MAX_ARCHIVE_PHOTOS,
   MAX_ARCHIVE_REFERENCE_PHOTOS,
+  sectionForContentType,
 } from "@/lib/types/archive";
 import { deleteMediaByUrls } from "./media";
 import {
@@ -75,29 +75,15 @@ function secureMediaHref(formData: FormData, key: string, label: string) {
 function fieldsFrom(formData: FormData) {
   const heading = requiredText(formData, "heading", "শিরোনাম", 200);
   const headingEn = optionalText(formData, "heading_en", 200);
-  const section = enumField(
-    formData,
-    "section",
-    archiveSections,
-    "press_media"
-  );
   const contentType = enumField(
     formData,
     "content_type",
     archiveContentTypes,
     "event"
   );
-  const sectionMatchesType =
-    (section === "press_media" &&
-      (contentType === "event" || contentType === "press_release")) ||
-    (section === "news_archive" &&
-      ["media_coverage", "mens_rights_news", "case_study", "report"].includes(
-        contentType
-      ));
-
-  if (!sectionMatchesType) {
-    throw new FieldError("নির্বাচিত সেকশনের সঙ্গে কনটেন্ট টাইপটি মেলে না।");
-  }
+  // Derived, not read from the form: the content type alone decides whether an
+  // entry belongs to the Media Center or to Research & Case Studies.
+  const section = sectionForContentType[contentType];
 
   return {
     // The server derives this independently instead of trusting a client URL.
