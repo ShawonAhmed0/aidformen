@@ -53,7 +53,7 @@ export function ArchiveCard({
         <Link
             href={`/${locale}/news/${item.slug}`}
             className={cn(
-                "group flex h-full w-full flex-col overflow-hidden rounded-xl border border-ink-200 bg-surface text-left shadow-xs transition-ui hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-md",
+                "group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-ink-200 bg-surface text-left shadow-xs transition-ui hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-md",
                 className
             )}
         >

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 import { getVideos } from "@/lib/content/queries";
 import { pick, type Locale } from "@/lib/i18n/config";
@@ -8,6 +9,17 @@ import { Section } from "./ui/section";
 import { SectionHeading } from "./ui/section-heading";
 import { buttonVariants } from "./ui/button";
 
+/** The homepage previews a few videos; "All videos" holds the rest. */
+const PREVIEW_COUNT = 3;
+
+// Same rule as ArchivePreview: columns follow the count, and a third card is
+// dropped on tablets rather than left alone on a half-empty row.
+const gridByCount: Record<number, string> = {
+    1: "grid max-w-md",
+    2: "grid gap-5 sm:grid-cols-2",
+    3: "grid gap-5 sm:grid-cols-2 lg:grid-cols-3 sm:max-lg:[&>*:nth-child(3)]:hidden",
+};
+
 export default async function MediaSection({
     locale,
     t,
@@ -15,12 +27,12 @@ export default async function MediaSection({
     locale: Locale;
     t: Dictionary;
 }) {
-    const videos = await getVideos();
+    const videos = (await getVideos()).slice(0, PREVIEW_COUNT);
 
     if (videos.length === 0) return null;
 
     return (
-        <Section space="lg">
+        <Section space="md">
             <SectionHeading
                 eyebrow={t.home.mediaEyebrow}
                 title={t.home.mediaTitle}
@@ -28,14 +40,15 @@ export default async function MediaSection({
                 action={
                     <Link
                         href={`/${locale}/news`}
-                        className={buttonVariants({ variant: "outline" })}
+                        className={buttonVariants({ variant: "outline", className: "gap-2" })}
                     >
                         {t.home.allVideos}
+                        <ArrowRight aria-hidden="true" />
                     </Link>
                 }
             />
 
-            <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+            <div className={gridByCount[videos.length]}>
                 {videos.map((video) => (
                     <VideoCard
                         key={video.id}

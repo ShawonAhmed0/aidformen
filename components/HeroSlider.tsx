@@ -5,6 +5,7 @@ import { Pause, Play } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 
+import { Container } from "@/components/ui/container";
 import { pick, type Locale } from "@/lib/i18n/config";
 import { focalPosition, type CarouselImage } from "@/lib/types/content";
 
@@ -62,25 +63,40 @@ export default function HeroSlider({
         </motion.div>
       </AnimatePresence>
 
-      {(title || subtitle) && (
-        <AnimatePresence mode="wait">
-          <motion.aside
-            key={`caption-${slide.id}`}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.35 }}
-            aria-label={locale === "en" ? "Current slide caption" : "বর্তমান স্লাইডের ক্যাপশন"}
-            className="absolute right-6 top-6 z-10 hidden max-w-sm rounded-xl border border-white/15 bg-brand-950/76 p-5 text-white shadow-xl backdrop-blur-lg lg:block xl:right-[max(1.5rem,calc((100vw-80rem)/2))]"
-          >
-            <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-brand-100">
-              {locale === "en" ? "From our history" : "আমাদের ইতিহাস থেকে"}
-            </p>
-            {title && <h2 className="mt-2 text-xl text-white">{title}</h2>}
-            {subtitle && <p className="mt-2 text-sm leading-6 text-brand-50">{subtitle}</p>}
-          </motion.aside>
-        </AnimatePresence>
-      )}
+      {/* Photo caption in the bottom-left corner, aligned with the hero
+          panel's left edge and bottom-aligned with the pause button. Up to two
+          lines each for title and subtitle; max-w keeps it clear of the pause
+          button on tablets. The fill is opaque enough for 13px white text over
+          a blown-out sky. */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-6 z-30 hidden sm:block">
+        <Container>
+          <AnimatePresence mode="wait">
+            {(title || subtitle) && (
+              <motion.aside
+                key={`caption-${slide.id}`}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                transition={{ duration: 0.25 }}
+                aria-label={locale === "en" ? "Current slide caption" : "বর্তমান স্লাইডের ক্যাপশন"}
+                className="pointer-events-auto w-fit max-w-lg rounded-xl border border-white/10 bg-brand-950/80 px-4 py-3 text-white shadow-lg backdrop-blur-md lg:max-w-xl"
+              >
+                <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-brand-100">
+                  {locale === "en" ? "From our history" : "আমাদের ইতিহাস থেকে"}
+                </p>
+                {title && (
+                  <p className="mt-1 line-clamp-2 text-sm leading-snug font-medium text-white">
+                    {title}
+                  </p>
+                )}
+                {subtitle && (
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-brand-50">{subtitle}</p>
+                )}
+              </motion.aside>
+            )}
+          </AnimatePresence>
+        </Container>
+      </div>
 
       {images.length > 1 && (
         <button

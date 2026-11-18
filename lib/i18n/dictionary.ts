@@ -34,6 +34,7 @@ const bn = {
     loggingOut: "লগআউট হচ্ছে…",
     dashboard: "ড্যাশবোর্ড",
     adminDashboard: "অ্যাডমিন ড্যাশবোর্ড",
+    account: "অ্যাকাউন্ট",
     switchLanguage: "ভাষা পরিবর্তন করুন",
   },
   home: {
@@ -388,6 +389,7 @@ const en = {
     loggingOut: "Logging out…",
     dashboard: "Dashboard",
     adminDashboard: "Admin dashboard",
+    account: "Account",
     switchLanguage: "Change language",
   },
   home: {

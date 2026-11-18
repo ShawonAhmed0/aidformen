@@ -1,21 +1,21 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-    ArrowLeft,
-    Calendar,
-    MapPin,
-    ChevronLeft,
-    HeartHandshake,
     AlertTriangle,
+    ArrowRight,
+    Calendar,
+    ChevronRight,
+    HeartHandshake,
+    MapPin,
 } from "lucide-react";
 
 import { getActivities } from "@/lib/content/queries";
 import { localizeHref, pick, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { Activity } from "@/lib/types/content";
+import { cn } from "@/lib/utils";
 import { Section } from "./ui/section";
 import { SectionHeading } from "./ui/section-heading";
-import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { buttonVariants } from "./ui/button";
 
@@ -52,57 +52,63 @@ export default async function LatestActivities({
     // rendering an empty grid.
     if (!lead && !note && secondary.length === 0) return null;
 
+    const leadCategory = lead && pick(locale, lead.category, lead.category_en);
+    const leadLocation = lead && pick(locale, lead.location, lead.location_en);
+    const noteCategory = note && pick(locale, note.category, note.category_en);
+    const noteExcerpt = note && pick(locale, note.excerpt, note.excerpt_en);
+
     return (
-        <Section space="lg">
+        <Section space="md">
             <SectionHeading
                 eyebrow={t.home.activitiesEyebrow}
                 title={t.home.activitiesTitle}
                 action={
                     <Link
                         href={`/${locale}/news`}
-                        className={buttonVariants({ variant: "outline" })}
+                        className={buttonVariants({ variant: "outline", className: "gap-2" })}
                     >
                         {t.home.viewAllActivities}
-                        <ArrowLeft aria-hidden="true" className="rotate-180" />
+                        <ArrowRight aria-hidden="true" />
                     </Link>
                 }
             />
 
+            {/* Feature on the left, the advisory and the legal-help prompt
+                stacked on the right at the same height. The prompt used to
+                wrap onto a row of its own and leave two thirds of it empty. */}
             <div className="grid gap-5 lg:grid-cols-3">
                 {lead && (
                     <Link
                         href={localizeHref(locale, lead.href, "/news")}
-                        className="group relative col-span-full overflow-hidden rounded-xl lg:col-span-2"
+                        className="group relative block aspect-4/3 overflow-hidden rounded-2xl bg-ink-200 shadow-sm sm:aspect-16/9 lg:col-span-2 lg:aspect-auto lg:min-h-[28rem]"
                     >
-                        <div className="relative aspect-16/10 bg-ink-200 sm:aspect-16/9">
-                            {lead.image_url && (
-                                <Image
-                                    src={lead.image_url}
-                                    alt=""
-                                    fill
-                                    sizes="(min-width: 1024px) 66vw, 100vw"
-                                    className="object-cover transition-transform duration-700 ease-out-soft group-hover:scale-[1.03]"
-                                />
-                            )}
-                        </div>
+                        {lead.image_url && (
+                            <Image
+                                src={lead.image_url}
+                                alt=""
+                                fill
+                                sizes="(min-width: 1024px) 66vw, 100vw"
+                                className="object-cover transition-transform duration-700 ease-out-soft group-hover:scale-[1.03]"
+                            />
+                        )}
 
                         <div
                             aria-hidden="true"
-                            className="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/30 to-transparent"
+                            className="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-950/35 to-transparent"
                         />
 
-                        <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
-                            {pick(locale, lead.category, lead.category_en) && (
+                        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
+                            {leadCategory && (
                                 <Badge tone="solid" size="sm">
-                                    {pick(locale, lead.category, lead.category_en)}
+                                    {leadCategory}
                                 </Badge>
                             )}
 
-                            <h3 className="mt-4 max-w-xl text-xl text-white sm:text-2xl">
+                            <h3 className="mt-3 line-clamp-3 max-w-2xl text-xl leading-snug text-white sm:mt-4 sm:text-2xl lg:text-3xl">
                                 {pick(locale, lead.title, lead.title_en)}
                             </h3>
 
-                            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/85">
+                            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-white/85 sm:mt-4">
                                 {lead.event_date && (
                                     <span className="flex items-center gap-1.5">
                                         <Calendar className="size-4" aria-hidden="true" />
@@ -111,10 +117,10 @@ export default async function LatestActivities({
                                         </time>
                                     </span>
                                 )}
-                                {pick(locale, lead.location, lead.location_en) && (
+                                {leadLocation && (
                                     <span className="flex items-center gap-1.5">
                                         <MapPin className="size-4" aria-hidden="true" />
-                                        {pick(locale, lead.location, lead.location_en)}
+                                        {leadLocation}
                                     </span>
                                 )}
                             </div>
@@ -122,112 +128,140 @@ export default async function LatestActivities({
                     </Link>
                 )}
 
-                {note && (
-                    <Card className="flex flex-col justify-between" padded="lg">
-                        <div>
-                            {pick(locale, note.category, note.category_en) && (
-                                <Badge tone="danger" size="sm">
+                <div
+                    className={cn(
+                        // Side by side on tablets, stacked beside the feature
+                        // on laptops; without a feature they share the row.
+                        "grid gap-5",
+                        note && "sm:grid-cols-2",
+                        lead ? "lg:flex lg:flex-col" : "lg:col-span-3",
+                    )}
+                >
+                    {note && (
+                        <article className="flex flex-1 flex-col rounded-2xl border border-ink-200 bg-surface p-6 shadow-xs">
+                            {noteCategory && (
+                                <Badge tone="danger" size="sm" className="self-start">
                                     <AlertTriangle aria-hidden="true" />
-                                    {pick(locale, note.category, note.category_en)}
+                                    {noteCategory}
                                 </Badge>
                             )}
 
-                            <h3 className="mt-4 text-lg text-brand-800">
+                            <h3 className="mt-4 text-lg leading-snug text-brand-800">
                                 {pick(locale, note.title, note.title_en)}
                             </h3>
 
-                            {pick(locale, note.excerpt, note.excerpt_en) && (
-                                <p className="mt-3 text-sm text-ink-600">
-                                    {pick(locale, note.excerpt, note.excerpt_en)}
+                            {noteExcerpt && (
+                                <p className="mt-2 line-clamp-3 text-sm leading-6 text-ink-600">
+                                    {noteExcerpt}
                                 </p>
                             )}
+
+                            <Link
+                                href={localizeHref(locale, note.href, "/news")}
+                                className="group -ms-2 mt-auto inline-flex h-11 items-center gap-1 self-start rounded-lg px-2 pt-1 text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
+                            >
+                                {pick(locale, note.action_label, note.action_label_en) ||
+                                    t.home.readMore}
+                                <ChevronRight
+                                    aria-hidden="true"
+                                    className="size-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                                />
+                            </Link>
+                        </article>
+                    )}
+
+                    <div
+                        className={cn(
+                            "relative flex flex-col overflow-hidden rounded-2xl bg-brand-800 p-6 text-brand-50 shadow-sm",
+                            !note && "flex-1 justify-center",
+                        )}
+                    >
+                        <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute -right-12 -bottom-16 size-48 rounded-full bg-white/5"
+                        />
+
+                        <div className="relative flex items-center gap-3">
+                            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/10">
+                                <HeartHandshake className="size-5" aria-hidden="true" />
+                            </span>
+                            <h3 className="text-lg leading-snug text-white">
+                                {t.home.legalHelpTitle}
+                            </h3>
                         </div>
 
+                        <p className="relative mt-3 text-sm leading-6 text-brand-100">
+                            {t.home.legalHelpBody}
+                        </p>
+
                         <Link
-                            href={localizeHref(locale, note.href, "/news")}
-                            className="group mt-6 inline-flex items-center gap-1.5 self-start rounded-sm text-sm font-semibold text-brand-700 transition-ui hover:text-brand-800"
+                            href={`/${locale}/contact`}
+                            className={buttonVariants({
+                                variant: "onDark",
+                                className: "relative mt-5 gap-2 self-start",
+                            })}
                         >
-                            {pick(locale, note.action_label, note.action_label_en) ||
-                                t.home.readMore}
-                            <ChevronLeft
-                                aria-hidden="true"
-                                className="size-4 rotate-180 transition-transform duration-200 group-hover:translate-x-0.5"
-                            />
+                            {t.home.legalHelpCta}
+                            <ArrowRight aria-hidden="true" />
                         </Link>
-                    </Card>
-                )}
-
-                <Card
-                    tone="brand"
-                    elevation="flat"
-                    padded="lg"
-                    className="flex flex-col items-center justify-center text-center"
-                >
-                    <div className="flex size-14 items-center justify-center rounded-full bg-white/10">
-                        <HeartHandshake className="size-7" aria-hidden="true" />
                     </div>
-
-                    <h3 className="mt-5 text-xl text-white">{t.home.legalHelpTitle}</h3>
-
-                    <p className="mt-2.5 text-sm text-brand-100">
-                        {t.home.legalHelpBody}
-                    </p>
-
-                    <Link
-                        href={`/${locale}/contact`}
-                        className={buttonVariants({
-                            variant: "onDark",
-                            className: "mt-6",
-                        })}
-                    >
-                        {t.home.legalHelpCta}
-                    </Link>
-                </Card>
+                </div>
             </div>
 
             {secondary.length > 0 && (
-                <ul className="mt-5 grid gap-2 sm:grid-cols-2">
-                    {secondary.map((item) => (
-                        <li key={item.id}>
-                            <Link
-                                href={localizeHref(locale, item.href, "/news")}
-                                className="group flex gap-4 rounded-xl p-4 transition-ui hover:bg-surface-sunken"
-                            >
-                                <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-ink-200">
-                                    {item.image_url && (
-                                        <Image
-                                            src={item.image_url}
-                                            alt=""
-                                            fill
-                                            sizes="96px"
-                                            className="object-cover transition-transform duration-500 ease-out-soft group-hover:scale-105"
-                                        />
-                                    )}
-                                </div>
+                // Two columns of equal cards; an odd last card spans both so
+                // the grid never ends on a half-empty row.
+                <ul className="mt-5 grid gap-5 sm:grid-cols-2">
+                    {secondary.map((item) => {
+                        const category = pick(locale, item.category, item.category_en);
 
-                                <div className="min-w-0">
-                                    {pick(locale, item.category, item.category_en) && (
-                                        <span className="text-2xs font-semibold uppercase text-ochre-700">
-                                            {pick(locale, item.category, item.category_en)}
-                                        </span>
-                                    )}
+                        return (
+                            <li key={item.id} className="sm:last:odd:col-span-2">
+                                <Link
+                                    href={localizeHref(locale, item.href, "/news")}
+                                    className="group flex h-full items-center gap-4 rounded-2xl border border-ink-200 bg-surface p-3 pe-5 shadow-xs transition-ui hover:border-ink-300 hover:shadow-md"
+                                >
+                                    <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-ink-200 sm:size-28">
+                                        {item.image_url && (
+                                            <Image
+                                                src={item.image_url}
+                                                alt=""
+                                                fill
+                                                sizes="112px"
+                                                className="object-cover transition-transform duration-500 ease-out-soft group-hover:scale-105"
+                                            />
+                                        )}
+                                    </div>
 
-                                    <h3 className="mt-1.5 text-base text-brand-800">
-                                        {pick(locale, item.title, item.title_en)}
-                                    </h3>
+                                    <div className="min-w-0 flex-1">
+                                        {category && (
+                                            <span className="text-2xs font-semibold uppercase text-ochre-700">
+                                                {category}
+                                            </span>
+                                        )}
 
-                                    {item.event_date && (
-                                        <time
-                                            dateTime={item.event_date}
-                                            className="mt-2 block text-xs text-ink-500"
-                                        >
-                                            {formatDate(item.event_date, locale)}
-                                        </time>
-                                    )}
-                                </div>
-                            </Link>
-                        </li>
-                    ))}
+                                        <h3 className="mt-1 line-clamp-2 text-base leading-snug text-brand-800 transition-ui group-hover:text-brand-700">
+                                            {pick(locale, item.title, item.title_en)}
+                                        </h3>
+
+                                        {item.event_date && (
+                                            <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-500">
+                                                <Calendar className="size-3.5" aria-hidden="true" />
+                                                <time dateTime={item.event_date}>
+                                                    {formatDate(item.event_date, locale)}
+                                                </time>
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <ArrowRight
+                                        aria-hidden="true"
+                                        className="hidden size-4 shrink-0 text-ink-400 transition-ui group-hover:translate-x-0.5 group-hover:text-brand-700 sm:block"
+                                    />
+                                </Link>
+                            </li>
+                        );
+                    })}
                 </ul>
             )}
         </Section>

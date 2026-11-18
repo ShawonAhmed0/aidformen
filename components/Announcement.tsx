@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Megaphone } from "lucide-react";
+import { ArrowRight, Megaphone } from "lucide-react";
 
 import { localizeHref, pick, type Locale } from "@/lib/i18n/config";
 import type { SiteSettings } from "@/lib/types/content";
 import { Container } from "./ui/container";
 import { Badge } from "./ui/badge";
 import { buttonVariants } from "./ui/button";
+import { cn } from "@/lib/utils";
 
 export default function Announcement({
     locale,
@@ -43,33 +44,40 @@ export default function Announcement({
         : null;
 
     return (
-        // Flows below the hero rather than overlapping it: the hero panel now
-        // holds the overlap position on the photo's bottom edge, and two cards
-        // cannot straddle the same seam.
-        <section className="relative z-20 mt-10 sm:mt-14">
+        // Continues the About section's white band rather than floating on a
+        // strip of page background of its own, and reads as a notice: icon,
+        // copy, one action.
+        <section className="bg-surface pb-10 sm:pb-14">
             <Container>
-                <div className="flex flex-col gap-6 rounded-2xl border border-ink-200 bg-surface p-6 shadow-lg sm:p-8 lg:flex-row lg:items-center lg:gap-8">
-                    <div className="flex-1">
+                <div className="flex flex-col gap-5 rounded-2xl border border-ink-200 bg-surface-sunken p-5 shadow-xs sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+                    {/* On phones the icon rides in the badge instead of
+                        taking a row of its own above it. */}
+                    <span className="hidden size-12 shrink-0 items-center justify-center rounded-xl bg-danger-soft text-danger sm:flex">
+                        <Megaphone className="size-6" aria-hidden="true" />
+                    </span>
+
+                    <div className="min-w-0 flex-1">
                         {badge && (
-                            <Badge tone="danger" size="md">
-                                <Megaphone aria-hidden="true" />
+                            <Badge tone="danger" size="sm">
+                                <Megaphone aria-hidden="true" className="sm:hidden" />
                                 {badge}
                             </Badge>
                         )}
 
-                        <h2 className="mt-4 text-xl text-brand-800 sm:text-2xl">
+                        <h2 className={cn("text-lg leading-snug text-brand-900 sm:text-xl", badge && "mt-2")}>
                             {title}
                         </h2>
 
-                        {body && <p className="mt-2 text-base text-ink-600">{body}</p>}
+                        {body && <p className="mt-1 text-sm leading-6 text-ink-600">{body}</p>}
                     </div>
 
                     {ctaLabel && href && (
                         <Link
                             href={href}
-                            className={buttonVariants({ className: "shrink-0" })}
+                            className={buttonVariants({ className: "shrink-0 gap-2 self-start sm:self-center" })}
                         >
                             {ctaLabel}
+                            <ArrowRight aria-hidden="true" />
                         </Link>
                     )}
                 </div>
