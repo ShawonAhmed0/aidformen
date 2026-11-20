@@ -10,7 +10,7 @@ import { Section } from "./ui/section";
 import { SectionHeading } from "./ui/section-heading";
 import { buttonVariants } from "./ui/button";
 
-/** How many entries the homepage shows before sending the reader to /archive. */
+/** How many entries the homepage shows before sending the reader to the sections. */
 const PREVIEW_COUNT = 3;
 
 // Columns follow the number of entries, so two entries never sit in a
@@ -33,10 +33,16 @@ export default async function ArchivePreview({
 
     if (entries.length === 0) return null;
 
-    // The first few in the admin's own order rather than by date: which entries
-    // deserve the homepage is an editorial decision, and reordering them in
-    // /admin/archive is how it gets made.
-    const items = entries
+    // Newest first across both public sections — Media Center and Research &
+    // Case Studies. Ordered by the date the card shows; an undated post counts
+    // from its upload day, and the later upload wins a tie.
+    const items = [...entries]
+        .sort((a, b) => {
+            const day = (entry: typeof a) => entry.event_date ?? entry.created_at.slice(0, 10);
+            return (
+                day(b).localeCompare(day(a)) || b.created_at.localeCompare(a.created_at)
+            );
+        })
         .slice(0, PREVIEW_COUNT)
         .map((entry) => toArchiveListingItem(resolveArchiveEntry(locale, entry)));
 

@@ -6,21 +6,17 @@ import { Search, SlidersHorizontal, X } from "lucide-react";
 
 import { formatCount } from "@/lib/i18n/config";
 import {
-    postKinds,
     archiveSubsections,
     sortArchiveItemsNewestFirst,
     subsectionsBySection,
     type ArchiveContentType,
     type ArchiveListingItem,
-    type PostKind,
     type ArchiveSection,
     type ArchiveSubsection,
 } from "@/lib/types/archive";
 import type { ArchiveLabels } from "./labels";
 import { ArchiveGrid } from "./ArchiveGrid";
 import { cn } from "@/lib/utils";
-
-type KindFilter = PostKind | "all";
 
 const inSubsection = (item: ArchiveListingItem, subsection: ArchiveSubsection) =>
     (archiveSubsections[subsection] as readonly ArchiveContentType[]).includes(
@@ -56,7 +52,6 @@ export function ArchiveExplorer({
     basePath: string;
     subsection: ArchiveSubsection | null;
 }) {
-    const [kind, setKind] = useState<KindFilter>("all");
     const [category, setCategory] = useState<string | null>(null);
     const [year, setYear] = useState<string | null>(null);
     const [query, setQuery] = useState("");
@@ -67,7 +62,6 @@ export function ArchiveExplorer({
         return sortArchiveItemsNewestFirst(
             items.filter((item) => {
                 if (subsection && !inSubsection(item, subsection)) return false;
-                if (kind !== "all" && item.kind !== kind) return false;
                 if (category && item.category !== category) return false;
                 if (year && item.year !== year) return false;
 
@@ -79,34 +73,24 @@ export function ArchiveExplorer({
                 return true;
             })
         );
-    }, [items, subsection, kind, category, year, query]);
+    }, [items, subsection, category, year, query]);
 
     const filtered =
-        Boolean(subsection) || kind !== "all" || category || year || query.trim();
+        Boolean(subsection) || category || year || query.trim();
 
     const inView = (item: ArchiveListingItem) =>
         !subsection || inSubsection(item, subsection);
     const activeCategories = categories.filter((value) =>
         items.some((item) => inView(item) && item.category === value)
     );
-    const activeKinds = postKinds.filter((value) =>
-        items.some((item) => inView(item) && item.kind === value)
-    );
     const activeYears = years.filter((option) =>
         items.some((item) => inView(item) && item.year === option.value)
     );
 
     const reset = () => {
-        setKind("all");
         setCategory(null);
         setYear(null);
         setQuery("");
-    };
-
-    const kindLabel: Record<PostKind, string> = {
-        article: t.articleKind,
-        photo: t.photoKind,
-        video: t.videoKind,
     };
 
     const subsectionLabel: Record<ArchiveSubsection, string> = {
@@ -182,23 +166,7 @@ export function ArchiveExplorer({
                     </ul>
                 </nav>
 
-                {/* Format joins category and year as a dropdown: as a second
-                    row of chips it put two "All" rows directly under each
-                    other and read as a duplicate of the subsection tabs. */}
                 <div className="flex flex-wrap items-end gap-4">
-                    {activeKinds.length > 1 && (
-                        <Facet
-                            label={t.filterFormat}
-                            allLabel={t.allFormats}
-                            value={kind === "all" ? null : kind}
-                            options={activeKinds.map((value) => ({
-                                value,
-                                label: kindLabel[value],
-                            }))}
-                            onChange={(value) => setKind((value as PostKind | null) ?? "all")}
-                        />
-                    )}
-
                     {activeCategories.length > 0 && (
                         <Facet
                             label={t.filterCategory}

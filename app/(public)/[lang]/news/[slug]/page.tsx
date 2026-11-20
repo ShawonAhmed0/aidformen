@@ -14,13 +14,16 @@ import {
   FolderDown,
   Images,
   MapPin,
+  Maximize2,
   Newspaper,
+  Paperclip,
   Play,
   ShieldCheck,
 } from "lucide-react";
 
 import { HomeAboutAudioPlayer } from "@/components/HomeAboutAudioPlayer";
 import { ShareActions } from "@/components/ShareActions";
+import { ImageLightbox } from "@/components/archive/ImageLightbox";
 import { EditorialContent } from "@/components/content/EditorialContent";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -40,6 +43,7 @@ import {
   subsectionForContentType,
   type ArchiveEntry,
 } from "@/lib/types/archive";
+import { cn } from "@/lib/utils";
 
 type Props = {
   params: Promise<{ lang: string; slug: string }>;
@@ -146,7 +150,16 @@ export default async function NewsDetailPage({ params }: Props) {
 
   return (
     <main data-print-document className="bg-surface">
-      <article>
+      <article data-lightbox>
+        <ImageLightbox
+          locale={lang}
+          labels={{
+            open: t.archive.viewImage,
+            close: t.archive.close,
+            previous: t.archive.previousPhoto,
+            next: t.archive.nextPhoto,
+          }}
+        />
         <div
           className="border-b border-ink-200 bg-surface-sunken py-2"
           data-print-hide
@@ -164,95 +177,85 @@ export default async function NewsDetailPage({ params }: Props) {
           </Container>
         </div>
 
-        <Container className="py-8 sm:py-10 lg:py-12">
-          <header className="mx-auto max-w-5xl">
-            <div className="max-w-3xl lg:pl-12">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-xs font-semibold tracking-[0.08em] text-ink-600 uppercase">
-                <span className="text-brand-700">
-                  {item.section === "press_media"
-                    ? t.archive.pressMediaTab
-                    : t.archive.newsArchiveTab}
-                </span>
-                <span aria-hidden="true" className="text-ink-300">
-                  /
-                </span>
-                <span>{subsectionLabels[subsectionForContentType(item.contentType)]}</span>
-                {item.eventStatus && (
-                  <Badge
-                    tone={
-                      item.eventStatus === "upcoming" ? "warning" : "success"
-                    }
-                    size="sm"
-                    className="ms-1 normal-case tracking-normal"
-                  >
-                    {item.eventStatus === "upcoming"
-                      ? t.archive.statusUpcoming
-                      : t.archive.statusCompleted}
+        <Container className="py-8 sm:py-10 lg:py-14">
+          {/* Title, cover and text share one column, so all three start and
+              end on the same edges; related posts sit beside it. */}
+          <div
+            data-news-layout
+            className="mx-auto grid max-w-5xl gap-12 lg:grid-cols-[minmax(0,44rem)_17rem] lg:justify-between lg:gap-10"
+          >
+            <div className="min-w-0">
+              <header>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone="brand" size="sm">
+                    {item.section === "press_media"
+                      ? t.archive.pressMediaTab
+                      : t.archive.newsArchiveTab}
                   </Badge>
-                )}
-              </div>
-
-              <h1 className="mt-4 font-display text-[clamp(2rem,5.5vw,2.85rem)] leading-[1.16] text-balance text-brand-950">
-                {item.heading}
-              </h1>
-
-              {/* The share bar never wraps internally; when it doesn't fit
-                  beside the date and place it drops below them as one row.
-                  Wrapping inside it stranded "Print" on a line of its own. */}
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-y border-ink-300 py-3">
-                <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink-600">
-                  {item.date && (
-                    <span className="inline-flex items-center gap-1.5">
-                      <CalendarDays className="size-4" aria-hidden="true" />
-                      <time dateTime={item.dateIso ?? undefined}>
-                        {item.date}
-                      </time>
-                    </span>
-                  )}
-                  {item.location && (
-                    <span className="inline-flex items-center gap-1.5">
-                      <MapPin className="size-4" aria-hidden="true" />
-                      {item.location}
-                    </span>
+                  <Badge tone="neutral" size="sm">
+                    {subsectionLabels[subsectionForContentType(item.contentType)]}
+                  </Badge>
+                  {item.eventStatus && (
+                    <Badge
+                      tone={item.eventStatus === "upcoming" ? "warning" : "success"}
+                      size="sm"
+                    >
+                      {item.eventStatus === "upcoming"
+                        ? t.archive.statusUpcoming
+                        : t.archive.statusCompleted}
+                    </Badge>
                   )}
                 </div>
 
-                <ShareActions
-                  title={item.heading}
-                  locale={lang}
-                  className="-mx-2"
-                />
-              </div>
-            </div>
-          </header>
+                {/* Sized for long news headlines: at 2.85rem a typical one
+                    ran to five lines. */}
+                <h1 className="mt-4 font-display text-[clamp(1.625rem,1.1rem+1.6vw,2.125rem)] leading-[1.25] text-balance text-brand-950">
+                  {item.heading}
+                </h1>
 
-          {item.cover && (
-            // Shares the title's left edge (lg:pl-12) instead of starting
-            // further left and overhanging it.
-            <figure className="mx-auto mt-8 max-w-5xl sm:mt-10 lg:pl-12" data-print-keep>
-              <div className="relative aspect-16/9 overflow-hidden rounded-sm bg-brand-50">
-                <Image
-                  src={item.cover}
-                  alt={item.heading}
-                  fill
-                  preload
-                  sizes="(min-width: 1024px) 976px, 100vw"
-                  className="object-cover"
-                />
-              </div>
-              {coverCaption && (
-                <figcaption className="mt-2 max-w-3xl text-sm leading-6 text-ink-500">
-                  {coverCaption}
-                </figcaption>
+                {/* The share bar never wraps internally; when it doesn't fit
+                    beside the date and place it drops below them as one row.
+                    Wrapping inside it stranded "Print" on a line of its own. */}
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 rounded-2xl border border-ink-200 bg-surface-sunken px-4 py-1.5">
+                  <div className="flex flex-wrap gap-x-5 gap-y-1 py-2 text-sm text-ink-600">
+                    {item.date && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <CalendarDays className="size-4" aria-hidden="true" />
+                        <time dateTime={item.dateIso ?? undefined}>{item.date}</time>
+                      </span>
+                    )}
+                    {item.location && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin className="size-4" aria-hidden="true" />
+                        {item.location}
+                      </span>
+                    )}
+                  </div>
+
+                  <ShareActions title={item.heading} locale={lang} className="-mx-2" />
+                </div>
+              </header>
+
+              {item.cover && (
+                <figure className="mt-8" data-print-keep>
+                  <ZoomableImage
+                    src={item.cover}
+                    alt={item.heading}
+                    caption={coverCaption}
+                    label={t.archive.viewImage}
+                    sizes="(min-width: 1024px) 704px, 100vw"
+                    preload
+                    className="aspect-16/9 rounded-2xl"
+                  />
+                  {coverCaption && (
+                    <figcaption className="mt-2.5 text-sm leading-6 text-ink-500">
+                      {coverCaption}
+                    </figcaption>
+                  )}
+                </figure>
               )}
-            </figure>
-          )}
 
-          <div
-            data-news-layout
-            className="mx-auto mt-8 grid max-w-5xl gap-10 sm:mt-10 lg:grid-cols-[minmax(0,42rem)_16.5rem] lg:items-start lg:gap-10 lg:pl-12"
-          >
-            <div className="min-w-0 space-y-8">
+            <div className="mt-10 space-y-12">
               {/* Any post can carry a recording; it plays in the same player
                   as the homepage story rather than the browser's bare one. */}
               {item.audioUrl &&
@@ -275,7 +278,7 @@ export default async function NewsDetailPage({ params }: Props) {
                 ))}
 
               {item.body && (
-                <section aria-label={t.archive.overview}>
+                <section aria-label={t.archive.overview} data-zoom-body>
                   <EditorialContent
                     content={item.body}
                     variant="article"
@@ -307,13 +310,13 @@ export default async function NewsDetailPage({ params }: Props) {
 
               {(item.fileUrl || item.embedUrl) && (
                 <section aria-labelledby="video-heading" data-print-keep>
-                  <h2
+                  <SectionTitle
                     id="video-heading"
-                    className="border-t-4 border-brand-800 pt-3 text-2xl text-brand-950"
+                    icon={<Play className="size-5" aria-hidden="true" />}
                   >
                     {t.archive.videoPreview}
-                  </h2>
-                  <div className="mt-4 aspect-video overflow-hidden rounded-sm bg-ink-950">
+                  </SectionTitle>
+                  <div className="mt-5 aspect-video overflow-hidden rounded-2xl bg-ink-950">
                     {item.fileUrl ? (
                       <video
                         src={item.fileUrl}
@@ -339,15 +342,15 @@ export default async function NewsDetailPage({ params }: Props) {
               {item.externalUrl && !item.fileUrl && !item.embedUrl && (
                 <section
                   aria-labelledby="external-video-heading"
-                  className="border-y border-ink-300 py-5"
+                  className="rounded-2xl border border-ink-200 bg-surface-sunken p-5 sm:p-6"
                   data-print-keep
                 >
-                  <h2
+                  <SectionTitle
                     id="external-video-heading"
-                    className="text-xl text-brand-900"
+                    icon={<Play className="size-5" aria-hidden="true" />}
                   >
                     {t.archive.videoPreview}
-                  </h2>
+                  </SectionTitle>
                   <a
                     href={item.externalUrl}
                     target="_blank"
@@ -365,29 +368,37 @@ export default async function NewsDetailPage({ params }: Props) {
 
               {item.photos.length > 0 && (
                 <section aria-labelledby="gallery-heading">
-                  <h2
+                  <SectionTitle
                     id="gallery-heading"
-                    className="border-t-4 border-brand-800 pt-3 text-2xl text-brand-950"
+                    icon={<Images className="size-5" aria-hidden="true" />}
                   >
                     {item.kind === "photo"
                       ? t.archive.photoGallery
                       : t.archive.supportingImages}
-                  </h2>
-                  <ul className="mt-5 grid gap-4 sm:grid-cols-2">
+                  </SectionTitle>
+                  <ul
+                    className={cn(
+                      "mt-5 grid gap-x-4 gap-y-6",
+                      item.photos.length > 1 && "sm:grid-cols-2"
+                    )}
+                  >
                     {item.photos.map((photo) => (
                       <li key={photo.id} data-print-keep>
-                        <figure className="overflow-hidden border-b border-ink-300 bg-surface">
-                          <div className="relative aspect-3/2 bg-brand-50">
-                            <Image
-                              src={photo.url}
-                              alt={photo.caption || item.heading}
-                              fill
-                              sizes="(min-width: 640px) 50vw, 100vw"
-                              className="object-cover"
-                            />
-                          </div>
+                        <figure>
+                          <ZoomableImage
+                            src={photo.url}
+                            alt={photo.caption || item.heading}
+                            caption={photo.caption}
+                            label={t.archive.viewImage}
+                            sizes={
+                              item.photos.length > 1
+                                ? "(min-width: 1024px) 344px, (min-width: 640px) 50vw, 100vw"
+                                : "(min-width: 1024px) 704px, 100vw"
+                            }
+                            className="aspect-3/2 rounded-xl"
+                          />
                           {photo.caption && (
-                            <figcaption className="px-4 py-3 text-sm text-ink-600">
+                            <figcaption className="mt-2 text-sm leading-6 text-ink-600">
                               {photo.caption}
                             </figcaption>
                           )}
@@ -399,18 +410,14 @@ export default async function NewsDetailPage({ params }: Props) {
               )}
 
               {item.attachments.length > 0 && (
-                <section
-                  aria-labelledby="references-heading"
-                  className="border-t-4 border-brand-800 pt-3"
-                  data-print-keep
-                >
-                  <h2
+                <section aria-labelledby="references-heading" data-print-keep>
+                  <SectionTitle
                     id="references-heading"
-                    className="text-2xl text-brand-950"
+                    icon={<Paperclip className="size-5" aria-hidden="true" />}
                   >
                     {t.archive.referencesTitle}
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-ink-600">
+                  </SectionTitle>
+                  <p className="mt-3 text-sm leading-6 text-ink-600">
                     {t.archive.referencesBody}
                   </p>
                   <ul className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -457,7 +464,7 @@ export default async function NewsDetailPage({ params }: Props) {
               {hasMediaKit && item.section === "press_media" && (
                 <section
                   aria-labelledby="media-kit-heading"
-                  className="rounded-sm border border-brand-200 bg-brand-50 p-6 sm:p-8"
+                  className="rounded-2xl border border-brand-200 bg-brand-50 p-6 sm:p-8"
                   data-print-keep
                 >
                   <div className="flex items-start gap-3">
@@ -535,12 +542,15 @@ export default async function NewsDetailPage({ params }: Props) {
               {item.sourceUrl && (
                 <section
                   aria-labelledby="source-heading"
-                  className="border-y border-ink-300 py-5"
+                  className="rounded-2xl border border-ink-200 bg-surface-sunken p-5 sm:p-6"
                   data-print-keep
                 >
-                  <h2 id="source-heading" className="text-xl text-brand-900">
+                  <SectionTitle
+                    id="source-heading"
+                    icon={<Newspaper className="size-5" aria-hidden="true" />}
+                  >
                     {t.archive.originalSource}
-                  </h2>
+                  </SectionTitle>
                   <a
                     href={item.sourceUrl}
                     target="_blank"
@@ -555,6 +565,7 @@ export default async function NewsDetailPage({ params }: Props) {
                   </a>
                 </section>
               )}
+            </div>
             </div>
 
             <Suspense
@@ -592,16 +603,15 @@ function AudioRecording({
   return (
     <section
       aria-labelledby="audio-heading"
-      className="border-y border-brand-200 bg-brand-50/70 px-4 py-4"
+      className="rounded-2xl border border-brand-200 bg-brand-50 p-5 sm:p-6"
       data-print-keep
     >
-      <h2
+      <SectionTitle
         id="audio-heading"
-        className="flex items-center gap-2 text-lg text-brand-950"
+        icon={<FileAudio className="size-5" aria-hidden="true" />}
       >
-        <FileAudio className="size-5" aria-hidden="true" />
         {title}
-      </h2>
+      </SectionTitle>
       <a
         href={url}
         target="_blank"
@@ -639,15 +649,13 @@ async function RelatedNewsAside({
       className="min-w-0"
       data-print-hide
     >
-      <div className="lg:sticky lg:top-24">
-        <div className="border-t-4 border-brand-800 pt-3">
-          <h2
-            id="related-news-heading"
-            className="text-sm font-bold tracking-[0.08em] text-brand-950 uppercase"
-          >
-            {title}
-          </h2>
-        </div>
+      <div className="rounded-2xl border border-ink-200 bg-surface-sunken p-5 lg:sticky lg:top-24">
+        <h2
+          id="related-news-heading"
+          className="text-sm font-bold tracking-[0.08em] text-brand-950 uppercase"
+        >
+          {title}
+        </h2>
 
         <nav
           aria-label={title}
@@ -657,9 +665,9 @@ async function RelatedNewsAside({
             <Link
               key={related.id}
               href={archiveEntryHref(lang, related)}
-              className="group grid min-w-0 grid-cols-[4.75rem_minmax(0,1fr)] gap-3 border-b border-ink-300 py-3 transition-ui hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+              className="group grid min-w-0 grid-cols-[4.75rem_minmax(0,1fr)] gap-3 border-b border-ink-200 py-3 transition-ui hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
             >
-              <span className="relative aspect-4/3 overflow-hidden bg-brand-50">
+              <span className="relative aspect-4/3 overflow-hidden rounded-lg bg-brand-50">
                 {related.cover ? (
                   <Image
                     src={related.cover}
@@ -690,7 +698,7 @@ async function RelatedNewsAside({
 
         <Link
           href={viewAllHref}
-          className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-700 transition-ui hover:text-brand-900"
+          className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-700 transition-ui hover:text-brand-900"
         >
           {viewAll}
           <ArrowRight className="size-4" aria-hidden="true" />
@@ -702,17 +710,21 @@ async function RelatedNewsAside({
 
 function RelatedNewsSkeleton({ title }: { title: string }) {
   return (
-    <aside aria-hidden="true" className="hidden lg:block" data-print-hide>
-      <h2 className="border-t-4 border-brand-800 pt-3 text-sm font-bold tracking-[0.08em] text-brand-950 uppercase">
+    <aside
+      aria-hidden="true"
+      className="hidden rounded-2xl border border-ink-200 bg-surface-sunken p-5 lg:block"
+      data-print-hide
+    >
+      <h2 className="text-sm font-bold tracking-[0.08em] text-brand-950 uppercase">
         {title}
       </h2>
-      <div className="mt-2 divide-y divide-ink-300">
+      <div className="mt-2 divide-y divide-ink-200">
         {[0, 1, 2].map((item) => (
           <div
             key={item}
             className="h-24 animate-pulse py-3 motion-reduce:animate-none"
           >
-            <div className="h-full bg-ink-100" />
+            <div className="h-full rounded-lg bg-ink-100" />
           </div>
         ))}
       </div>
@@ -738,19 +750,17 @@ function ContentPanel({
   return (
     <section
       aria-labelledby={`${id}-heading`}
-      className={
+      data-zoom-body
+      className={cn(
+        "rounded-2xl border p-6 sm:p-7",
         tone === "brand"
-          ? "border-s-4 border-brand-700 bg-brand-50 px-5 py-6 sm:px-7"
-          : "border-y border-ink-300 py-6"
-      }
+          ? "border-brand-200 bg-brand-50"
+          : "border-ink-200 bg-surface-sunken"
+      )}
     >
-      <h2
-        id={`${id}-heading`}
-        className="flex items-center gap-2 text-2xl text-brand-900"
-      >
-        {icon}
+      <SectionTitle id={`${id}-heading`} icon={icon}>
         {title}
-      </h2>
+      </SectionTitle>
       <EditorialContent
         content={body}
         className="mt-5"
@@ -780,5 +790,83 @@ function ResourceLink({
       {icon}
       {label}
     </a>
+  );
+}
+
+/** Section heading with its icon in a soft tile — one style for every block. */
+function SectionTitle({
+  id,
+  icon,
+  children,
+}: {
+  id: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <h2
+      id={id}
+      className="flex items-center gap-3 font-display text-xl leading-snug text-brand-950 sm:text-2xl"
+    >
+      <span
+        aria-hidden="true"
+        className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-800"
+      >
+        {icon}
+      </span>
+      {children}
+    </h2>
+  );
+}
+
+/**
+ * A photo that opens the full-screen preview (`ImageLightbox` listens for
+ * `data-zoom-src`). A real button, so it works from the keyboard too.
+ */
+function ZoomableImage({
+  src,
+  alt,
+  caption,
+  label,
+  sizes,
+  preload = false,
+  className,
+}: {
+  src: string;
+  alt: string;
+  caption?: string | null;
+  label: string;
+  sizes: string;
+  preload?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      data-zoom-src={src}
+      data-zoom-caption={caption ?? ""}
+      aria-label={caption ? `${label}: ${caption}` : label}
+      aria-haspopup="dialog"
+      className={cn(
+        "group relative block w-full cursor-zoom-in overflow-hidden bg-brand-50",
+        className
+      )}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        preload={preload}
+        sizes={sizes}
+        className="object-cover transition-transform duration-500 ease-out-soft group-hover:scale-[1.03]"
+      />
+      {/* Always shown where there is no hover to reveal it. */}
+      <span
+        aria-hidden="true"
+        className="absolute end-3 bottom-3 flex size-10 items-center justify-center rounded-full bg-brand-950/70 text-white opacity-0 backdrop-blur-sm transition-ui group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+      >
+        <Maximize2 className="size-4" />
+      </span>
+    </button>
   );
 }

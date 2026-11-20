@@ -15,7 +15,9 @@ const badgeVariants = cva(
         warning: "bg-warning-soft text-warning",
         /** Solid fill, for placing over photography. */
         solid: "bg-ochre-700 text-white",
-        onDark: "bg-white/15 text-white backdrop-blur-sm",
+        /** Over photography of any brightness. A white tint vanished on a
+         *  bright sky; this dark one is what keeps the white text legible. */
+        onDark: "bg-brand-950/70 text-white backdrop-blur-sm",
       },
       size: {
         sm: "px-2.5 py-1 text-2xs",

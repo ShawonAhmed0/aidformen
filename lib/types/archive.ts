@@ -340,6 +340,8 @@ export type ArchiveEntry = {
   source_url: string | null;
   sort_order: number;
   is_published: boolean;
+  /** Upload time — orders posts that share a date, or have none. */
+  created_at: string;
   /** Empty for a video entry. Ordered by sort_order. */
   photos: ArchivePhoto[];
   /** Ordered downloads and external references shown only on the detail page. */

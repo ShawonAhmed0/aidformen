@@ -2,19 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-    CalendarDays,
-    FileText,
-    Images,
-    ImageOff,
-    Play,
-} from "lucide-react";
+import { CalendarDays, ImageOff } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { editorialPlainText } from "@/lib/editorial/plain-text";
-import { formatCount } from "@/lib/i18n/config";
 import { archiveEntryHref, type ArchiveListingItem } from "@/lib/types/archive";
-import type { ArchiveLabels } from "./labels";
+import { contentTypeLabel, type ArchiveLabels } from "./labels";
 import { cn } from "@/lib/utils";
 
 /**
@@ -33,15 +26,6 @@ export function ArchiveCard({
     priority?: boolean;
     className?: string;
 }) {
-    const isVideo = item.kind === "video";
-    const isArticle = item.kind === "article";
-    const photoCount = item.photoCount;
-
-    // No audio tag: a recording is an optional extra on any post, not a kind
-    // of post, so the card shows what the post is — article, photos, video.
-    const kindLabel = isVideo ? t.videoKind : isArticle ? t.articleKind : t.photoKind;
-    const KindIcon = isVideo ? Play : isArticle ? FileText : Images;
-
     return (
         <Link
             href={archiveEntryHref(locale, item)}
@@ -64,33 +48,12 @@ export function ArchiveCard({
                     <ImageOff className="size-8 text-brand-600" aria-hidden="true" />
                 )}
 
-                {/* Play affordance for a video entry. The scrim underneath is what
-                    keeps the white glyph legible over an arbitrary photograph. */}
-                {isVideo && (
-                    <span
-                        aria-hidden="true"
-                        className="absolute inset-0 flex items-center justify-center bg-ink-950/35 transition-ui group-hover:bg-ink-950/25"
-                    >
-                        <span className="flex size-14 items-center justify-center rounded-full bg-white/95 text-brand-800 shadow-md transition-transform duration-200 group-hover:scale-105">
-                            <KindIcon
-                                className={cn(
-                                    "size-6",
-                                    isVideo && "translate-x-px fill-current"
-                                )}
-                            />
-                        </span>
-                    </span>
-                )}
-
+                {/* Every card looks the same whatever media the post holds: the
+                    tag says what the post is, and no play button or photo count
+                    sorts posts into "video" and "photo" kinds. */}
                 <span className="absolute left-3 top-3">
-                    <Badge tone={isVideo ? "solid" : "onDark"} size="sm">
-                        <KindIcon
-                            aria-hidden="true"
-                            className={cn(isVideo && "fill-current")}
-                        />
-                        {item.kind === "photo" && photoCount > 0
-                            ? `${formatCount(locale, photoCount)} ${t.photosLabel}`
-                            : kindLabel}
+                    <Badge tone="onDark" size="sm">
+                        {contentTypeLabel(t, item.contentType)}
                     </Badge>
                 </span>
             </span>
@@ -119,11 +82,7 @@ export function ArchiveCard({
                 )}
 
                 <span className="mt-auto pt-4 text-sm font-semibold text-brand-700">
-                    {isVideo
-                        ? t.watchVideo
-                        : item.kind === "photo"
-                          ? t.viewGallery
-                          : t.readArticle}
+                    {t.readArticle}
                 </span>
             </span>
         </Link>
