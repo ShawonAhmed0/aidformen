@@ -77,37 +77,39 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
             data-site-chrome
             className="sticky top-0 z-50 border-b border-ink-200 bg-surface/85 backdrop-blur-md"
         >
-            {/* 2xl widens past max-w-7xl: with the wordmark shown, the English
-                row measures ~1230px against 1200px of content box. */}
+            {/* 2xl widens past max-w-7xl, where the wordmark and logo return to
+                full size. Between xl and 2xl every control is on the row at
+                once, so the logo, wordmark, link padding and gaps all step
+                down a notch there to keep the name un-truncated. */}
             <Container width="wide" className="2xl:max-w-[88rem]">
                 {/* The primary navigation appears on laptop screens. Utilities
                     move into the menu until xl, where there is enough room for
                     every control without squeezing or wrapping Bengali labels.
                     The links never shrink — when they did, they overflowed on
                     top of the locale switcher. The wordmark truncates instead. */}
-                <div className="flex h-18 items-center justify-between gap-2 xl:gap-3">
+                <div className="flex h-18 items-center justify-between gap-2 2xl:gap-3">
                     <Link
                         href={`/${locale}`}
                         aria-label={orgName}
-                        className="flex min-w-0 items-center gap-3 rounded-md transition-ui hover:opacity-85"
+                        className="flex min-w-0 items-center gap-2.5 rounded-md transition-ui hover:opacity-85"
                     >
                         <Image
                             src="/logo (1).png"
                             alt=""
-                            width={40}
-                            height={40}
+                            width={56}
+                            height={56}
                             priority
-                            className="size-10 shrink-0 object-contain"
+                            className="size-14 shrink-0 object-contain xl:size-13 2xl:size-14"
                         />
                         {/* nowrap: the name is a single label, and letting flex
                             wrap it broke the 72px header row onto two lines. */}
-                        <span className="hidden truncate font-display text-xl font-semibold tracking-tight whitespace-nowrap text-brand-800 2xl:inline">
+                        <span className="truncate font-display text-xl font-semibold tracking-tight whitespace-nowrap text-brand-800 xl:text-[1.0625rem] 2xl:text-xl">
                             {orgName}
                         </span>
                     </Link>
 
                     <nav aria-label={t.nav.menu} className="hidden shrink-0 lg:block">
-                        <ul className="flex items-center gap-1">
+                        <ul className="flex items-center gap-1 xl:gap-0.5 2xl:gap-1">
                             {navLinks.map((link) => {
                                 const isActive = isCurrent(link.href);
 
@@ -117,7 +119,7 @@ export default function Navbar({ locale, t, settings }: NavbarProps) {
                                             href={link.href}
                                             aria-current={isActive ? "page" : undefined}
                                             className={cn(
-                                                "relative flex h-11 items-center whitespace-nowrap rounded-md px-2 text-sm font-medium transition-ui xl:px-2.5",
+                                                "relative flex h-11 items-center whitespace-nowrap rounded-md px-2 text-sm font-medium transition-ui 2xl:px-2.5",
                                                 isActive
                                                     ? "text-brand-800"
                                                     : "text-ink-600 hover:bg-ink-100 hover:text-brand-800"

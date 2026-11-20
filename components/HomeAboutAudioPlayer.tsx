@@ -216,7 +216,7 @@ export function HomeAboutAudioPlayer({
         <section
             aria-labelledby={headingId}
             aria-busy={available && !ready && !failed}
-            className="relative overflow-hidden rounded-2xl bg-brand-950 p-4 text-white shadow-lg ring-1 ring-white/5 sm:p-5"
+            className="relative overflow-hidden rounded-2xl bg-brand-950 px-4 py-2 text-white shadow-lg ring-1 ring-white/5 sm:px-5"
         >
             <div
                 aria-hidden="true"
@@ -263,7 +263,7 @@ export function HomeAboutAudioPlayer({
                 />
             )}
 
-            <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
+            <div className="relative flex flex-col gap-1.5 sm:gap-2 lg:flex-row lg:items-center lg:gap-6">
                 <div className="flex min-w-0 items-center gap-4 lg:w-68 lg:shrink-0">
                     <button
                         type="button"
@@ -271,7 +271,7 @@ export function HomeAboutAudioPlayer({
                         disabled={!available}
                         aria-label={playing ? copy.pause : copy.play}
                         className={cn(
-                            "relative flex size-14 shrink-0 items-center justify-center rounded-full bg-white text-brand-950 shadow-lg transition-ui",
+                            "relative flex size-12 shrink-0 items-center justify-center rounded-full bg-white text-brand-950 shadow-lg transition-ui",
                             available ? "hover:scale-105 hover:bg-brand-50" : "cursor-not-allowed opacity-40",
                             playing && "ring-4 ring-white/15",
                         )}
@@ -284,24 +284,24 @@ export function HomeAboutAudioPlayer({
                     </button>
 
                     <div className="min-w-0">
-                        <p className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-[0.12em] text-ochre-300">
+                        <p className="flex items-center gap-2 text-2xs leading-4 font-semibold uppercase tracking-[0.12em] text-ochre-300">
                             <Equalizer active={playing} />
                             {status}
                         </p>
-                        <h3 id={headingId} className="mt-0.5 truncate text-lg leading-snug text-white">
+                        <h3 id={headingId} className="truncate text-lg leading-snug text-white">
                             {copy.title}
                         </h3>
-                        <p className="truncate text-xs text-brand-100">{copy.subtitle}</p>
+                        <p className="truncate text-xs leading-4 text-brand-100">{copy.subtitle}</p>
                     </div>
                 </div>
 
-                <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+                <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-5">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                         <span className="w-9 shrink-0 text-right text-xs tabular-nums text-brand-100">
                             {available ? formatClock(safeElapsed, locale) : "--:--"}
                         </span>
 
-                        <div className={cn("group relative h-10 min-w-0 flex-1", !available && "opacity-50")}>
+                        <div className={cn("group relative h-8 min-w-0 flex-1", !available && "opacity-50")}>
                             <div aria-hidden="true" className="flex h-full items-center gap-0.75">
                                 {waveform.map((height, index) => (
                                     <span
@@ -331,7 +331,7 @@ export function HomeAboutAudioPlayer({
                                         safeDuration,
                                         locale,
                                     )}`}
-                                    className="absolute inset-0 z-10 h-full w-full cursor-pointer appearance-none bg-transparent disabled:cursor-wait [&::-moz-range-progress]:bg-transparent [&::-moz-range-thumb]:h-10 [&::-moz-range-thumb]:w-0.75 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-white [&::-moz-range-track]:h-full [&::-moz-range-track]:bg-transparent [&::-webkit-slider-runnable-track]:h-full [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:h-10 [&::-webkit-slider-thumb]:w-0.75 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+                                    className="absolute inset-0 z-10 h-full w-full cursor-pointer appearance-none bg-transparent disabled:cursor-wait [&::-moz-range-progress]:bg-transparent [&::-moz-range-thumb]:h-8 [&::-moz-range-thumb]:w-0.75 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-white [&::-moz-range-track]:h-full [&::-moz-range-track]:bg-transparent [&::-webkit-slider-runnable-track]:h-full [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:w-0.75 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
                                 />
                             )}
                         </div>
@@ -341,8 +341,10 @@ export function HomeAboutAudioPlayer({
                         </span>
                     </div>
 
+                    {/* Negative block margin: the buttons keep their 44px touch
+                        target while the player takes 36px of height for them. */}
                     {available && (
-                        <div className="grid grid-cols-4 place-items-center sm:flex sm:shrink-0 sm:gap-1">
+                        <div className="-my-1 grid grid-cols-4 place-items-center sm:flex sm:shrink-0 sm:gap-1">
                             <button
                                 type="button"
                                 onClick={() => seek(safeElapsed - SKIP_SECONDS)}
