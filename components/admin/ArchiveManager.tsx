@@ -15,6 +15,7 @@ import {
     Pencil,
     Plus,
     Search,
+    Sparkles,
     Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ import {
     toggleArchivePublished,
     updateArchiveEntry,
 } from "@/lib/actions/archive";
+import { translateToEnglish } from "@/lib/actions/translate";
 import { toEmbedUrl } from "@/lib/embed";
 import type { AdminLocale } from "@/lib/i18n/admin";
 import {
@@ -141,6 +143,12 @@ const copy = {
         saveChanges: "পরিবর্তন সংরক্ষণ",
         moveToDrafts: "খসড়ায় ফিরিয়ে নিন",
         saving: "সংরক্ষণ হচ্ছে…",
+        translating: "অনুবাদ হচ্ছে…",
+        autoTranslate: "খালি ইংরেজি ঘর AI দিয়ে পূরণ",
+        autoTranslateHint:
+            "সংরক্ষণের সময় যে ঘরগুলোর ইংরেজি খালি, সেগুলো বাংলা থেকে Claude দিয়ে অনুবাদ হবে।",
+        translatedNote: (n: number) => `${n}টি ঘরের ইংরেজি AI দিয়ে পূরণ হয়েছে।`,
+        translateFailed: "ইংরেজি অনুবাদ করা যায়নি — শুধু বাংলা দিয়েই সংরক্ষণ হচ্ছে।",
         saved: "পোস্ট সংরক্ষণ হয়েছে।",
         publishedToast: "পোস্টটি প্রকাশিত হয়েছে।",
         errTitle: "শিরোনাম লিখুন।",
@@ -229,6 +237,13 @@ const copy = {
         saveChanges: "Save changes",
         moveToDrafts: "Move back to drafts",
         saving: "Saving…",
+        translating: "Translating…",
+        autoTranslate: "Fill empty English with AI",
+        autoTranslateHint:
+            "On save, every field whose English is blank is translated from the Bengali by Claude.",
+        translatedNote: (n: number) =>
+            `English filled in by AI for ${n} ${n === 1 ? "field" : "fields"}.`,
+        translateFailed: "Couldn't translate the English — saving with the Bengali only.",
         saved: "The post was saved.",
         publishedToast: "The post is now published.",
         errTitle: "Add a title.",
@@ -400,6 +415,102 @@ type StatusFilter = "all" | "published" | "drafts";
  * and the presentation are all derived, and rarely used fields sit behind
  * "More options" instead of in the editor's way.
  */
+const textOf = (html: string) => html.replace(/<[^>]*>/g, "").trim();
+
+/**
+ * The fields whose English is still blank but whose Bengali is not, keyed for
+ * one batched translation call. Only fields the form shows — legacy text it
+ * carries through hidden is never rewritten behind the editor's back.
+ */
+function englishGaps(draft: Draft): Record<string, string> {
+    const gaps: Record<string, string> = {};
+    const add = (key: string, bn: string, en: string) => {
+        if (textOf(bn) && !textOf(en)) gaps[key] = bn;
+    };
+    add("heading", draft.heading, draft.heading_en);
+    add("location", draft.location, draft.location_en);
+    add("body", draft.body, draft.body_en);
+    add("category", draft.category, draft.category_en);
+    add("source_name", draft.source_name, draft.source_name_en);
+    draft.photos.forEach((photo, i) => add(`photo.${i}`, photo.caption, photo.caption_en));
+    draft.attachments.forEach((item, i) => add(`attachment.${i}`, item.label, item.label_en));
+    return gaps;
+}
+
+/** Fills only what is still blank, so text typed while translating survives. */
+function withEnglish(draft: Draft, en: Record<string, string>): Draft {
+    const fill = (current: string, key: string) =>
+        textOf(current) ? current : en[key] || current;
+    return {
+        ...draft,
+        heading_en: fill(draft.heading_en, "heading"),
+        location_en: fill(draft.location_en, "location"),
+        body_en: fill(draft.body_en, "body"),
+        category_en: fill(draft.category_en, "category"),
+        source_name_en: fill(draft.source_name_en, "source_name"),
+        photos: draft.photos.map((photo, i) => ({
+            ...photo,
+            caption_en: fill(photo.caption_en, `photo.${i}`),
+        })),
+        attachments: draft.attachments.map((item, i) => ({
+            ...item,
+            label_en: fill(item.label_en, `attachment.${i}`),
+        })),
+    };
+}
+
+function toFormData(d: Draft, slug: string, publish: boolean): FormData {
+    const body = new FormData();
+    if (d.id) body.append("id", d.id);
+    body.append("slug", slug);
+    body.append("kind", presentationOf(d));
+    body.append("section", sectionForContentType[d.content_type]);
+    body.append("content_type", d.content_type);
+    body.append("event_status", d.content_type === "event" ? d.event_status : "");
+    body.append("heading", d.heading);
+    body.append("heading_en", d.heading_en);
+    body.append("body", d.body);
+    body.append("body_en", d.body_en);
+    body.append("category", d.category);
+    body.append("category_en", d.category_en);
+    body.append("location", d.location);
+    body.append("location_en", d.location_en);
+    body.append("event_date", d.event_date);
+    if (d.cover_image_url) body.append("cover_image_url", d.cover_image_url);
+    body.append("video_url", d.video_url);
+    if (d.video_file_url) body.append("video_file_url", d.video_file_url);
+    body.append("notice_body", d.notice_body);
+    body.append("notice_body_en", d.notice_body_en);
+    body.append("post_event_body", d.post_event_body);
+    body.append("post_event_body_en", d.post_event_body_en);
+    body.append("press_release_body", d.press_release_body);
+    body.append("press_release_body_en", d.press_release_body_en);
+    body.append("press_release_url", d.press_release_url);
+    body.append("hd_photos_url", d.hd_photos_url);
+    body.append("raw_video_url", d.raw_video_url);
+    body.append("audio_url", d.audio_url);
+    body.append("source_name", d.source_name);
+    body.append("source_name_en", d.source_name_en);
+    body.append("source_url", d.source_url);
+
+    d.photos.forEach((photo) => {
+        body.append("photo_url", photo.url);
+        body.append("photo_caption", photo.caption);
+        body.append("photo_caption_en", photo.caption_en);
+    });
+
+    d.attachments.forEach((attachment) => {
+        body.append("attachment_kind", attachment.kind);
+        body.append("attachment_label", attachment.label);
+        body.append("attachment_label_en", attachment.label_en);
+        body.append("attachment_url", attachment.url);
+        body.append("attachment_mime_type", attachment.mime_type);
+    });
+
+    body.append("is_published", String(publish));
+    return body;
+}
+
 export function ArchiveManager({
     entries,
     section,
@@ -411,6 +522,7 @@ export function ArchiveManager({
     const locale = useAdminLocale();
     const t = copy[locale];
     const [pending, startTransition] = useTransition();
+    const [translating, setTranslating] = useState(false);
     const [draft, setDraft] = useState<Draft | null>(null);
     const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
     const [query, setQuery] = useState("");
@@ -463,18 +575,10 @@ export function ArchiveManager({
         });
     };
 
-    const save = (publish: boolean) => {
+    const save = (publish: boolean, fillEnglish: boolean) => {
         if (!draft) return;
         if (!draft.heading.trim()) {
             toast.error(t.errTitle);
-            return;
-        }
-        // Existing posts keep their address; a new one gets it from the title.
-        const slug = draft.id
-            ? draft.slug.trim()
-            : archiveSlugFromTitle(draft.heading_en.trim() || draft.heading);
-        if (!isArchiveSlug(slug)) {
-            toast.error(t.errSlug);
             return;
         }
         if (draft.photos.length > MAX_ARCHIVE_PHOTOS) {
@@ -493,57 +597,48 @@ export function ArchiveManager({
             return;
         }
 
-        const body = new FormData();
-        if (draft.id) body.append("id", draft.id);
-        body.append("slug", slug);
-        body.append("kind", presentationOf(draft));
-        body.append("section", sectionForContentType[draft.content_type]);
-        body.append("content_type", draft.content_type);
-        body.append("event_status", draft.content_type === "event" ? draft.event_status : "");
-        body.append("heading", draft.heading);
-        body.append("heading_en", draft.heading_en);
-        body.append("body", draft.body);
-        body.append("body_en", draft.body_en);
-        body.append("category", draft.category);
-        body.append("category_en", draft.category_en);
-        body.append("location", draft.location);
-        body.append("location_en", draft.location_en);
-        body.append("event_date", draft.event_date);
-        if (draft.cover_image_url) body.append("cover_image_url", draft.cover_image_url);
-        body.append("video_url", draft.video_url);
-        if (draft.video_file_url) body.append("video_file_url", draft.video_file_url);
-        body.append("notice_body", draft.notice_body);
-        body.append("notice_body_en", draft.notice_body_en);
-        body.append("post_event_body", draft.post_event_body);
-        body.append("post_event_body_en", draft.post_event_body_en);
-        body.append("press_release_body", draft.press_release_body);
-        body.append("press_release_body_en", draft.press_release_body_en);
-        body.append("press_release_url", draft.press_release_url);
-        body.append("hd_photos_url", draft.hd_photos_url);
-        body.append("raw_video_url", draft.raw_video_url);
-        body.append("audio_url", draft.audio_url);
-        body.append("source_name", draft.source_name);
-        body.append("source_name_en", draft.source_name_en);
-        body.append("source_url", draft.source_url);
-
-        draft.photos.forEach((photo) => {
-            body.append("photo_url", photo.url);
-            body.append("photo_caption", photo.caption);
-            body.append("photo_caption_en", photo.caption_en);
-        });
-
-        draft.attachments.forEach((attachment) => {
-            body.append("attachment_kind", attachment.kind);
-            body.append("attachment_label", attachment.label);
-            body.append("attachment_label_en", attachment.label_en);
-            body.append("attachment_url", attachment.url);
-            body.append("attachment_mime_type", attachment.mime_type);
-        });
-
-        body.append("is_published", String(publish));
+        const gaps = fillEnglish ? englishGaps(draft) : {};
+        const translate = Object.keys(gaps).length > 0;
+        // Outside the transition: an update made inside it would not show
+        // until the whole save finished.
+        if (translate) setTranslating(true);
 
         startTransition(async () => {
-            const result = draft.id
+            let current = draft;
+            let filled = 0;
+
+            if (translate) {
+                // A dropped connection counts as a failed translation, not a failed save.
+                const translated = await translateToEnglish(gaps).catch(() => null);
+                setTranslating(false);
+
+                if (translated?.ok && translated.data) {
+                    const english = translated.data;
+                    filled = Object.values(english).filter(Boolean).length;
+                    current = withEnglish(draft, english);
+                    // Into the form too, so a failed save still keeps them.
+                    setDraft((d) => (d ? withEnglish(d, english) : d));
+                } else {
+                    // The site falls back to Bengali, so a translation outage
+                    // must not block saving.
+                    toast.warning(t.translateFailed, {
+                        description: translated && !translated.ok ? translated.error : undefined,
+                    });
+                }
+            }
+
+            // Existing posts keep their address; a new one gets it from the
+            // title — the English one when there is one, translated or typed.
+            const slug = current.id
+                ? current.slug.trim()
+                : archiveSlugFromTitle(current.heading_en.trim() || current.heading);
+            if (!isArchiveSlug(slug)) {
+                toast.error(t.errSlug);
+                return;
+            }
+
+            const body = toFormData(current, slug, publish);
+            const result = current.id
                 ? await updateArchiveEntry(body)
                 : await createArchiveEntry(body);
 
@@ -552,7 +647,9 @@ export function ArchiveManager({
                 return;
             }
 
-            toast.success(publish && !draft.is_published ? t.publishedToast : t.saved);
+            toast.success(publish && !current.is_published ? t.publishedToast : t.saved, {
+                description: filled > 0 ? t.translatedNote(filled) : undefined,
+            });
             setDraft(null);
             router.refresh();
         });
@@ -565,6 +662,7 @@ export function ArchiveManager({
                 patch={patch}
                 section={section}
                 pending={pending}
+                translating={translating}
                 t={t}
                 onCancel={() => setDraft(null)}
                 onSave={save}
@@ -823,6 +921,7 @@ function PostForm({
     patch,
     section,
     pending,
+    translating,
     t,
     onCancel,
     onSave,
@@ -831,10 +930,12 @@ function PostForm({
     patch: (changes: Partial<Draft>) => void;
     section: ArchiveSection;
     pending: boolean;
+    translating: boolean;
     t: Copy;
     onCancel: () => void;
-    onSave: (publish: boolean) => void;
+    onSave: (publish: boolean, fillEnglish: boolean) => void;
 }) {
+    const [fillEnglish, setFillEnglish] = useState(true);
     const active = subsectionForContentType(draft.content_type);
     const isCoverage = active === "media_coverage";
     // A link we cannot frame still works as a link out, so this is a note
@@ -1120,6 +1221,20 @@ function PostForm({
                 "published" checkbox: what happens next is the button's label. */}
             <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-200 bg-surface/95 px-5 py-3 backdrop-blur-md lg:left-(--admin-sidebar-w)">
                 <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-end gap-2">
+                    <label
+                        title={t.autoTranslateHint}
+                        className="mr-auto flex min-h-11 cursor-pointer items-center gap-2 text-sm text-ink-700"
+                    >
+                        <input
+                            type="checkbox"
+                            checked={fillEnglish}
+                            onChange={(e) => setFillEnglish(e.target.checked)}
+                            disabled={pending}
+                            className="size-4 rounded border-ink-300 accent-brand-800"
+                        />
+                        <Sparkles className="size-4 text-brand-700" aria-hidden="true" />
+                        {t.autoTranslate}
+                    </label>
                     {/* Phones: three buttons wrap to two rows, and "Back to the
                         list" above already cancels. */}
                     <Button
@@ -1134,14 +1249,20 @@ function PostForm({
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => onSave(false)}
+                        onClick={() => onSave(false, fillEnglish)}
                         disabled={pending}
                     >
                         {draft.is_published ? t.moveToDrafts : t.saveDraft}
                     </Button>
-                    <Button type="button" onClick={() => onSave(true)} disabled={pending}>
+                    <Button type="button" onClick={() => onSave(true, fillEnglish)} disabled={pending}>
                         {pending && <Loader2 className="animate-spin" aria-hidden="true" />}
-                        {pending ? t.saving : draft.is_published ? t.saveChanges : t.publishNow}
+                        {translating
+                            ? t.translating
+                            : pending
+                              ? t.saving
+                              : draft.is_published
+                                ? t.saveChanges
+                                : t.publishNow}
                     </Button>
                 </div>
             </div>

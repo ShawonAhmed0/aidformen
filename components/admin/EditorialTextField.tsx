@@ -31,6 +31,7 @@ import {
 } from "@/lib/supabase/upload";
 import { cn } from "@/lib/utils";
 import { useAdminLocale } from "./AdminLocale";
+import { TranslateButton } from "./TranslateButton";
 
 type EditorialTextFieldProps = {
   label: string;
@@ -615,6 +616,20 @@ export function EditorialTextField({
           )}
         </span>
 
+        <div className="flex flex-wrap items-center gap-1.5">
+        <TranslateButton
+          source={value}
+          target={valueEn}
+          onTranslated={(english) => {
+            onChangeEn(english);
+            // Not selectLanguage(): it would reload the source draft from the
+            // English value as it was before this update landed.
+            if (sourceMode) setSourceDraft(english);
+            langRef.current = "en";
+            setLang("en");
+            setError(null);
+          }}
+        />
         <div
           role="tablist"
           aria-label={t.languageTabs(label)}
@@ -651,6 +666,7 @@ export function EditorialTextField({
               </button>
             );
           })}
+        </div>
         </div>
       </div>
 

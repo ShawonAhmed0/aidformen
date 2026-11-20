@@ -154,6 +154,21 @@ slug, section and presentation kind are derived on save, and fields it no
 longer shows (event notices, press-release text) are carried through untouched
 so saving an older entry never erases them.
 
+### AI translation (Bengali → English)
+
+`translateToEnglish()` in `lib/actions/translate.ts` (admin-gated) sends a
+keyed object of Bengali strings to **`claude-haiku-5-5`** in one call with a
+JSON-schema output, and returns the same keys in English. HTML values keep
+their tags and attributes. It shares `ANTHROPIC_API_KEY` with the chatbot.
+
+- Every `BilingualField` / `EditorialTextField` has a "Translate with AI"
+  button beside its language tabs (`TranslateButton`); it asks once before
+  overwriting English that is already there.
+- The post editor (`ArchiveManager`) has "Fill empty English with AI", on by
+  default: on save it batch-translates the visible fields whose English is
+  blank. A failed translation warns and saves anyway — the site falls back to
+  Bengali, so translation must never block publishing.
+
 ## Server actions
 
 Every mutation lives in `lib/actions/`, is gated, and returns one shape:

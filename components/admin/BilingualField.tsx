@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useAdminLocale } from "./AdminLocale";
+import { TranslateButton } from "./TranslateButton";
 
 type BilingualFieldProps = {
     label: string;
@@ -84,6 +85,15 @@ export function BilingualField({
                     )}
                 </label>
 
+                <div className="flex flex-wrap items-center gap-1.5">
+                <TranslateButton
+                    source={value}
+                    target={valueEn}
+                    onTranslated={(english) => {
+                        onChangeEn(english);
+                        setLang("en");
+                    }}
+                />
                 <div
                     role="tablist"
                     aria-label={t.languageTabs(label)}
@@ -124,6 +134,7 @@ export function BilingualField({
                             </button>
                         );
                     })}
+                </div>
                 </div>
             </div>
 
