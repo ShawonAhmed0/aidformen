@@ -37,6 +37,7 @@ import {
   archiveSectionPath,
   isArchiveSlug,
   resolveArchiveEntry,
+  subsectionForContentType,
   type ArchiveEntry,
 } from "@/lib/types/archive";
 
@@ -124,13 +125,14 @@ export default async function NewsDetailPage({ params }: Props) {
   if (!entry) notFound();
 
   const item = resolveArchiveEntry(lang, entry);
-  const typeLabels = {
-    event: t.archive.typeEvent,
-    press_release: t.archive.typePressRelease,
-    media_coverage: t.archive.typeMediaCoverage,
-    mens_rights_news: t.archive.typeMensRightsNews,
-    case_study: t.archive.typeCaseStudy,
-    report: t.archive.typeReport,
+  // The tab the entry is listed under, so the breadcrumb, the listing and
+  // the admin's "what kind of post" choice all use the same words.
+  const subsectionLabels = {
+    news_events: t.archive.subNewsEvents,
+    press_release: t.archive.subPressRelease,
+    media_coverage: t.archive.subMediaCoverage,
+    case_study: t.archive.subCaseStudy,
+    report: t.archive.subReport,
   } as const;
   // The recording alone doesn't make a media kit: it already plays at the
   // top of the post. It is still offered for download inside a real kit.
@@ -174,7 +176,7 @@ export default async function NewsDetailPage({ params }: Props) {
                 <span aria-hidden="true" className="text-ink-300">
                   /
                 </span>
-                <span>{typeLabels[item.contentType]}</span>
+                <span>{subsectionLabels[subsectionForContentType(item.contentType)]}</span>
                 {item.eventStatus && (
                   <Badge
                     tone={

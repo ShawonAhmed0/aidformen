@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Move, RotateCcw } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useAdminLocale } from "./AdminLocale";
 
 type FocalPointPickerProps = {
     url: string;
@@ -23,6 +24,21 @@ const aspects = {
     card: "aspect-4/3",
 } as const;
 
+const copy = {
+    bn: {
+        label: "ছবির অবস্থান",
+        helper: "মুখ বা গুরুত্বপূর্ণ অংশে ক্লিক করুন বা টেনে আনুন — কার্ডে ঐ অংশটিই থাকবে।",
+        centre: "মাঝখানে",
+        valueText: (x: number, y: number) => `অনুভূমিক ${x}%, উল্লম্ব ${y}%`,
+    },
+    en: {
+        label: "Image position",
+        helper: "Click or drag to the face or the important part — that is what the card keeps.",
+        centre: "Centre",
+        valueText: (x: number, y: number) => `Horizontal ${x}%, vertical ${y}%`,
+    },
+};
+
 /**
  * Chooses which part of a photo survives the crop.
  *
@@ -40,9 +56,12 @@ export function FocalPointPicker({
     y,
     onChange,
     aspect = "card",
-    label = "ছবির অবস্থান",
-    helper = "মুখ বা গুরুত্বপূর্ণ অংশে ক্লিক করুন বা টেনে আনুন — কার্ডে ঐ অংশটিই থাকবে।",
+    label: labelProp,
+    helper: helperProp,
 }: FocalPointPickerProps) {
+    const t = copy[useAdminLocale()];
+    const label = labelProp ?? t.label;
+    const helper = helperProp ?? t.helper;
     const boxRef = useRef<HTMLDivElement>(null);
     const [dragging, setDragging] = useState(false);
 
@@ -84,7 +103,7 @@ export function FocalPointPicker({
                     className="flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900"
                 >
                     <RotateCcw className="size-3.5" aria-hidden="true" />
-                    মাঝখানে
+                    {t.centre}
                 </button>
             </div>
 
@@ -93,7 +112,7 @@ export function FocalPointPicker({
                 role="slider"
                 tabIndex={0}
                 aria-label={label}
-                aria-valuetext={`অনুভূমিক ${x}%, উল্লম্ব ${y}%`}
+                aria-valuetext={t.valueText(x, y)}
                 aria-valuenow={y}
                 aria-valuemin={0}
                 aria-valuemax={100}

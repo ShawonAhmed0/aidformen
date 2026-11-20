@@ -27,10 +27,84 @@ import { ImagePicker } from "./ImagePicker";
 import { DocumentPicker } from "./DocumentPicker";
 import { FocalPointPicker } from "./FocalPointPicker";
 import { BilingualField } from "./BilingualField";
+import { useAdminLocale } from "./AdminLocale";
 import type { TeamMember } from "@/lib/types/content";
 import { cn } from "@/lib/utils";
 
 const s = (v: string | null | undefined) => v ?? "";
+
+const copy = {
+    bn: {
+        nameRoleRequired: "নাম ও পদবি দুটোই প্রয়োজন।",
+        updated: "সদস্য আপডেট হয়েছে।",
+        created: "নতুন সদস্য যোগ হয়েছে।",
+        deleted: "সদস্য মুছে ফেলা হয়েছে।",
+        heading: "দলের সদস্য",
+        intro: "“আমাদের দল” পাতায় যে সদস্যরা দেখাবেন, তাঁদের তথ্য ও ক্রম।",
+        newMember: "নতুন সদস্য",
+        editMember: "সদস্য সম্পাদনা",
+        empty: "এখনো কোনো সদস্য যোগ করা হয়নি।",
+        unpublished: "অপ্রকাশিত",
+        moveUp: "উপরে সরান",
+        moveDown: "নিচে সরান",
+        edit: "সম্পাদনা করুন",
+        delete: "মুছে ফেলুন",
+        confirmDelete: (role: string) => `“${role}” স্থায়ীভাবে মুছে যাবে।`,
+        cancel: "বাতিল",
+        close: "বন্ধ করুন",
+        photoLabel: "ছবি",
+        focalHelper: "দলের কার্ডে ছবির উপরের অংশ দেখায়। মুখ যেখানে, সেখানে টেনে আনুন।",
+        nameLabel: "নাম",
+        roleLabel: "পদবি",
+        quoteLabel: "সংক্ষিপ্ত উক্তি",
+        quoteHelper: "কার্ডে দেখানো হবে।",
+        statementLabel: "বিবৃতি",
+        statementHelper: "“বিস্তারিত পড়ুন” খুললে বড় করে দেখাবে।",
+        bioLabel: "পরিচিতি",
+        signatureLabel: "স্বাক্ষর",
+        signatureHelper:
+            "সাদা পটভূমি ছাড়া (স্বচ্ছ) PNG হলে সবচেয়ে ভালো দেখায়। প্রোফাইলের নিচে ডানদিকে দেখাবে।",
+        pdfLabel: "প্রোফাইল PDF",
+        pdfHelper: "“বিস্তারিত পড়ুন” খুললে ডাউনলোড বোতাম হিসেবে দেখাবে।",
+        showOnSite: "ওয়েবসাইটে দেখান",
+        save: "সংরক্ষণ করুন",
+    },
+    en: {
+        nameRoleRequired: "Both name and role are required.",
+        updated: "Member updated.",
+        created: "New member added.",
+        deleted: "Member deleted.",
+        heading: "Team members",
+        intro: "Details and order of the members shown on the “Our Team” page.",
+        newMember: "New member",
+        editMember: "Edit member",
+        empty: "No members added yet.",
+        unpublished: "Unpublished",
+        moveUp: "Move up",
+        moveDown: "Move down",
+        edit: "Edit",
+        delete: "Delete",
+        confirmDelete: (role: string) => `“${role}” will be permanently deleted.`,
+        cancel: "Cancel",
+        close: "Close",
+        photoLabel: "Photo",
+        focalHelper: "The team card shows the upper part of the photo. Drag to where the face is.",
+        nameLabel: "Name",
+        roleLabel: "Role",
+        quoteLabel: "Short quote",
+        quoteHelper: "Shown on the card.",
+        statementLabel: "Statement",
+        statementHelper: "Shown large when “Read more” is opened.",
+        bioLabel: "Profile",
+        signatureLabel: "Signature",
+        signatureHelper:
+            "A transparent PNG (no white background) looks best. Shown at the bottom right of the profile.",
+        pdfLabel: "Profile PDF",
+        pdfHelper: "Shown as a download button when “Read more” is opened.",
+        showOnSite: "Show on website",
+        save: "Save",
+    },
+};
 
 type Draft = {
     id: string | null;
@@ -95,6 +169,7 @@ const toDraft = (m: TeamMember): Draft => ({
 export function TeamManager({ members }: { members: TeamMember[] }) {
     const router = useRouter();
     const [pending, startTransition] = useTransition();
+    const t = copy[useAdminLocale()];
     const [draft, setDraft] = useState<Draft | null>(null);
     const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
@@ -127,7 +202,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
     const save = () => {
         if (!draft) return;
         if (!draft.name.trim() || !draft.role.trim()) {
-            toast.error("নাম ও পদবি দুটোই প্রয়োজন।");
+            toast.error(t.nameRoleRequired);
             return;
         }
 
@@ -161,7 +236,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                 return;
             }
 
-            toast.success(draft.id ? "সদস্য আপডেট হয়েছে।" : "নতুন সদস্য যোগ হয়েছে।");
+            toast.success(draft.id ? t.updated : t.created);
             setDraft(null);
             router.refresh();
         });
@@ -172,10 +247,10 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <h2 className="text-base font-semibold text-ink-900">
-                        দলের সদস্য
+                        {t.heading}
                     </h2>
                     <p className="mt-1 text-sm text-ink-500">
-                        “আমাদের দল” পাতায় যে সদস্যরা দেখাবেন, তাঁদের তথ্য ও ক্রম।
+                        {t.intro}
                     </p>
                 </div>
 
@@ -186,14 +261,14 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                     disabled={pending}
                 >
                     <Plus aria-hidden="true" />
-                    নতুন সদস্য
+                    {t.newMember}
                 </Button>
             </div>
 
             {order.length === 0 ? (
                 <div className="mt-6 rounded-xl border border-dashed border-ink-300 px-6 py-12 text-center">
                     <p className="text-sm font-medium text-ink-700">
-                        এখনো কোনো সদস্য যোগ করা হয়নি।
+                        {t.empty}
                     </p>
                 </div>
             ) : (
@@ -233,7 +308,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                 </p>
                                 {!member.is_published && (
                                     <Badge tone="neutral" size="sm" className="mt-1.5">
-                                        অপ্রকাশিত
+                                        {t.unpublished}
                                     </Badge>
                                 )}
                             </div>
@@ -244,7 +319,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                     onClick={() => move(index, -1)}
                                     disabled={pending || index === 0}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900 disabled:opacity-30"
-                                    aria-label="উপরে সরান"
+                                    aria-label={t.moveUp}
                                 >
                                     <ArrowUp className="size-4" />
                                 </button>
@@ -254,7 +329,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                     onClick={() => move(index, 1)}
                                     disabled={pending || index === order.length - 1}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900 disabled:opacity-30"
-                                    aria-label="নিচে সরান"
+                                    aria-label={t.moveDown}
                                 >
                                     <ArrowDown className="size-4" />
                                 </button>
@@ -264,7 +339,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                     onClick={() => setDraft(toDraft(member))}
                                     disabled={pending}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900"
-                                    aria-label="সম্পাদনা করুন"
+                                    aria-label={t.edit}
                                 >
                                     <Pencil className="size-4" />
                                 </button>
@@ -274,7 +349,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                     onClick={() => setConfirmingDelete(member.id)}
                                     disabled={pending}
                                     className="flex size-9 items-center justify-center rounded-lg text-danger transition-ui hover:bg-danger-soft"
-                                    aria-label="মুছে ফেলুন"
+                                    aria-label={t.delete}
                                 >
                                     <Trash2 className="size-4" />
                                 </button>
@@ -283,7 +358,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                             {confirmingDelete === member.id && (
                                 <div className="flex w-full flex-wrap items-center justify-between gap-3 rounded-lg border border-danger-line bg-danger-soft px-4 py-3">
                                     <p className="text-sm text-danger">
-                                        “{member.role}” স্থায়ীভাবে মুছে যাবে।
+                                        {t.confirmDelete(member.role)}
                                     </p>
                                     <div className="flex gap-2">
                                         <Button
@@ -292,7 +367,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                             variant="ghost"
                                             onClick={() => setConfirmingDelete(null)}
                                         >
-                                            বাতিল
+                                            {t.cancel}
                                         </Button>
                                         <Button
                                             type="button"
@@ -306,12 +381,12 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                                 startTransition(async () => {
                                                     const r = await deleteTeamMember(body);
                                                     if (!r.ok) toast.error(r.error);
-                                                    else toast.success("সদস্য মুছে ফেলা হয়েছে।");
+                                                    else toast.success(t.deleted);
                                                     router.refresh();
                                                 });
                                             }}
                                         >
-                                            মুছে ফেলুন
+                                            {t.delete}
                                         </Button>
                                     </div>
                                 </div>
@@ -332,18 +407,18 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                     <div
                         role="dialog"
                         aria-modal="true"
-                        aria-label={draft.id ? "সদস্য সম্পাদনা" : "নতুন সদস্য"}
+                        aria-label={draft.id ? t.editMember : t.newMember}
                         className="my-8 w-full max-w-xl rounded-2xl bg-surface p-6 shadow-xl"
                     >
                         <div className="flex items-start justify-between gap-4">
                             <h3 className="text-lg text-ink-900">
-                                {draft.id ? "সদস্য সম্পাদনা" : "নতুন সদস্য"}
+                                {draft.id ? t.editMember : t.newMember}
                             </h3>
                             <button
                                 type="button"
                                 onClick={() => setDraft(null)}
                                 className="flex size-9 items-center justify-center rounded-full text-ink-500 transition-ui hover:bg-ink-100"
-                                aria-label="বন্ধ করুন"
+                                aria-label={t.close}
                             >
                                 <X className="size-5" />
                             </button>
@@ -351,7 +426,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
 
                         <div className="mt-5 space-y-5">
                             <ImagePicker
-                                label="ছবি"
+                                label={t.photoLabel}
                                 folder="team"
                                 aspect="square"
                                 className="max-w-48"
@@ -371,12 +446,12 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                     onChange={(focal_x, focal_y) =>
                                         setDraft((d) => (d ? { ...d, focal_x, focal_y } : d))
                                     }
-                                    helper="দলের কার্ডে ছবির উপরের অংশ দেখায়। মুখ যেখানে, সেখানে টেনে আনুন।"
+                                    helper={t.focalHelper}
                                 />
                             )}
 
                             <BilingualField
-                                label="নাম"
+                                label={t.nameLabel}
                                 required
                                 value={draft.name}
                                 onChange={(v) => setDraft((d) => (d ? { ...d, name: v } : d))}
@@ -387,7 +462,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                             />
 
                             <BilingualField
-                                label="পদবি"
+                                label={t.roleLabel}
                                 required
                                 value={draft.role}
                                 onChange={(v) => setDraft((d) => (d ? { ...d, role: v } : d))}
@@ -398,7 +473,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                             />
 
                             <BilingualField
-                                label="সংক্ষিপ্ত উক্তি"
+                                label={t.quoteLabel}
                                 multiline
                                 rows={2}
                                 value={draft.quote}
@@ -407,11 +482,11 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                 onChangeEn={(v) =>
                                     setDraft((d) => (d ? { ...d, quote_en: v } : d))
                                 }
-                                helper="কার্ডে দেখানো হবে।"
+                                helper={t.quoteHelper}
                             />
 
                             <BilingualField
-                                label="বিবৃতি"
+                                label={t.statementLabel}
                                 multiline
                                 rows={3}
                                 value={draft.statement}
@@ -422,11 +497,11 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                 onChangeEn={(v) =>
                                     setDraft((d) => (d ? { ...d, statement_en: v } : d))
                                 }
-                                helper="“বিস্তারিত পড়ুন” খুললে বড় করে দেখাবে।"
+                                helper={t.statementHelper}
                             />
 
                             <BilingualField
-                                label="পরিচিতি"
+                                label={t.bioLabel}
                                 multiline
                                 rows={4}
                                 value={draft.bio}
@@ -438,7 +513,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                             />
 
                             <ImagePicker
-                                label="স্বাক্ষর"
+                                label={t.signatureLabel}
                                 folder="signatures"
                                 aspect="wide"
                                 fit="contain"
@@ -447,17 +522,17 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                 onChange={(url) =>
                                     setDraft((d) => (d ? { ...d, signature_url: url } : d))
                                 }
-                                helper="সাদা পটভূমি ছাড়া (স্বচ্ছ) PNG হলে সবচেয়ে ভালো দেখায়। প্রোফাইলের নিচে ডানদিকে দেখাবে।"
+                                helper={t.signatureHelper}
                             />
 
                             <DocumentPicker
-                                label="প্রোফাইল PDF"
+                                label={t.pdfLabel}
                                 folder="documents"
                                 value={draft.profile_pdf_url}
                                 onChange={(url) =>
                                     setDraft((d) => (d ? { ...d, profile_pdf_url: url } : d))
                                 }
-                                helper="“বিস্তারিত পড়ুন” খুললে ডাউনলোড বোতাম হিসেবে দেখাবে।"
+                                helper={t.pdfHelper}
                             />
 
                             <label className="flex items-center gap-2.5 text-sm text-ink-700">
@@ -471,7 +546,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                     }
                                     className="size-4 rounded border-ink-300 accent-brand-800"
                                 />
-                                ওয়েবসাইটে দেখান
+                                {t.showOnSite}
                             </label>
                         </div>
 
@@ -481,13 +556,13 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
                                 variant="outline"
                                 onClick={() => setDraft(null)}
                             >
-                                বাতিল
+                                {t.cancel}
                             </Button>
                             <Button type="button" onClick={save} disabled={pending}>
                                 {pending && (
                                     <Loader2 className="animate-spin" aria-hidden="true" />
                                 )}
-                                সংরক্ষণ করুন
+                                {t.save}
                             </Button>
                         </div>
                     </div>

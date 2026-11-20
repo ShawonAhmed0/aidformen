@@ -20,6 +20,7 @@ import {
 } from "@/lib/supabase/upload";
 import type { MediaFolder } from "@/lib/types/media";
 import { cn } from "@/lib/utils";
+import { useAdminLocale } from "./AdminLocale";
 
 type MediaFieldProps = {
     value: string | null;
@@ -30,6 +31,51 @@ type MediaFieldProps = {
     label: string;
     helper?: string;
     className?: string;
+};
+
+const copy = {
+    bn: {
+        wrongType: {
+            video: "শুধু ভিডিও ফাইল (MP4, WEBM, MOV) দেওয়া যাবে।",
+            audio: "শুধু অডিও ফাইল (MP3, M4A, OGG, WAV) দেওয়া যাবে।",
+            image: "শুধু ছবি (JPG, PNG, WEBP, AVIF) দেওয়া যাবে।",
+        },
+        noAudioSupport: "আপনার ব্রাউজার অডিও চালাতে পারছে না।",
+        change: "পরিবর্তন",
+        remove: "সরান",
+        drop: {
+            video: "ভিডিও টেনে আনুন বা ক্লিক করুন",
+            audio: "অডিও টেনে আনুন বা ক্লিক করুন",
+            image: "ছবি টেনে আনুন বা ক্লিক করুন",
+        },
+        hint: {
+            video: "MP4, WEBM, MOV · সর্বোচ্চ ৫০ MB",
+            audio: "MP3, M4A, OGG, WAV · সর্বোচ্চ ২৫ MB",
+            image: "JPG, PNG, WEBP · বড় ছবি নিজে থেকেই ছোট হবে",
+        },
+        uploading: "আপলোড হচ্ছে…",
+    },
+    en: {
+        wrongType: {
+            video: "Only video files (MP4, WEBM, MOV) are accepted.",
+            audio: "Only audio files (MP3, M4A, OGG, WAV) are accepted.",
+            image: "Only images (JPG, PNG, WEBP, AVIF) are accepted.",
+        },
+        noAudioSupport: "Your browser cannot play this audio.",
+        change: "Change",
+        remove: "Remove",
+        drop: {
+            video: "Drag a video here or click",
+            audio: "Drag an audio file here or click",
+            image: "Drag an image here or click",
+        },
+        hint: {
+            video: "MP4, WEBM, MOV · up to 50 MB",
+            audio: "MP3, M4A, OGG, WAV · up to 25 MB",
+            image: "JPG, PNG, WEBP · large images are resized automatically",
+        },
+        uploading: "Uploading…",
+    },
 };
 
 /**
@@ -48,6 +94,7 @@ export function MediaField({
     helper,
     className,
 }: MediaFieldProps) {
+    const t = copy[useAdminLocale()];
     const inputRef = useRef<HTMLInputElement>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -69,13 +116,7 @@ export function MediaField({
         // the wrong kind before it reaches it — dropping a video on the cover
         // field would otherwise upload happily and render nothing.
         if (!types.includes(file.type)) {
-            setError(
-                isVideo
-                    ? "শুধু ভিডিও ফাইল (MP4, WEBM, MOV) দেওয়া যাবে।"
-                    : isAudio
-                      ? "শুধু অডিও ফাইল (MP3, M4A, OGG, WAV) দেওয়া যাবে।"
-                    : "শুধু ছবি (JPG, PNG, WEBP, AVIF) দেওয়া যাবে।"
-            );
+            setError(t.wrongType[accept]);
             return;
         }
 
@@ -138,7 +179,7 @@ export function MediaField({
                                     preload="metadata"
                                     className="w-full"
                                 >
-                                    আপনার ব্রাউজার অডিও চালাতে পারছে না।
+                                    {t.noAudioSupport}
                                 </audio>
                             </div>
                         ) : (
@@ -160,7 +201,7 @@ export function MediaField({
                                 className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white/95 px-3 text-sm font-medium text-ink-900 transition-ui hover:bg-white disabled:opacity-60"
                             >
                                 <UploadCloud className="size-4" aria-hidden="true" />
-                                পরিবর্তন
+                                {t.change}
                             </button>
 
                             <button
@@ -171,7 +212,7 @@ export function MediaField({
                                 }}
                                 disabled={busy}
                                 className="inline-flex size-9 items-center justify-center rounded-lg bg-white/95 text-danger transition-ui hover:bg-white disabled:opacity-60"
-                                aria-label="সরান"
+                                aria-label={t.remove}
                             >
                                 <Trash2 className="size-4" />
                             </button>
@@ -194,18 +235,10 @@ export function MediaField({
                             )}
                         </span>
                         <span className="text-sm font-medium text-ink-700">
-                            {isVideo
-                                ? "ভিডিও টেনে আনুন বা ক্লিক করুন"
-                                : isAudio
-                                  ? "অডিও টেনে আনুন বা ক্লিক করুন"
-                                : "ছবি টেনে আনুন বা ক্লিক করুন"}
+                            {t.drop[accept]}
                         </span>
                         <span className="text-xs text-ink-500">
-                            {isVideo
-                                ? "MP4, WEBM, MOV · সর্বোচ্চ ৫০ MB"
-                                : isAudio
-                                  ? "MP3, M4A, OGG, WAV · সর্বোচ্চ ২৫ MB"
-                                : "JPG, PNG, WEBP · সর্বোচ্চ ৮ MB"}
+                            {t.hint[accept]}
                         </span>
                     </button>
                 )}
@@ -213,7 +246,7 @@ export function MediaField({
                 {busy && (
                     <div className="absolute inset-0 flex items-center justify-center gap-2 bg-surface/80 text-sm font-medium text-ink-700 backdrop-blur-sm">
                         <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                        আপলোড হচ্ছে…
+                        {t.uploading}
                     </div>
                 )}
             </div>

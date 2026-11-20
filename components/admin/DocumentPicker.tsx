@@ -6,6 +6,7 @@ import { FileText, Loader2, Trash2, UploadCloud } from "lucide-react";
 import { uploadDocumentToMedia } from "@/lib/supabase/upload";
 import type { MediaFolder } from "@/lib/types/media";
 import { cn } from "@/lib/utils";
+import { useAdminLocale } from "./AdminLocale";
 
 type DocumentPickerProps = {
     /** Current PDF/Word URL, or null for empty. */
@@ -19,12 +20,35 @@ type DocumentPickerProps = {
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
+const copy = {
+    bn: {
+        document: "ডকুমেন্ট",
+        wrongType: "শুধু PDF, DOC অথবা DOCX ফাইল দেওয়া যাবে।",
+        tooLarge: "ফাইলের আকার ১০ মেগাবাইটের কম হতে হবে।",
+        change: "পরিবর্তন",
+        remove: "ফাইল সরান",
+        drop: "ডকুমেন্ট টেনে আনুন বা ক্লিক করুন",
+        hint: "PDF, DOC, DOCX · সর্বোচ্চ ১০ MB",
+        uploading: "আপলোড হচ্ছে…",
+    },
+    en: {
+        document: "Document",
+        wrongType: "Only PDF, DOC or DOCX files are accepted.",
+        tooLarge: "The file must be smaller than 10 MB.",
+        change: "Change",
+        remove: "Remove file",
+        drop: "Drag a document here or click",
+        hint: "PDF, DOC, DOCX · up to 10 MB",
+        uploading: "Uploading…",
+    },
+};
+
 /** Stored names are generated, so show the tail of the object key, not a guess. */
-function fileNameFrom(url: string) {
+function fileNameFrom(url: string, fallback: string) {
     try {
-        return decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "") || "Document";
+        return decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "") || fallback;
     } catch {
-        return "Document";
+        return fallback;
     }
 }
 
@@ -38,10 +62,12 @@ export function DocumentPicker({
     value,
     onChange,
     folder,
-    label = "ডকুমেন্ট",
+    label,
     helper,
     className,
 }: DocumentPickerProps) {
+    const t = copy[useAdminLocale()];
+    const fieldLabel = label ?? t.document;
     const inputRef = useRef<HTMLInputElement>(null);
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -61,11 +87,11 @@ export function DocumentPicker({
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
             /\.(pdf|doc|docx)$/.test(lowerName);
         if (!supported) {
-            setError("শুধু PDF, DOC অথবা DOCX ফাইল দেওয়া যাবে।");
+            setError(t.wrongType);
             return;
         }
         if (file.size > MAX_BYTES) {
-            setError("ফাইলের আকার ১০ মেগাবাইটের কম হতে হবে।");
+            setError(t.tooLarge);
             return;
         }
 
@@ -83,7 +109,7 @@ export function DocumentPicker({
 
     return (
         <div className={cn("space-y-2", className)}>
-            <span className="flex text-sm font-medium text-ink-700">{label}</span>
+            <span className="flex text-sm font-medium text-ink-700">{fieldLabel}</span>
 
             <div
                 onDragOver={(e) => {
@@ -116,7 +142,7 @@ export function DocumentPicker({
                             rel="noopener noreferrer"
                             className="min-w-0 flex-1 truncate text-sm font-medium text-brand-700 underline-offset-4 hover:underline"
                         >
-                            {uploadedName ?? fileNameFrom(value)}
+                            {uploadedName ?? fileNameFrom(value, t.document)}
                         </a>
 
                         <div className="flex items-center gap-2">
@@ -127,7 +153,7 @@ export function DocumentPicker({
                                 className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-ink-300 bg-surface px-3 text-sm font-medium text-ink-800 transition-ui hover:bg-ink-50 disabled:opacity-60"
                             >
                                 <UploadCloud className="size-4" aria-hidden="true" />
-                                পরিবর্তন
+                                {t.change}
                             </button>
 
                             <button
@@ -139,7 +165,7 @@ export function DocumentPicker({
                                 }}
                                 disabled={pending}
                                 className="inline-flex size-9 items-center justify-center rounded-lg border border-ink-300 bg-surface text-danger transition-ui hover:bg-danger-soft disabled:opacity-60"
-                                aria-label="ফাইল সরান"
+                                aria-label={t.remove}
                             >
                                 <Trash2 className="size-4" />
                             </button>
@@ -156,10 +182,10 @@ export function DocumentPicker({
                             <FileText className="size-5" aria-hidden="true" />
                         </span>
                         <span className="text-sm font-medium text-ink-700">
-                            ডকুমেন্ট টেনে আনুন বা ক্লিক করুন
+                            {t.drop}
                         </span>
                         <span className="text-xs text-ink-500">
-                            PDF, DOC, DOCX · সর্বোচ্চ ১০ MB
+                            {t.hint}
                         </span>
                     </button>
                 )}
@@ -167,7 +193,7 @@ export function DocumentPicker({
                 {pending && (
                     <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-xl bg-surface/80 text-sm font-medium text-ink-700 backdrop-blur-sm">
                         <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                        আপলোড হচ্ছে…
+                        {t.uploading}
                     </div>
                 )}
             </div>
@@ -177,7 +203,7 @@ export function DocumentPicker({
                 type="file"
                 accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,.doc,.docx"
                 className="sr-only"
-                aria-label={label}
+                aria-label={fieldLabel}
                 onChange={(e) => {
                     void handleFile(e.target.files?.[0]);
                     // Reset so picking the same file twice still fires onChange.

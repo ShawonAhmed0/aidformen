@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useAdminLocale } from "./AdminLocale";
 
 type Administrator = {
   id: string;
@@ -45,14 +46,87 @@ type Candidate = {
   alreadyAdmin: boolean;
 };
 
-const actionErrors = {
-  unauthorized: "Your account cannot manage administrator access.",
-  required: "Enter the account email address.",
-  invalid: "Enter a valid email address.",
-  not_found:
-    "No registered account was found for that email. Ask the person to register first, then try again.",
-  failed: "Administrator access could not be updated. Please try again.",
-} as const;
+const copy = {
+  bn: {
+    errors: {
+      unauthorized:
+        "আপনার অ্যাকাউন্ট থেকে অ্যাডমিনিস্ট্রেটর অ্যাক্সেস পরিচালনা করা যাবে না।",
+      required: "অ্যাকাউন্টের ইমেইল ঠিকানা লিখুন।",
+      invalid: "একটি সঠিক ইমেইল ঠিকানা লিখুন।",
+      not_found:
+        "এই ইমেইলে কোনো নিবন্ধিত অ্যাকাউন্ট পাওয়া যায়নি। আগে তাঁকে নিবন্ধন করতে বলুন, তারপর আবার চেষ্টা করুন।",
+      failed:
+        "অ্যাডমিনিস্ট্রেটর অ্যাক্সেস আপডেট করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    },
+    notices: {
+      alreadyAdmin: "এই অ্যাকাউন্টের আগে থেকেই অ্যাডমিনিস্ট্রেটর অ্যাক্সেস আছে।",
+      granted: "অ্যাডমিনিস্ট্রেটর অ্যাক্সেস সফলভাবে দেওয়া হয়েছে।",
+    },
+    addTitle: "অ্যাডমিনিস্ট্রেটর যোগ করুন",
+    addBody:
+      "ব্যক্তির আগে থেকেই একটি অ্যাকাউন্ট থাকতে হবে — সাইটে এখন আর সাইন-আপ পেজ নেই, তাই আগে Supabase Auth ড্যাশবোর্ড থেকে তাঁকে আমন্ত্রণ জানান। তিনি সাইটের কনটেন্ট, সেটিংস ও মিডিয়া পরিচালনা করতে পারবেন, তবে নতুন অ্যাডমিনিস্ট্রেটর যোগ করতে পারবেন না।",
+    emailLabel: "নিবন্ধিত অ্যাকাউন্টের ইমেইল",
+    checking: "অ্যাকাউন্ট যাচাই হচ্ছে…",
+    review: "অ্যাকাউন্ট যাচাই করুন",
+    alreadyHeading: "আগে থেকেই অ্যাডমিনিস্ট্রেটর",
+    confirmHeading: "এই অ্যাকাউন্টটি নিশ্চিত করুন",
+    unnamed: "নামহীন অ্যাকাউন্ট",
+    confirmBody:
+      "নিশ্চিত করলে এই অ্যাকাউন্ট ব্যক্তিগত অ্যাডমিন টুল ও সদস্যদের তথ্যে প্রবেশাধিকার পাবে।",
+    granting: "অ্যাক্সেস দেওয়া হচ্ছে…",
+    grant: "নিশ্চিত করে অ্যাক্সেস দিন",
+    changeEmail: "ইমেইল বদলান",
+    yourAccount: "আপনার অ্যাকাউন্ট",
+    signedIn: "সাইন-ইন করা অ্যাডমিনিস্ট্রেটর",
+    managerNote:
+      "আপনি একজন অ্যাক্সেস ম্যানেজার। শুধু অ্যাক্সেস ম্যানেজাররাই অ্যাডমিনিস্ট্রেটরের অনুমতি দিতে পারেন।",
+    current: "বর্তমান অ্যাডমিনিস্ট্রেটর",
+    loadFailed: "অ্যাডমিনিস্ট্রেটর অ্যাকাউন্টগুলো লোড করা যায়নি।",
+    you: " (আপনি)",
+    administrator: "অ্যাডমিনিস্ট্রেটর",
+    accessManager: "অ্যাক্সেস ম্যানেজার",
+  },
+  en: {
+    errors: {
+      unauthorized: "Your account cannot manage administrator access.",
+      required: "Enter the account email address.",
+      invalid: "Enter a valid email address.",
+      not_found:
+        "No registered account was found for that email. Ask the person to register first, then try again.",
+      failed: "Administrator access could not be updated. Please try again.",
+    },
+    notices: {
+      alreadyAdmin: "That account already has administrator access.",
+      granted: "Administrator access has been granted successfully.",
+    },
+    addTitle: "Add an administrator",
+    addBody:
+      "The person must already have an account — invite them from the Supabase Auth dashboard first, since the site no longer has a sign-up page. They will be able to manage site content, settings and media, but cannot add further administrators.",
+    emailLabel: "Registered account email",
+    checking: "Checking account…",
+    review: "Review account",
+    alreadyHeading: "Already an administrator",
+    confirmHeading: "Confirm this account",
+    unnamed: "Unnamed account",
+    confirmBody:
+      "Confirming will give this account access to private administration tools and member information.",
+    granting: "Granting access…",
+    grant: "Confirm & grant access",
+    changeEmail: "Change email",
+    yourAccount: "Your account",
+    signedIn: "Signed-in administrator",
+    managerNote:
+      "You are an access manager. Only access managers can grant administrator permissions.",
+    current: "Current administrators",
+    loadFailed: "Administrator accounts could not be loaded.",
+    you: " (you)",
+    administrator: "Administrator",
+    accessManager: "Access manager",
+  },
+};
+
+type ErrorCode = keyof (typeof copy)["en"]["errors"];
+type NoticeCode = keyof (typeof copy)["en"]["notices"];
 
 export function AdminAccessManager({
   currentUserId,
@@ -64,28 +138,31 @@ export function AdminAccessManager({
   administrators: Administrator[];
 }) {
   const router = useRouter();
+  const t = copy[useAdminLocale()];
   const emailRef = useRef<HTMLInputElement>(null);
   const candidateRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
   const [pending, startTransition] = useTransition();
   const [email, setEmail] = useState("");
   const [candidate, setCandidate] = useState<Candidate>();
-  const [fieldError, setFieldError] = useState<string>();
+  // Codes, not text: a message already on screen then follows the language
+  // switch instead of staying in the language it was raised in.
+  const [fieldError, setFieldError] = useState<"required" | "invalid">();
   const [message, setMessage] = useState<
-    { tone: "success" | "error"; text: string } | undefined
+    | { tone: "success"; code: NoticeCode }
+    | { tone: "error"; code: ErrorCode }
+    | undefined
   >();
 
-  const showError = (code: keyof typeof actionErrors) => {
-    const text = actionErrors[code];
-
+  const showError = (code: ErrorCode) => {
     if (code === "required" || code === "invalid") {
-      setFieldError(text);
+      setFieldError(code);
       setMessage(undefined);
       requestAnimationFrame(() => emailRef.current?.focus());
       return;
     }
 
-    setMessage({ tone: "error", text });
+    setMessage({ tone: "error", code });
     requestAnimationFrame(() => messageRef.current?.focus());
   };
 
@@ -115,10 +192,7 @@ export function AdminAccessManager({
       setCandidate(result.candidate);
 
       if (result.candidate.alreadyAdmin) {
-        setMessage({
-          tone: "success",
-          text: "That account already has administrator access.",
-        });
+        setMessage({ tone: "success", code: "alreadyAdmin" });
       }
 
       requestAnimationFrame(() => candidateRef.current?.focus());
@@ -144,12 +218,10 @@ export function AdminAccessManager({
         return;
       }
 
-      const text =
-        result.status === "already_admin"
-          ? "That account already has administrator access."
-          : "Administrator access has been granted successfully.";
-
-      setMessage({ tone: "success", text });
+      setMessage({
+        tone: "success",
+        code: result.status === "already_admin" ? "alreadyAdmin" : "granted",
+      });
       setCandidate(undefined);
       setEmail("");
       router.refresh();
@@ -172,23 +244,20 @@ export function AdminAccessManager({
           </span>
           <div>
             <h2 className="text-xl font-semibold text-ink-900">
-              Add an administrator
+              {t.addTitle}
             </h2>
             <p className="mt-1 text-sm leading-6 text-ink-600">
-              The person must already have an account — invite them from the
-              Supabase Auth dashboard first, since the site no longer has a
-              sign-up page. They will be able to manage site content, settings
-              and media, but cannot add further administrators.
+              {t.addBody}
             </p>
           </div>
         </div>
 
         <form onSubmit={review} noValidate className="mt-7 space-y-5">
           <Field
-            label="Registered account email"
+            label={t.emailLabel}
             icon={Mail}
             required
-            error={fieldError}
+            error={fieldError && t.errors[fieldError]}
           >
             {(props) => (
               <Input
@@ -219,7 +288,7 @@ export function AdminAccessManager({
               ) : (
                 <Search aria-hidden="true" />
               )}
-              {pending ? "Checking account…" : "Review account"}
+              {pending ? t.checking : t.review}
             </Button>
           )}
         </form>
@@ -236,9 +305,7 @@ export function AdminAccessManager({
               id="admin-candidate-heading"
               className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-700"
             >
-              {candidate.alreadyAdmin
-                ? "Already an administrator"
-                : "Confirm this account"}
+              {candidate.alreadyAdmin ? t.alreadyHeading : t.confirmHeading}
             </h3>
 
             <div className="mt-3 flex items-center gap-3">
@@ -258,7 +325,7 @@ export function AdminAccessManager({
               </span>
               <div className="min-w-0">
                 <p className="truncate font-semibold text-ink-900">
-                  {candidate.fullName || "Unnamed account"}
+                  {candidate.fullName || t.unnamed}
                 </p>
                 <p className="truncate text-sm text-ink-600">{candidate.email}</p>
               </div>
@@ -266,8 +333,7 @@ export function AdminAccessManager({
 
             {!candidate.alreadyAdmin && (
               <p className="mt-4 text-sm leading-6 text-ink-700">
-                Confirming will give this account access to private administration
-                tools and member information.
+                {t.confirmBody}
               </p>
             )}
 
@@ -279,7 +345,7 @@ export function AdminAccessManager({
                   ) : (
                     <ShieldCheck aria-hidden="true" />
                   )}
-                  {pending ? "Granting access…" : "Confirm & grant access"}
+                  {pending ? t.granting : t.grant}
                 </Button>
               )}
               <Button
@@ -289,7 +355,7 @@ export function AdminAccessManager({
                 onClick={changeEmail}
               >
                 <ArrowLeft aria-hidden="true" />
-                Change email
+                {t.changeEmail}
               </Button>
             </div>
           </div>
@@ -309,7 +375,11 @@ export function AdminAccessManager({
             {message.tone === "success" && (
               <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             )}
-            <span>{message.text}</span>
+            <span>
+              {message.tone === "success"
+                ? t.notices[message.code]
+                : t.errors[message.code]}
+            </span>
           </div>
         )}
       </Card>
@@ -322,23 +392,22 @@ export function AdminAccessManager({
             </span>
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-500">
-                Your account
+                {t.yourAccount}
               </p>
               <p className="truncate text-sm font-medium text-ink-900">
-                {currentUserEmail ?? "Signed-in administrator"}
+                {currentUserEmail ?? t.signedIn}
               </p>
             </div>
           </div>
           <div className="mt-4 rounded-lg bg-brand-50 px-4 py-3 text-sm leading-5 text-brand-900">
-            You are an access manager. Only access managers can grant
-            administrator permissions.
+            {t.managerNote}
           </div>
         </Card>
 
         <Card padded="md" elevation="xs">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-ink-900">
-              Current administrators
+              {t.current}
             </h2>
             <Badge tone="neutral" size="sm">
               {administrators.length}
@@ -347,7 +416,7 @@ export function AdminAccessManager({
 
           {administrators.length === 0 ? (
             <p className="mt-4 rounded-lg border border-dashed border-ink-300 p-4 text-sm text-ink-600">
-              Administrator accounts could not be loaded.
+              {t.loadFailed}
             </p>
           ) : (
             <ul className="mt-4 divide-y divide-ink-100">
@@ -373,19 +442,19 @@ export function AdminAccessManager({
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-ink-900">
-                      {administrator.full_name || "Unnamed account"}
-                      {administrator.id === currentUserId ? " (you)" : ""}
+                      {administrator.full_name || t.unnamed}
+                      {administrator.id === currentUserId ? t.you : ""}
                     </p>
                     <p className="truncate text-xs text-ink-500">
                       {administrator.email}
                     </p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       <Badge tone="brand" size="sm">
-                        Administrator
+                        {t.administrator}
                       </Badge>
                       {administrator.can_manage_admins && (
                         <Badge tone="accent" size="sm">
-                          Access manager
+                          {t.accessManager}
                         </Badge>
                       )}
                     </div>

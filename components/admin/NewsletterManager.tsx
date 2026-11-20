@@ -7,9 +7,46 @@ import { toast } from "sonner";
 
 import { deleteNewsletterSubscriber } from "@/lib/actions/newsletter";
 import { Button } from "@/components/ui/button";
+import type { AdminLocale } from "@/lib/i18n/admin";
 import type { NewsletterSubscriber } from "@/lib/types/content";
+import { useAdminLocale } from "./AdminLocale";
 
-const dateFormat = new Intl.DateTimeFormat("bn-BD", { dateStyle: "medium" });
+const copy = {
+    bn: {
+        removed: "ইমেইলটি তালিকা থেকে সরানো হয়েছে।",
+        heading: "সাবস্ক্রাইবার",
+        total: (count: string) => `মোট ${count} জন`,
+        copied: "কপি হয়েছে",
+        copyAll: "সব ইমেইল কপি করুন",
+        downloadCsv: "CSV ডাউনলোড",
+        empty: "এখনো কেউ সাবস্ক্রাইব করেননি।",
+        remove: "সরান",
+        cancel: "বাতিল",
+        removeLabel: (email: string) => `${email} সরান`,
+    },
+    en: {
+        removed: "The email was removed from the list.",
+        heading: "Subscribers",
+        total: (count: string) => `${count} in total`,
+        copied: "Copied",
+        copyAll: "Copy all emails",
+        downloadCsv: "Download CSV",
+        empty: "No one has subscribed yet.",
+        remove: "Remove",
+        cancel: "Cancel",
+        removeLabel: (email: string) => `Remove ${email}`,
+    },
+};
+
+const dateFormat: Record<AdminLocale, Intl.DateTimeFormat> = {
+    bn: new Intl.DateTimeFormat("bn-BD", { dateStyle: "medium" }),
+    en: new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }),
+};
+
+const numberFormat: Record<AdminLocale, Intl.NumberFormat> = {
+    bn: new Intl.NumberFormat("bn-BD"),
+    en: new Intl.NumberFormat("en-GB"),
+};
 
 /**
  * The subscriber list, with the two things an editor actually does with it:
@@ -17,6 +54,8 @@ const dateFormat = new Intl.DateTimeFormat("bn-BD", { dateStyle: "medium" });
  */
 export function NewsletterManager({ subscribers }: { subscribers: NewsletterSubscriber[] }) {
     const router = useRouter();
+    const locale = useAdminLocale();
+    const t = copy[locale];
     const [pending, startTransition] = useTransition();
     const [confirming, setConfirming] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
@@ -48,7 +87,7 @@ export function NewsletterManager({ subscribers }: { subscribers: NewsletterSubs
                 toast.error(result.error);
                 return;
             }
-            toast.success("ইমেইলটি তালিকা থেকে সরানো হয়েছে।");
+            toast.success(t.removed);
             router.refresh();
         });
     };
@@ -57,9 +96,9 @@ export function NewsletterManager({ subscribers }: { subscribers: NewsletterSubs
         <div className="rounded-xl border border-ink-200 bg-surface p-6 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-base font-semibold text-ink-900">সাবস্ক্রাইবার</h2>
+                    <h2 className="text-base font-semibold text-ink-900">{t.heading}</h2>
                     <p className="mt-1 text-sm text-ink-500 tabular-nums">
-                        মোট {new Intl.NumberFormat("bn-BD").format(subscribers.length)} জন
+                        {t.total(numberFormat[locale].format(subscribers.length))}
                     </p>
                 </div>
 
@@ -67,11 +106,11 @@ export function NewsletterManager({ subscribers }: { subscribers: NewsletterSubs
                     <div className="flex flex-wrap gap-2">
                         <Button type="button" variant="outline" size="sm" onClick={() => void copyAll()}>
                             {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-                            {copied ? "কপি হয়েছে" : "সব ইমেইল কপি করুন"}
+                            {copied ? t.copied : t.copyAll}
                         </Button>
                         <Button type="button" variant="outline" size="sm" onClick={downloadCsv}>
                             <Download aria-hidden="true" />
-                            CSV ডাউনলোড
+                            {t.downloadCsv}
                         </Button>
                     </div>
                 )}
@@ -79,7 +118,7 @@ export function NewsletterManager({ subscribers }: { subscribers: NewsletterSubs
 
             {subscribers.length === 0 ? (
                 <p className="mt-6 rounded-xl border border-dashed border-ink-300 px-6 py-12 text-center text-sm text-ink-500">
-                    এখনো কেউ সাবস্ক্রাইব করেননি।
+                    {t.empty}
                 </p>
             ) : (
                 <ul className="mt-6 divide-y divide-ink-200 rounded-xl border border-ink-200">
@@ -96,7 +135,7 @@ export function NewsletterManager({ subscribers }: { subscribers: NewsletterSubs
                                 dateTime={subscriber.created_at}
                                 className="text-xs text-ink-500 tabular-nums"
                             >
-                                {dateFormat.format(new Date(subscriber.created_at))}
+                                {dateFormat[locale].format(new Date(subscriber.created_at))}
                             </time>
 
                             {confirming === subscriber.id ? (
@@ -113,7 +152,7 @@ export function NewsletterManager({ subscribers }: { subscribers: NewsletterSubs
                                         ) : (
                                             <Trash2 aria-hidden="true" />
                                         )}
-                                        সরান
+                                        {t.remove}
                                     </Button>
                                     <Button
                                         type="button"
@@ -122,14 +161,14 @@ export function NewsletterManager({ subscribers }: { subscribers: NewsletterSubs
                                         disabled={pending}
                                         onClick={() => setConfirming(null)}
                                     >
-                                        বাতিল
+                                        {t.cancel}
                                     </Button>
                                 </span>
                             ) : (
                                 <button
                                     type="button"
                                     onClick={() => setConfirming(subscriber.id)}
-                                    aria-label={`${subscriber.email} সরান`}
+                                    aria-label={t.removeLabel(subscriber.email)}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-danger-soft hover:text-danger"
                                 >
                                     <Trash2 className="size-4" aria-hidden="true" />

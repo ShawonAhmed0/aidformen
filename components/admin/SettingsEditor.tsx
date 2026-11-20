@@ -10,7 +10,86 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { BilingualField } from "./BilingualField";
+import { useAdminLocale } from "./AdminLocale";
 import type { SiteSettings } from "@/lib/types/content";
+
+const copy = {
+    bn: {
+        nameRequired: "সংগঠনের নাম প্রয়োজন।",
+        saved: "সাইট সেটিংস সংরক্ষণ হয়েছে।",
+        identityTitle: "সংগঠনের পরিচয়",
+        identityDescription: "নেভিগেশন বার ও ফুটারে যে নাম ও পরিচিতি দেখা যায়।",
+        organisationName: "সংগঠনের নাম",
+        tagline: "সংক্ষিপ্ত পরিচিতি",
+        taglineHelper: "ফুটারে নামের নিচে দেখাবে।",
+        contactTitle: "যোগাযোগ",
+        contactDescription: "যোগাযোগ পাতা, ফুটার ও জরুরি বোতামে এই তথ্যগুলো ব্যবহার হয়।",
+        emergencyPhone: "জরুরি ফোন নম্বর",
+        emergencyPhoneHelper: "নেভিগেশন বারের জরুরি বোতামে ব্যবহার হয়।",
+        contactPhone: "সাধারণ ফোন নম্বর",
+        contactEmail: "ইমেইল ঠিকানা",
+        address: "ঠিকানা",
+        officeHours: "অফিস সময়",
+        officeHoursPlaceholder: "শনিবার – বৃহস্পতিবার, সকাল ৯:০০ – সন্ধ্যা ৬:০০",
+        socialTitle: "সোশ্যাল ও ওয়েবসাইট",
+        socialDescription:
+            "সম্পূর্ণ ঠিকানা দিন (https:// সহ)। খালি রাখলে ফুটারে আইকনটি দেখাবে না।",
+        facebook: "ফেসবুক",
+        youtube: "ইউটিউব",
+        website: "ওয়েবসাইট",
+        announcementTitle: "ঘোষণা",
+        announcementDescription: "হোমপেজে হিরো সেকশনের ঠিক নিচে দেখানো বার্তা।",
+        announcementEnabled: "হোমপেজে ঘোষণাটি দেখান",
+        badge: "ব্যাজের লেখা",
+        badgePlaceholder: "জরুরি আপডেট",
+        announcementHeading: "ঘোষণার শিরোনাম",
+        announcementHeadingHelper: "শিরোনাম খালি থাকলে ঘোষণাটি দেখানো হবে না।",
+        announcementBody: "ঘোষণার বিবরণ",
+        ctaLabel: "বোতামের লেখা",
+        ctaHref: "বোতামের লিঙ্ক",
+        ctaHrefHelper: "ভেতরের ঠিকানা '/' দিয়ে শুরু করুন।",
+        saving: "সংরক্ষণ হচ্ছে…",
+        save: "পরিবর্তন সংরক্ষণ করুন",
+    },
+    en: {
+        nameRequired: "The organisation name is required.",
+        saved: "Site settings saved.",
+        identityTitle: "Organisation identity",
+        identityDescription: "The name and description shown in the navigation bar and footer.",
+        organisationName: "Organisation name",
+        tagline: "Short description",
+        taglineHelper: "Shown under the name in the footer.",
+        contactTitle: "Contact",
+        contactDescription:
+            "Used on the contact page, in the footer and on the emergency button.",
+        emergencyPhone: "Emergency phone number",
+        emergencyPhoneHelper: "Used by the emergency button in the navigation bar.",
+        contactPhone: "General phone number",
+        contactEmail: "Email address",
+        address: "Address",
+        officeHours: "Office hours",
+        officeHoursPlaceholder: "Saturday – Thursday, 9:00 am – 6:00 pm",
+        socialTitle: "Social & website",
+        socialDescription:
+            "Enter the full address (including https://). Leave one empty to hide its footer icon.",
+        facebook: "Facebook",
+        youtube: "YouTube",
+        website: "Website",
+        announcementTitle: "Announcement",
+        announcementDescription: "The message shown just below the hero section on the homepage.",
+        announcementEnabled: "Show the announcement on the homepage",
+        badge: "Badge text",
+        badgePlaceholder: "Urgent update",
+        announcementHeading: "Announcement title",
+        announcementHeadingHelper: "The announcement is not shown while the title is empty.",
+        announcementBody: "Announcement details",
+        ctaLabel: "Button text",
+        ctaHref: "Button link",
+        ctaHrefHelper: "Start internal addresses with '/'.",
+        saving: "Saving…",
+        save: "Save changes",
+    },
+};
 
 const s = (v: string | null | undefined) => v ?? "";
 
@@ -35,6 +114,7 @@ function Panel({
 
 export function SettingsEditor({ settings }: { settings: SiteSettings | null }) {
     const router = useRouter();
+    const t = copy[useAdminLocale()];
     const [pending, startTransition] = useTransition();
 
     const [form, setForm] = useState({
@@ -77,7 +157,7 @@ export function SettingsEditor({ settings }: { settings: SiteSettings | null }) 
         event.preventDefault();
 
         if (!form.organisation_name.trim()) {
-            toast.error("সংগঠনের নাম প্রয়োজন।");
+            toast.error(t.nameRequired);
             return;
         }
 
@@ -93,7 +173,7 @@ export function SettingsEditor({ settings }: { settings: SiteSettings | null }) 
                 return;
             }
 
-            toast.success("সাইট সেটিংস সংরক্ষণ হয়েছে।");
+            toast.success(t.saved);
             router.refresh();
         });
     };
@@ -120,11 +200,11 @@ export function SettingsEditor({ settings }: { settings: SiteSettings | null }) 
     return (
         <form onSubmit={handleSubmit} className="space-y-5">
             <Panel
-                title="সংগঠনের পরিচয়"
-                description="নেভিগেশন বার ও ফুটারে যে নাম ও পরিচিতি দেখা যায়।"
+                title={t.identityTitle}
+                description={t.identityDescription}
             >
                 <BilingualField
-                    label="সংগঠনের নাম"
+                    label={t.organisationName}
                     required
                     value={form.organisation_name}
                     onChange={set("organisation_name")}
@@ -133,41 +213,41 @@ export function SettingsEditor({ settings }: { settings: SiteSettings | null }) 
                 />
 
                 <BilingualField
-                    label="সংক্ষিপ্ত পরিচিতি"
+                    label={t.tagline}
                     multiline
                     rows={3}
                     value={form.tagline}
                     onChange={set("tagline")}
                     valueEn={form.tagline_en}
                     onChangeEn={set("tagline_en")}
-                    helper="ফুটারে নামের নিচে দেখাবে।"
+                    helper={t.taglineHelper}
                 />
             </Panel>
 
             <Panel
-                title="যোগাযোগ"
-                description="যোগাযোগ পাতা, ফুটার ও জরুরি বোতামে এই তথ্যগুলো ব্যবহার হয়।"
+                title={t.contactTitle}
+                description={t.contactDescription}
             >
                 <div className="grid gap-5 sm:grid-cols-2">
-                    {text("emergency_phone", "জরুরি ফোন নম্বর", {
+                    {text("emergency_phone", t.emergencyPhone, {
                         type: "tel",
                         placeholder: "01404555999",
-                        helper: "নেভিগেশন বারের জরুরি বোতামে ব্যবহার হয়।",
+                        helper: t.emergencyPhoneHelper,
                     })}
 
-                    {text("contact_phone", "সাধারণ ফোন নম্বর", {
+                    {text("contact_phone", t.contactPhone, {
                         type: "tel",
                         placeholder: "01404555999",
                     })}
                 </div>
 
-                {text("contact_email", "ইমেইল ঠিকানা", {
+                {text("contact_email", t.contactEmail, {
                     type: "email",
                     placeholder: "info@aidformen.com",
                 })}
 
                 <BilingualField
-                    label="ঠিকানা"
+                    label={t.address}
                     multiline
                     rows={2}
                     value={form.address}
@@ -177,29 +257,29 @@ export function SettingsEditor({ settings }: { settings: SiteSettings | null }) 
                 />
 
                 <BilingualField
-                    label="অফিস সময়"
+                    label={t.officeHours}
                     value={form.office_hours}
                     onChange={set("office_hours")}
                     valueEn={form.office_hours_en}
                     onChangeEn={set("office_hours_en")}
-                    placeholder="শনিবার – বৃহস্পতিবার, সকাল ৯:০০ – সন্ধ্যা ৬:০০"
+                    placeholder={t.officeHoursPlaceholder}
                 />
             </Panel>
 
             <Panel
-                title="সোশ্যাল ও ওয়েবসাইট"
-                description="সম্পূর্ণ ঠিকানা দিন (https:// সহ)। খালি রাখলে ফুটারে আইকনটি দেখাবে না।"
+                title={t.socialTitle}
+                description={t.socialDescription}
             >
                 <div className="grid gap-5 lg:grid-cols-3">
-                    {text("facebook_url", "ফেসবুক", {
+                    {text("facebook_url", t.facebook, {
                         type: "url",
                         placeholder: "https://facebook.com/…",
                     })}
-                    {text("youtube_url", "ইউটিউব", {
+                    {text("youtube_url", t.youtube, {
                         type: "url",
                         placeholder: "https://youtube.com/@…",
                     })}
-                    {text("website_url", "ওয়েবসাইট", {
+                    {text("website_url", t.website, {
                         type: "url",
                         placeholder: "https://aidformen.com",
                     })}
@@ -207,8 +287,8 @@ export function SettingsEditor({ settings }: { settings: SiteSettings | null }) 
             </Panel>
 
             <Panel
-                title="ঘোষণা"
-                description="হোমপেজে হিরো সেকশনের ঠিক নিচে দেখানো বার্তা।"
+                title={t.announcementTitle}
+                description={t.announcementDescription}
             >
                 <label className="flex items-center gap-2.5 text-sm text-ink-700">
                     <input
@@ -217,7 +297,7 @@ export function SettingsEditor({ settings }: { settings: SiteSettings | null }) 
                         onChange={(e) => setAnnouncementEnabled(e.target.checked)}
                         className="size-4 rounded border-ink-300 accent-brand-800"
                     />
-                    হোমপেজে ঘোষণাটি দেখান
+                    {t.announcementEnabled}
                 </label>
 
                 {/* Kept mounted but dimmed when off, so switching it back on does
@@ -230,25 +310,25 @@ export function SettingsEditor({ settings }: { settings: SiteSettings | null }) 
                     }
                 >
                     <BilingualField
-                        label="ব্যাজের লেখা"
+                        label={t.badge}
                         value={form.announcement_badge}
                         onChange={set("announcement_badge")}
                         valueEn={form.announcement_badge_en}
                         onChangeEn={set("announcement_badge_en")}
-                        placeholder="জরুরি আপডেট"
+                        placeholder={t.badgePlaceholder}
                     />
 
                     <BilingualField
-                        label="ঘোষণার শিরোনাম"
+                        label={t.announcementHeading}
                         value={form.announcement_title}
                         onChange={set("announcement_title")}
                         valueEn={form.announcement_title_en}
                         onChangeEn={set("announcement_title_en")}
-                        helper="শিরোনাম খালি থাকলে ঘোষণাটি দেখানো হবে না।"
+                        helper={t.announcementHeadingHelper}
                     />
 
                     <BilingualField
-                        label="ঘোষণার বিবরণ"
+                        label={t.announcementBody}
                         multiline
                         rows={3}
                         value={form.announcement_body}
@@ -259,16 +339,16 @@ export function SettingsEditor({ settings }: { settings: SiteSettings | null }) 
 
                     <div className="grid gap-5 sm:grid-cols-2">
                         <BilingualField
-                            label="বোতামের লেখা"
+                            label={t.ctaLabel}
                             value={form.announcement_cta_label}
                             onChange={set("announcement_cta_label")}
                             valueEn={form.announcement_cta_label_en}
                             onChangeEn={set("announcement_cta_label_en")}
                         />
 
-                        {text("announcement_cta_href", "বোতামের লিঙ্ক", {
+                        {text("announcement_cta_href", t.ctaHref, {
                             placeholder: "/contact",
-                            helper: "ভেতরের ঠিকানা '/' দিয়ে শুরু করুন।",
+                            helper: t.ctaHrefHelper,
                         })}
                     </div>
                 </div>
@@ -280,12 +360,12 @@ export function SettingsEditor({ settings }: { settings: SiteSettings | null }) 
                     {pending ? (
                         <>
                             <Loader2 className="animate-spin" aria-hidden="true" />
-                            সংরক্ষণ হচ্ছে…
+                            {t.saving}
                         </>
                     ) : (
                         <>
                             <Save aria-hidden="true" />
-                            পরিবর্তন সংরক্ষণ করুন
+                            {t.save}
                         </>
                     )}
                 </Button>

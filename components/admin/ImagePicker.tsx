@@ -4,9 +4,10 @@ import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { ImagePlus, Loader2, Trash2, UploadCloud } from "lucide-react";
 
-import { uploadToMedia } from "@/lib/supabase/upload";
+import { MAX_SOURCE_IMAGE_BYTES, uploadToMedia } from "@/lib/supabase/upload";
 import type { MediaFolder } from "@/lib/types/media";
 import { cn } from "@/lib/utils";
+import { useAdminLocale } from "./AdminLocale";
 
 type ImagePickerProps = {
     /** Current image URL, or null for empty. */
@@ -23,7 +24,6 @@ type ImagePickerProps = {
     helper?: string;
 };
 
-const MAX_BYTES = 8 * 1024 * 1024;
 // Matches what lib/supabase/upload.ts accepts for images.
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 
@@ -32,6 +32,29 @@ const aspects = {
     square: "aspect-square",
     wide: "aspect-3/1",
 } as const;
+
+const copy = {
+    bn: {
+        image: "ছবি",
+        wrongType: "শুধু JPG, PNG, WEBP বা AVIF ফাইল দেওয়া যাবে।",
+        tooLarge: "ছবির আকার ৪০ মেগাবাইটের কম হতে হবে।",
+        change: "পরিবর্তন",
+        remove: "ছবি সরান",
+        drop: "ছবি টেনে আনুন বা ক্লিক করুন",
+        hint: "JPG, PNG, WEBP · বড় ছবি নিজে থেকেই ছোট হবে",
+        uploading: "ছোট করে আপলোড হচ্ছে…",
+    },
+    en: {
+        image: "Image",
+        wrongType: "Only JPG, PNG, WEBP or AVIF files are accepted.",
+        tooLarge: "The image must be smaller than 40 MB.",
+        change: "Change",
+        remove: "Remove image",
+        drop: "Drag an image here or click",
+        hint: "JPG, PNG, WEBP · large images are resized automatically",
+        uploading: "Resizing and uploading…",
+    },
+};
 
 /**
  * Drag-and-drop image field used by the hero, team and video editors.
@@ -46,12 +69,14 @@ export function ImagePicker({
     value,
     onChange,
     folder,
-    label = "ছবি",
+    label,
     aspect = "video",
     fit = "cover",
     className,
     helper,
 }: ImagePickerProps) {
+    const t = copy[useAdminLocale()];
+    const fieldLabel = label ?? t.image;
     const inputRef = useRef<HTMLInputElement>(null);
     const [pending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
@@ -62,11 +87,11 @@ export function ImagePicker({
         if (!file) return;
 
         if (!ALLOWED.includes(file.type)) {
-            setError("শুধু JPG, PNG, WEBP বা AVIF ফাইল দেওয়া যাবে।");
+            setError(t.wrongType);
             return;
         }
-        if (file.size > MAX_BYTES) {
-            setError("ছবির আকার ৮ মেগাবাইটের কম হতে হবে।");
+        if (file.size > MAX_SOURCE_IMAGE_BYTES) {
+            setError(t.tooLarge);
             return;
         }
 
@@ -82,7 +107,7 @@ export function ImagePicker({
 
     return (
         <div className={cn("space-y-2", className)}>
-            <span className="flex text-sm font-medium text-ink-700">{label}</span>
+            <span className="flex text-sm font-medium text-ink-700">{fieldLabel}</span>
 
             <div
                 onDragOver={(e) => {
@@ -124,7 +149,7 @@ export function ImagePicker({
                                 className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white/95 px-3 text-sm font-medium text-ink-900 transition-ui hover:bg-white disabled:opacity-60"
                             >
                                 <UploadCloud className="size-4" aria-hidden="true" />
-                                পরিবর্তন
+                                {t.change}
                             </button>
 
                             <button
@@ -135,7 +160,7 @@ export function ImagePicker({
                                 }}
                                 disabled={pending}
                                 className="inline-flex size-9 items-center justify-center rounded-lg bg-white/95 text-danger transition-ui hover:bg-white disabled:opacity-60"
-                                aria-label="ছবি সরান"
+                                aria-label={t.remove}
                             >
                                 <Trash2 className="size-4" />
                             </button>
@@ -152,10 +177,10 @@ export function ImagePicker({
                             <ImagePlus className="size-5" aria-hidden="true" />
                         </span>
                         <span className="text-sm font-medium text-ink-700">
-                            ছবি টেনে আনুন বা ক্লিক করুন
+                            {t.drop}
                         </span>
                         <span className="text-xs text-ink-500">
-                            JPG, PNG, WEBP · সর্বোচ্চ ৮ MB
+                            {t.hint}
                         </span>
                     </button>
                 )}
@@ -163,7 +188,7 @@ export function ImagePicker({
                 {pending && (
                     <div className="absolute inset-0 flex items-center justify-center gap-2 bg-surface/80 text-sm font-medium text-ink-700 backdrop-blur-sm">
                         <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                        আপলোড হচ্ছে…
+                        {t.uploading}
                     </div>
                 )}
             </div>
@@ -173,7 +198,7 @@ export function ImagePicker({
                 type="file"
                 accept={ALLOWED.join(",")}
                 className="sr-only"
-                aria-label={label}
+                aria-label={fieldLabel}
                 onChange={(e) => {
                     handleFile(e.target.files?.[0]);
                     // Reset so picking the same file twice still fires onChange.

@@ -9,6 +9,7 @@ import {
     describeArchiveFileError,
     uploadToMedia,
 } from "@/lib/supabase/upload";
+import { useAdminLocale } from "./AdminLocale";
 import { BilingualField } from "./BilingualField";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,61 @@ export type GalleryPhoto = {
     url: string;
     caption: string;
     caption_en: string;
+};
+
+const copy = {
+    bn: {
+        limit: (max: number) => `সর্বোচ্চ ${max}টি ছবি যোগ করা যাবে।`,
+        limitTrimmed: (max: number) =>
+            `সর্বোচ্চ ${max}টি ছবি যোগ করা যাবে — বাকিগুলো বাদ দেওয়া হয়েছে।`,
+        failed: (names: string) =>
+            `যোগ করা যায়নি: ${names} — ছবি JPG/PNG/WEBP এবং ৪০ MB-এর কম হতে হবে।`,
+        referenceTitle: "সহায়ক / রেফারেন্স ছবি",
+        galleryTitle: "গ্যালারির ছবি",
+        referenceHint: (max: number) =>
+            `সর্বোচ্চ ${max}টি। আলাদা কভার না দিলে প্রথম ছবিটি কার্ডে দেখাবে; বাকিগুলো শুধু বিস্তারিত পাতায় থাকবে।`,
+        galleryHint: "প্রথম ছবিটি কভার হিসেবে ব্যবহৃত হবে যদি আলাদা কভার না দেওয়া হয়।",
+        uploading: (done: number, total: number) => `${done}/${total} আপলোড হচ্ছে…`,
+        add: "ছবি যোগ করুন",
+        referenceInput: "রেফারেন্স ছবি",
+        galleryInput: "গ্যালারির ছবি",
+        overLimit: (max: number, extra: number) =>
+            `এই ধরনের এন্ট্রিতে সর্বোচ্চ ${max}টি ছবি রাখা যাবে। সংরক্ষণের আগে অতিরিক্ত ${extra}টি ছবি সরান।`,
+        referenceEmpty: "এখনো কোনো সহায়ক ছবি যোগ করা হয়নি।",
+        galleryEmpty: "এখনো কোনো ছবি যোগ করা হয়নি।",
+        caption: "ক্যাপশন",
+        referenceCaptionPlaceholder: "ঐচ্ছিক — ছবিটির প্রাসঙ্গিকতা",
+        galleryCaptionPlaceholder: "ঐচ্ছিক — ছবিটি কী দেখাচ্ছে",
+        moveUp: "উপরে সরান",
+        moveDown: "নিচে সরান",
+        remove: "ছবি সরান",
+    },
+    en: {
+        limit: (max: number) => `You can add up to ${max} images.`,
+        limitTrimmed: (max: number) =>
+            `You can add up to ${max} images — the rest were left out.`,
+        failed: (names: string) =>
+            `Could not add: ${names} — images must be JPG/PNG/WEBP and under 40 MB.`,
+        referenceTitle: "Supporting / reference images",
+        galleryTitle: "Gallery images",
+        referenceHint: (max: number) =>
+            `Up to ${max}. Without a separate cover, the first image appears on the card; the rest appear only on the detail page.`,
+        galleryHint: "The first image is used as the cover if no separate cover is set.",
+        uploading: (done: number, total: number) => `Uploading ${done}/${total}…`,
+        add: "Add images",
+        referenceInput: "Reference images",
+        galleryInput: "Gallery images",
+        overLimit: (max: number, extra: number) =>
+            `This kind of entry can hold up to ${max} images. Remove ${extra} before saving.`,
+        referenceEmpty: "No supporting images added yet.",
+        galleryEmpty: "No images added yet.",
+        caption: "Caption",
+        referenceCaptionPlaceholder: "Optional — why this image is relevant",
+        galleryCaptionPlaceholder: "Optional — what the image shows",
+        moveUp: "Move up",
+        moveDown: "Move down",
+        remove: "Remove image",
+    },
 };
 
 /**
@@ -37,6 +93,7 @@ export function ArchiveGalleryEditor({
     max: number;
     mode?: "gallery" | "references";
 }) {
+    const t = copy[useAdminLocale()];
     const inputRef = useRef<HTMLInputElement>(null);
     const [progress, setProgress] = useState<{ done: number; total: number } | null>(
         null
@@ -49,13 +106,13 @@ export function ArchiveGalleryEditor({
 
         const room = max - photos.length;
         if (room <= 0) {
-            setError(`সর্বোচ্চ ${max}টি ছবি যোগ করা যাবে।`);
+            setError(t.limit(max));
             return;
         }
 
         const chosen = Array.from(files).slice(0, room);
         if (chosen.length < files.length) {
-            setError(`সর্বোচ্চ ${max}টি ছবি যোগ করা যাবে — বাকিগুলো বাদ দেওয়া হয়েছে।`);
+            setError(t.limitTrimmed(max));
         }
 
         setProgress({ done: 0, total: chosen.length });
@@ -91,9 +148,7 @@ export function ArchiveGalleryEditor({
         if (added.length) onChange([...photos, ...added]);
 
         if (failures.length) {
-            setError(
-                `যোগ করা যায়নি: ${failures.join(", ")} — ছবি JPG/PNG/WEBP এবং ৮ MB-এর কম হতে হবে।`
-            );
+            setError(t.failed(failures.join(", ")));
         }
     };
 
@@ -125,12 +180,10 @@ export function ArchiveGalleryEditor({
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <span className="flex text-sm font-medium text-ink-700">
-                        {isReferenceGallery ? "সহায়ক / রেফারেন্স ছবি" : "গ্যালারির ছবি"}
+                        {isReferenceGallery ? t.referenceTitle : t.galleryTitle}
                     </span>
                     <p className="mt-0.5 text-xs text-ink-500">
-                        {isReferenceGallery
-                            ? `সর্বোচ্চ ${max}টি। আলাদা কভার না দিলে প্রথম ছবিটি কার্ডে দেখাবে; বাকিগুলো শুধু বিস্তারিত পাতায় থাকবে।`
-                            : "প্রথম ছবিটি কভার হিসেবে ব্যবহৃত হবে যদি আলাদা কভার না দেওয়া হয়।"}
+                        {isReferenceGallery ? t.referenceHint(max) : t.galleryHint}
                     </p>
                 </div>
 
@@ -143,12 +196,12 @@ export function ArchiveGalleryEditor({
                     {busy ? (
                         <>
                             <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                            {progress.done}/{progress.total} আপলোড হচ্ছে…
+                            {t.uploading(progress.done, progress.total)}
                         </>
                     ) : (
                         <>
                             <ImagePlus className="size-4" aria-hidden="true" />
-                            ছবি যোগ করুন
+                            {t.add}
                         </>
                     )}
                 </button>
@@ -160,7 +213,7 @@ export function ArchiveGalleryEditor({
                 multiple
                 accept={ARCHIVE_IMAGE_TYPES.join(",")}
                 className="sr-only"
-                aria-label={isReferenceGallery ? "রেফারেন্স ছবি" : "গ্যালারির ছবি"}
+                aria-label={isReferenceGallery ? t.referenceInput : t.galleryInput}
                 onChange={(event) => {
                     void addFiles(event.target.files);
                     event.target.value = "";
@@ -175,16 +228,13 @@ export function ArchiveGalleryEditor({
 
             {overLimit && (
                 <p role="alert" className="text-xs font-medium text-warning">
-                    এই ধরনের এন্ট্রিতে সর্বোচ্চ {max}টি ছবি রাখা যাবে। সংরক্ষণের আগে
-                    অতিরিক্ত {photos.length - max}টি ছবি সরান।
+                    {t.overLimit(max, photos.length - max)}
                 </p>
             )}
 
             {photos.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-ink-300 px-6 py-8 text-center text-sm text-ink-500">
-                    {isReferenceGallery
-                        ? "এখনো কোনো সহায়ক ছবি যোগ করা হয়নি।"
-                        : "এখনো কোনো ছবি যোগ করা হয়নি।"}
+                    {isReferenceGallery ? t.referenceEmpty : t.galleryEmpty}
                 </p>
             ) : (
                 <ul className="space-y-3">
@@ -206,15 +256,15 @@ export function ArchiveGalleryEditor({
 
                             <div className="min-w-56 flex-1">
                                 <BilingualField
-                                    label="ক্যাপশন"
+                                    label={t.caption}
                                     value={photo.caption}
                                     onChange={(v) => update(index, { caption: v })}
                                     valueEn={photo.caption_en}
                                     onChangeEn={(v) => update(index, { caption_en: v })}
                                     placeholder={
                                         isReferenceGallery
-                                            ? "ঐচ্ছিক — ছবিটির প্রাসঙ্গিকতা"
-                                            : "ঐচ্ছিক — ছবিটি কী দেখাচ্ছে"
+                                            ? t.referenceCaptionPlaceholder
+                                            : t.galleryCaptionPlaceholder
                                     }
                                 />
                             </div>
@@ -225,7 +275,7 @@ export function ArchiveGalleryEditor({
                                     onClick={() => move(index, -1)}
                                     disabled={index === 0}
                                     className={arrowClass}
-                                    aria-label="উপরে সরান"
+                                    aria-label={t.moveUp}
                                 >
                                     <ArrowUp className="size-4" />
                                 </button>
@@ -235,7 +285,7 @@ export function ArchiveGalleryEditor({
                                     onClick={() => move(index, 1)}
                                     disabled={index === photos.length - 1}
                                     className={arrowClass}
-                                    aria-label="নিচে সরান"
+                                    aria-label={t.moveDown}
                                 >
                                     <ArrowDown className="size-4" />
                                 </button>
@@ -244,7 +294,7 @@ export function ArchiveGalleryEditor({
                                     type="button"
                                     onClick={() => remove(index)}
                                     className="flex size-9 items-center justify-center rounded-lg text-danger transition-ui hover:bg-danger-soft"
-                                    aria-label="ছবি সরান"
+                                    aria-label={t.remove}
                                 >
                                     <Trash2 className="size-4" />
                                 </button>

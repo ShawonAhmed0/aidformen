@@ -30,8 +30,82 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ImagePicker } from "./ImagePicker";
 import { BilingualField } from "./BilingualField";
+import { useAdminLocale } from "./AdminLocale";
 import type { Video } from "@/lib/types/content";
 import { cn } from "@/lib/utils";
+
+const copy = {
+    bn: {
+        titleRequired: "শিরোনাম প্রয়োজন।",
+        updated: "ভিডিও আপডেট হয়েছে।",
+        created: "নতুন ভিডিও যোগ হয়েছে।",
+        deleted: "ভিডিও মুছে ফেলা হয়েছে।",
+        heading: "ভিডিও",
+        intro: "হোমপেজের “মিডিয়া ও ডকুমেন্টারি” অংশে যে ভিডিওগুলো দেখাবে।",
+        newVideo: "নতুন ভিডিও",
+        editVideo: "ভিডিও সম্পাদনা",
+        empty: "এখনো কোনো ভিডিও যোগ করা হয়নি।",
+        noMeta: "সময়কাল ও সাল দেওয়া হয়নি",
+        unpublished: "অপ্রকাশিত",
+        noLink: "লিঙ্ক নেই",
+        moveUp: "উপরে সরান",
+        moveDown: "নিচে সরান",
+        hide: "সাইট থেকে লুকান",
+        show: "সাইটে দেখান",
+        edit: "সম্পাদনা করুন",
+        remove: "মুছে ফেলুন",
+        confirmDelete: (title: string) => `“${title}” স্থায়ীভাবে মুছে যাবে।`,
+        cancel: "বাতিল",
+        close: "বন্ধ করুন",
+        thumbnail: "থাম্বনেইল",
+        title: "শিরোনাম",
+        link: "ভিডিওর লিঙ্ক",
+        linkHelper: "ইউটিউব বা অন্য ঠিকানার সম্পূর্ণ URL। নতুন ট্যাবে খুলবে।",
+        duration: "সময়কাল",
+        durationHelper: "যেমন: ১২:৪৫",
+        durationPlaceholder: "১২:৪৫",
+        year: "সাল",
+        yearHelper: "যেমন: ২০২৩",
+        yearPlaceholder: "২০২৩",
+        showOnSite: "ওয়েবসাইটে দেখান",
+        save: "সংরক্ষণ করুন",
+    },
+    en: {
+        titleRequired: "A title is required.",
+        updated: "Video updated.",
+        created: "New video added.",
+        deleted: "Video deleted.",
+        heading: "Videos",
+        intro: "The videos shown in the homepage “Media & documentaries” section.",
+        newVideo: "New video",
+        editVideo: "Edit video",
+        empty: "No videos have been added yet.",
+        noMeta: "No duration or year given",
+        unpublished: "Unpublished",
+        noLink: "No link",
+        moveUp: "Move up",
+        moveDown: "Move down",
+        hide: "Hide from the site",
+        show: "Show on the site",
+        edit: "Edit",
+        remove: "Delete",
+        confirmDelete: (title: string) => `“${title}” will be permanently deleted.`,
+        cancel: "Cancel",
+        close: "Close",
+        thumbnail: "Thumbnail",
+        title: "Title",
+        link: "Video link",
+        linkHelper: "Full URL on YouTube or elsewhere. Opens in a new tab.",
+        duration: "Duration",
+        durationHelper: "e.g. 12:45",
+        durationPlaceholder: "12:45",
+        year: "Year",
+        yearHelper: "e.g. 2023",
+        yearPlaceholder: "2023",
+        showOnSite: "Show on the website",
+        save: "Save",
+    },
+};
 
 const s = (v: string | null | undefined) => v ?? "";
 
@@ -70,6 +144,7 @@ const toDraft = (v: Video): Draft => ({
 
 export function VideosManager({ videos }: { videos: Video[] }) {
     const router = useRouter();
+    const t = copy[useAdminLocale()];
     const [pending, startTransition] = useTransition();
     const [draft, setDraft] = useState<Draft | null>(null);
     const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
@@ -115,7 +190,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
     const save = () => {
         if (!draft) return;
         if (!draft.title.trim()) {
-            toast.error("শিরোনাম প্রয়োজন।");
+            toast.error(t.titleRequired);
             return;
         }
 
@@ -137,7 +212,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                 return;
             }
 
-            toast.success(draft.id ? "ভিডিও আপডেট হয়েছে।" : "নতুন ভিডিও যোগ হয়েছে।");
+            toast.success(draft.id ? t.updated : t.created);
             setDraft(null);
             router.refresh();
         });
@@ -147,9 +222,9 @@ export function VideosManager({ videos }: { videos: Video[] }) {
         <div className="rounded-xl border border-ink-200 bg-surface p-6 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-base font-semibold text-ink-900">ভিডিও</h2>
+                    <h2 className="text-base font-semibold text-ink-900">{t.heading}</h2>
                     <p className="mt-1 text-sm text-ink-500">
-                        হোমপেজের “মিডিয়া ও ডকুমেন্টারি” অংশে যে ভিডিওগুলো দেখাবে।
+                        {t.intro}
                     </p>
                 </div>
 
@@ -160,14 +235,14 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                     disabled={pending}
                 >
                     <Plus aria-hidden="true" />
-                    নতুন ভিডিও
+                    {t.newVideo}
                 </Button>
             </div>
 
             {order.length === 0 ? (
                 <div className="mt-6 rounded-xl border border-dashed border-ink-300 px-6 py-12 text-center">
                     <p className="text-sm font-medium text-ink-700">
-                        এখনো কোনো ভিডিও যোগ করা হয়নি।
+                        {t.empty}
                     </p>
                 </div>
             ) : (
@@ -205,18 +280,18 @@ export function VideosManager({ videos }: { videos: Video[] }) {
 
                                 <p className="mt-0.5 text-xs text-ink-500">
                                     {[video.duration, video.year].filter(Boolean).join(" • ") ||
-                                        "সময়কাল ও সাল দেওয়া হয়নি"}
+                                        t.noMeta}
                                 </p>
 
                                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                                     {!video.is_published && (
                                         <Badge tone="neutral" size="sm">
-                                            অপ্রকাশিত
+                                            {t.unpublished}
                                         </Badge>
                                     )}
                                     {!video.video_url && (
                                         <Badge tone="warning" size="sm">
-                                            লিঙ্ক নেই
+                                            {t.noLink}
                                         </Badge>
                                     )}
                                 </div>
@@ -228,7 +303,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                                     onClick={() => move(index, -1)}
                                     disabled={pending || index === 0}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900 disabled:opacity-30"
-                                    aria-label="উপরে সরান"
+                                    aria-label={t.moveUp}
                                 >
                                     <ArrowUp className="size-4" />
                                 </button>
@@ -238,7 +313,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                                     onClick={() => move(index, 1)}
                                     disabled={pending || index === order.length - 1}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900 disabled:opacity-30"
-                                    aria-label="নিচে সরান"
+                                    aria-label={t.moveDown}
                                 >
                                     <ArrowDown className="size-4" />
                                 </button>
@@ -249,7 +324,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                                     disabled={pending}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900"
                                     aria-label={
-                                        video.is_published ? "সাইট থেকে লুকান" : "সাইটে দেখান"
+                                        video.is_published ? t.hide : t.show
                                     }
                                 >
                                     {video.is_published ? (
@@ -264,7 +339,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                                     onClick={() => setDraft(toDraft(video))}
                                     disabled={pending}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900"
-                                    aria-label="সম্পাদনা করুন"
+                                    aria-label={t.edit}
                                 >
                                     <Pencil className="size-4" />
                                 </button>
@@ -274,7 +349,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                                     onClick={() => setConfirmingDelete(video.id)}
                                     disabled={pending}
                                     className="flex size-9 items-center justify-center rounded-lg text-danger transition-ui hover:bg-danger-soft"
-                                    aria-label="মুছে ফেলুন"
+                                    aria-label={t.remove}
                                 >
                                     <Trash2 className="size-4" />
                                 </button>
@@ -283,7 +358,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                             {confirmingDelete === video.id && (
                                 <div className="flex w-full flex-wrap items-center justify-between gap-3 rounded-lg border border-danger-line bg-danger-soft px-4 py-3">
                                     <p className="text-sm text-danger">
-                                        “{video.title}” স্থায়ীভাবে মুছে যাবে।
+                                        {t.confirmDelete(video.title)}
                                     </p>
                                     <div className="flex gap-2">
                                         <Button
@@ -292,7 +367,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                                             variant="ghost"
                                             onClick={() => setConfirmingDelete(null)}
                                         >
-                                            বাতিল
+                                            {t.cancel}
                                         </Button>
                                         <Button
                                             type="button"
@@ -306,12 +381,12 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                                                 startTransition(async () => {
                                                     const r = await deleteVideo(body);
                                                     if (!r.ok) toast.error(r.error);
-                                                    else toast.success("ভিডিও মুছে ফেলা হয়েছে।");
+                                                    else toast.success(t.deleted);
                                                     router.refresh();
                                                 });
                                             }}
                                         >
-                                            মুছে ফেলুন
+                                            {t.remove}
                                         </Button>
                                     </div>
                                 </div>
@@ -332,18 +407,18 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                     <div
                         role="dialog"
                         aria-modal="true"
-                        aria-label={draft.id ? "ভিডিও সম্পাদনা" : "নতুন ভিডিও"}
+                        aria-label={draft.id ? t.editVideo : t.newVideo}
                         className="my-8 w-full max-w-xl rounded-2xl bg-surface p-6 shadow-xl"
                     >
                         <div className="flex items-start justify-between gap-4">
                             <h3 className="text-lg text-ink-900">
-                                {draft.id ? "ভিডিও সম্পাদনা" : "নতুন ভিডিও"}
+                                {draft.id ? t.editVideo : t.newVideo}
                             </h3>
                             <button
                                 type="button"
                                 onClick={() => setDraft(null)}
                                 className="flex size-9 items-center justify-center rounded-full text-ink-500 transition-ui hover:bg-ink-100"
-                                aria-label="বন্ধ করুন"
+                                aria-label={t.close}
                             >
                                 <X className="size-5" />
                             </button>
@@ -351,7 +426,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
 
                         <div className="mt-5 space-y-5">
                             <ImagePicker
-                                label="থাম্বনেইল"
+                                label={t.thumbnail}
                                 folder="videos"
                                 value={draft.thumbnail_url}
                                 onChange={(url) =>
@@ -360,7 +435,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                             />
 
                             <BilingualField
-                                label="শিরোনাম"
+                                label={t.title}
                                 required
                                 multiline
                                 rows={2}
@@ -373,8 +448,8 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                             />
 
                             <Field
-                                label="ভিডিওর লিঙ্ক"
-                                helper="ইউটিউব বা অন্য ঠিকানার সম্পূর্ণ URL। নতুন ট্যাবে খুলবে।"
+                                label={t.link}
+                                helper={t.linkHelper}
                             >
                                 {(props) => (
                                     <Input
@@ -392,7 +467,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                             </Field>
 
                             <div className="grid gap-5 sm:grid-cols-2">
-                                <Field label="সময়কাল" helper="যেমন: ১২:৪৫">
+                                <Field label={t.duration} helper={t.durationHelper}>
                                     {(props) => (
                                         <Input
                                             {...props}
@@ -402,12 +477,12 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                                                     d ? { ...d, duration: e.target.value } : d
                                                 )
                                             }
-                                            placeholder="১২:৪৫"
+                                            placeholder={t.durationPlaceholder}
                                         />
                                     )}
                                 </Field>
 
-                                <Field label="সাল" helper="যেমন: ২০২৩">
+                                <Field label={t.year} helper={t.yearHelper}>
                                     {(props) => (
                                         <Input
                                             {...props}
@@ -417,7 +492,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                                                     d ? { ...d, year: e.target.value } : d
                                                 )
                                             }
-                                            placeholder="২০২৩"
+                                            placeholder={t.yearPlaceholder}
                                         />
                                     )}
                                 </Field>
@@ -434,7 +509,7 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                                     }
                                     className="size-4 rounded border-ink-300 accent-brand-800"
                                 />
-                                ওয়েবসাইটে দেখান
+                                {t.showOnSite}
                             </label>
                         </div>
 
@@ -444,13 +519,13 @@ export function VideosManager({ videos }: { videos: Video[] }) {
                                 variant="outline"
                                 onClick={() => setDraft(null)}
                             >
-                                বাতিল
+                                {t.cancel}
                             </Button>
                             <Button type="button" onClick={save} disabled={pending}>
                                 {pending && (
                                     <Loader2 className="animate-spin" aria-hidden="true" />
                                 )}
-                                সংরক্ষণ করুন
+                                {t.save}
                             </Button>
                         </div>
                     </div>

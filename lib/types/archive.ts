@@ -77,6 +77,16 @@ export const subsectionsBySection: Record<
   news_archive: ["case_study", "report"],
 };
 
+/** The tab a content type is listed under. */
+export function subsectionForContentType(type: ArchiveContentType): ArchiveSubsection {
+  const all = Object.keys(archiveSubsections) as ArchiveSubsection[];
+  return (
+    all.find((key) =>
+      (archiveSubsections[key] as readonly ArchiveContentType[]).includes(type)
+    ) ?? "news_events"
+  );
+}
+
 export function isArchiveSubsection(value: unknown): value is ArchiveSubsection {
   return typeof value === "string" && Object.hasOwn(archiveSubsections, value);
 }

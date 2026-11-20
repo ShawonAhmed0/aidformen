@@ -13,6 +13,7 @@ import {
 
 import { uploadDocumentToMedia } from "@/lib/supabase/upload";
 import type { ArchiveAttachmentKind } from "@/lib/types/archive";
+import { useAdminLocale } from "./AdminLocale";
 import { BilingualField } from "./BilingualField";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,47 @@ export type AttachmentDraft = {
     label_en: string;
     url: string;
     mime_type: string;
+};
+
+const copy = {
+    bn: {
+        limit: (max: number) => `সর্বোচ্চ ${max}টি রেফারেন্স যোগ করা যাবে।`,
+        uploadFailed: (names: string) => `আপলোড করা যায়নি: ${names}`,
+        limitTrimmed: (max: number) =>
+            `সর্বোচ্চ ${max}টি রেফারেন্স রাখা যাবে; অতিরিক্ত ফাইল বাদ দেওয়া হয়েছে।`,
+        title: "রেফারেন্স ও ডাউনলোড",
+        hint: "PDF/Word নথি বা বিশ্বস্ত HTTPS লিঙ্ক যোগ করুন। এগুলো শুধু বিস্তারিত পাতায় দেখাবে।",
+        addLink: "বাহ্যিক লিঙ্ক",
+        addDocument: "ডকুমেন্ট আপলোড",
+        documentInput: "রেফারেন্স ডকুমেন্ট আপলোড",
+        empty: "কোনো রেফারেন্স ডকুমেন্ট বা লিঙ্ক যোগ করা হয়নি।",
+        name: "রেফারেন্সের নাম",
+        namePlaceholder: "যেমন: মামলার আদেশের কপি",
+        linkInput: "রেফারেন্সের HTTPS লিঙ্ক",
+        openDocument: "ডকুমেন্ট খুলুন",
+        moveUp: "উপরে সরান",
+        moveDown: "নিচে সরান",
+        remove: "রেফারেন্স সরান",
+    },
+    en: {
+        limit: (max: number) => `You can add up to ${max} references.`,
+        uploadFailed: (names: string) => `Could not upload: ${names}`,
+        limitTrimmed: (max: number) =>
+            `Up to ${max} references are allowed; the extra files were left out.`,
+        title: "References & downloads",
+        hint: "Add PDF/Word documents or trusted HTTPS links. They appear only on the detail page.",
+        addLink: "External link",
+        addDocument: "Upload document",
+        documentInput: "Upload reference documents",
+        empty: "No reference documents or links added.",
+        name: "Reference name",
+        namePlaceholder: "e.g. a copy of the court order",
+        linkInput: "HTTPS link for the reference",
+        openDocument: "Open document",
+        moveUp: "Move up",
+        moveDown: "Move down",
+        remove: "Remove reference",
+    },
 };
 
 function labelFromFile(name: string) {
@@ -49,6 +91,7 @@ export function ArchiveAttachmentsEditor({
     onChange: (attachments: AttachmentDraft[]) => void;
     max: number;
 }) {
+    const t = copy[useAdminLocale()];
     const fileRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -72,7 +115,7 @@ export function ArchiveAttachmentsEditor({
     const addExternal = () => {
         setError(null);
         if (attachments.length >= max) {
-            setError(`সর্বোচ্চ ${max}টি রেফারেন্স যোগ করা যাবে।`);
+            setError(t.limit(max));
             return;
         }
         onChange([
@@ -93,7 +136,7 @@ export function ArchiveAttachmentsEditor({
 
         const room = max - attachments.length;
         if (room <= 0) {
-            setError(`সর্বোচ্চ ${max}টি রেফারেন্স যোগ করা যাবে।`);
+            setError(t.limit(max));
             return;
         }
 
@@ -122,8 +165,8 @@ export function ArchiveAttachmentsEditor({
         if (selected.length < files.length || failed.length) {
             setError(
                 failed.length
-                    ? `আপলোড করা যায়নি: ${failed.join(", ")}`
-                    : `সর্বোচ্চ ${max}টি রেফারেন্স রাখা যাবে; অতিরিক্ত ফাইল বাদ দেওয়া হয়েছে।`
+                    ? t.uploadFailed(failed.join(", "))
+                    : t.limitTrimmed(max)
             );
         }
         if (fileRef.current) fileRef.current.value = "";
@@ -134,10 +177,10 @@ export function ArchiveAttachmentsEditor({
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h4 className="font-semibold text-ink-900">
-                        রেফারেন্স ও ডাউনলোড
+                        {t.title}
                     </h4>
                     <p className="mt-1 text-xs leading-5 text-ink-500">
-                        PDF/Word নথি বা বিশ্বস্ত HTTPS লিঙ্ক যোগ করুন। এগুলো শুধু বিস্তারিত পাতায় দেখাবে।
+                        {t.hint}
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -148,7 +191,7 @@ export function ArchiveAttachmentsEditor({
                         className={addButtonClass}
                     >
                         <Link2 className="size-4" aria-hidden="true" />
-                        বাহ্যিক লিঙ্ক
+                        {t.addLink}
                     </button>
                     <button
                         type="button"
@@ -161,7 +204,7 @@ export function ArchiveAttachmentsEditor({
                         ) : (
                             <FileUp className="size-4" aria-hidden="true" />
                         )}
-                        ডকুমেন্ট আপলোড
+                        {t.addDocument}
                     </button>
                     <input
                         ref={fileRef}
@@ -169,7 +212,7 @@ export function ArchiveAttachmentsEditor({
                         multiple
                         accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,.doc,.docx"
                         className="sr-only"
-                        aria-label="রেফারেন্স ডকুমেন্ট আপলোড"
+                        aria-label={t.documentInput}
                         onChange={(event) => void addDocuments(event.target.files)}
                     />
                 </div>
@@ -183,7 +226,7 @@ export function ArchiveAttachmentsEditor({
 
             {attachments.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-ink-300 px-6 py-7 text-center text-sm text-ink-500">
-                    কোনো রেফারেন্স ডকুমেন্ট বা লিঙ্ক যোগ করা হয়নি।
+                    {t.empty}
                 </p>
             ) : (
                 <ul className="space-y-3">
@@ -202,21 +245,21 @@ export function ArchiveAttachmentsEditor({
                                 </span>
                                 <div className="min-w-0 flex-1 space-y-3">
                                     <BilingualField
-                                        label="রেফারেন্সের নাম"
+                                        label={t.name}
                                         value={attachment.label}
                                         onChange={(value) => update(index, { label: value })}
                                         valueEn={attachment.label_en}
                                         onChangeEn={(value) =>
                                             update(index, { label_en: value })
                                         }
-                                        placeholder="যেমন: মামলার আদেশের কপি"
+                                        placeholder={t.namePlaceholder}
                                     />
 
                                     {attachment.kind === "external_link" ? (
                                         <Input
                                             type="url"
                                             inputMode="url"
-                                            aria-label="রেফারেন্সের HTTPS লিঙ্ক"
+                                            aria-label={t.linkInput}
                                             value={attachment.url}
                                             onChange={(event) =>
                                                 update(index, { url: event.target.value })
@@ -230,7 +273,7 @@ export function ArchiveAttachmentsEditor({
                                             rel="noopener noreferrer"
                                             className="block truncate text-sm font-medium text-brand-700 underline-offset-4 hover:underline"
                                         >
-                                            {attachment.url.split("/").pop() || "ডকুমেন্ট খুলুন"}
+                                            {attachment.url.split("/").pop() || t.openDocument}
                                         </a>
                                     )}
                                 </div>
@@ -240,7 +283,7 @@ export function ArchiveAttachmentsEditor({
                                         onClick={() => move(index, -1)}
                                         disabled={index === 0}
                                         className={iconButtonClass}
-                                        aria-label="উপরে সরান"
+                                        aria-label={t.moveUp}
                                     >
                                         <ArrowUp className="size-4" />
                                     </button>
@@ -249,7 +292,7 @@ export function ArchiveAttachmentsEditor({
                                         onClick={() => move(index, 1)}
                                         disabled={index === attachments.length - 1}
                                         className={iconButtonClass}
-                                        aria-label="নিচে সরান"
+                                        aria-label={t.moveDown}
                                     >
                                         <ArrowDown className="size-4" />
                                     </button>
@@ -261,7 +304,7 @@ export function ArchiveAttachmentsEditor({
                                             )
                                         }
                                         className="flex size-9 items-center justify-center rounded-lg text-danger transition-ui hover:bg-danger-soft"
-                                        aria-label="রেফারেন্স সরান"
+                                        aria-label={t.remove}
                                     >
                                         <Trash2 className="size-4" />
                                     </button>

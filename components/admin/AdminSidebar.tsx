@@ -18,35 +18,103 @@ import {
     Building2,
     PanelsTopLeft,
     X,
+    type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAdminLocale } from './AdminLocale'
+
+const copy = {
+    bn: {
+        panel: 'অ্যাডমিন প্যানেল',
+        closeNav: 'মেনু বন্ধ করুন',
+        navLabel: 'অ্যাডমিন',
+        expand: 'সাইডবার বড় করুন',
+        collapse: 'ছোট করুন',
+        groups: {
+            overview: 'সারসংক্ষেপ',
+            content: 'কনটেন্ট',
+            configuration: 'কনফিগারেশন',
+        },
+        items: {
+            dashboard: 'ড্যাশবোর্ড',
+            hero: 'হিরো ও ক্যারোসেল',
+            team: 'আমাদের দল',
+            archive: 'মিডিয়া সেন্টার',
+            research: 'গবেষণা ও কেস স্টাডি',
+            media: 'মিডিয়া লাইব্রেরি',
+            videos: 'ভিডিও (বিকল্প)',
+            newsletter: 'নিউজলেটার',
+            settings: 'সাইট সেটিংস',
+            chatbot: 'চ্যাটবট',
+            access: 'অ্যাডমিন অ্যাক্সেস',
+        },
+    },
+    en: {
+        panel: 'Admin panel',
+        closeNav: 'Close navigation',
+        navLabel: 'Admin',
+        expand: 'Expand sidebar',
+        collapse: 'Collapse',
+        groups: {
+            overview: 'Overview',
+            content: 'Content',
+            configuration: 'Configuration',
+        },
+        items: {
+            dashboard: 'Dashboard',
+            hero: 'Hero & Carousel',
+            team: 'Our Team',
+            archive: 'Media Center',
+            research: 'Research & Case Studies',
+            media: 'Media Library',
+            videos: 'Videos (fallback)',
+            newsletter: 'Newsletter',
+            settings: 'Site Settings',
+            chatbot: 'Chatbot',
+            access: 'Admin access',
+        },
+    },
+}
+
+type NavItem = {
+    id: keyof (typeof copy)['en']['items']
+    href: string
+    icon: LucideIcon
+}
+
+type NavGroup = {
+    id: keyof (typeof copy)['en']['groups']
+    items: NavItem[]
+}
 
 // Grouped so the screens that actually exist are not buried among placeholders.
-const navGroups = [
+const navGroups: NavGroup[] = [
     {
-        label: 'Overview',
-        items: [{ title: 'Dashboard', href: '/admin', icon: LayoutDashboard }],
+        id: 'overview',
+        items: [{ id: 'dashboard', href: '/admin', icon: LayoutDashboard }],
     },
     {
-        label: 'Content',
+        id: 'content',
         items: [
-            { title: 'Hero & Carousel', href: '/admin/hero', icon: PanelsTopLeft },
-            { title: 'Our Team', href: '/admin/team', icon: Users },
-            { title: 'Media Center', href: '/admin/archive', icon: Newspaper },
-            { title: 'Research & Case Studies', href: '/admin/research', icon: BookOpen },
-            { title: 'Media Library', href: '/admin/media', icon: ImageIcon },
-            { title: 'Videos (fallback)', href: '/admin/videos', icon: Video },
-            { title: 'Newsletter', href: '/admin/newsletter', icon: Mail },
+            { id: 'hero', href: '/admin/hero', icon: PanelsTopLeft },
+            { id: 'team', href: '/admin/team', icon: Users },
+            { id: 'archive', href: '/admin/archive', icon: Newspaper },
+            { id: 'research', href: '/admin/research', icon: BookOpen },
+            { id: 'media', href: '/admin/media', icon: ImageIcon },
+            { id: 'videos', href: '/admin/videos', icon: Video },
+            { id: 'newsletter', href: '/admin/newsletter', icon: Mail },
         ],
     },
     {
-        label: 'Configuration',
+        id: 'configuration',
         items: [
-            { title: 'Site Settings', href: '/admin/settings', icon: Settings },
-            { title: 'Chatbot', href: '/admin/chatbot', icon: Bot },
+            { id: 'settings', href: '/admin/settings', icon: Settings },
+            { id: 'chatbot', href: '/admin/chatbot', icon: Bot },
         ],
     },
 ]
+
+const accessItem: NavItem = { id: 'access', href: '/admin/access', icon: ShieldCheck }
 
 type AdminSidebarProps = {
     orgName: string
@@ -73,6 +141,7 @@ export function AdminSidebar({
     canManageAdmins,
 }: AdminSidebarProps) {
     const pathname = usePathname()
+    const t = copy[useAdminLocale()]
 
     return (
         <aside
@@ -97,7 +166,7 @@ export function AdminSidebar({
                             {orgName}
                         </p>
                         <p className="truncate text-xs text-sidebar-foreground/50">
-                            অ্যাডমিন প্যানেল
+                            {t.panel}
                         </p>
                     </div>
                 )}
@@ -107,32 +176,33 @@ export function AdminSidebar({
                     type="button"
                     onClick={onCloseMobile}
                     className="flex size-9 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/60 transition-ui hover:bg-white/10 hover:text-white lg:hidden"
-                    aria-label="Close navigation"
+                    aria-label={t.closeNav}
                 >
                     <X className="size-5" />
                 </button>
             </div>
 
             {/* Navigation */}
-            <nav aria-label="Admin" className="flex-1 overflow-y-auto px-3 py-5">
+            <nav aria-label={t.navLabel} className="flex-1 overflow-y-auto px-3 py-5">
                 {navGroups.map((group) => (
-                    <div key={group.label} className="mb-5 last:mb-0">
+                    <div key={group.id} className="mb-5 last:mb-0">
                         <p
                             className={cn(
                                 'mb-1.5 px-3 text-2xs font-semibold uppercase text-sidebar-foreground/35',
                                 collapsed && 'lg:sr-only'
                             )}
                         >
-                            {group.label}
+                            {t.groups[group.id]}
                         </p>
 
                         <div className="space-y-0.5">
                             {[
                                 ...group.items,
-                                ...(group.label === 'Configuration' && canManageAdmins
-                                    ? [{ title: 'Admin access', href: '/admin/access', icon: ShieldCheck }]
+                                ...(group.id === 'configuration' && canManageAdmins
+                                    ? [accessItem]
                                     : []),
                             ].map((item) => {
+                                const title = t.items[item.id]
                                 const isActive =
                                     item.href === '/admin'
                                         ? pathname === '/admin'
@@ -143,7 +213,7 @@ export function AdminSidebar({
                                         key={item.href}
                                         href={item.href}
                                         aria-current={isActive ? 'page' : undefined}
-                                        title={collapsed ? item.title : undefined}
+                                        title={collapsed ? title : undefined}
                                         className={cn(
                                             'group relative flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-ui',
                                             collapsed && 'lg:justify-center lg:px-0',
@@ -175,7 +245,7 @@ export function AdminSidebar({
                                                 collapsed && 'lg:sr-only'
                                             )}
                                         >
-                                            {item.title}
+                                            {title}
                                         </span>
                                     </Link>
                                 )
@@ -196,12 +266,12 @@ export function AdminSidebar({
                     {collapsed ? (
                         <>
                             <ChevronRight className="size-4" aria-hidden="true" />
-                            <span className="sr-only">Expand sidebar</span>
+                            <span className="sr-only">{t.expand}</span>
                         </>
                     ) : (
                         <>
                             <ChevronLeft className="size-4" aria-hidden="true" />
-                            <span>Collapse</span>
+                            <span>{t.collapse}</span>
                         </>
                     )}
                 </button>

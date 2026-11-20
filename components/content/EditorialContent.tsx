@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Fragment, type ReactNode } from "react";
 
 import { isEditorialHtml } from "@/lib/editorial/legacy";
+import { isOwnStorageUrl } from "@/lib/images/own-storage";
 import { sanitizeEditorialHtml } from "@/lib/editorial/sanitize";
 import { safeHttpsUrl, safeMediaUrl } from "@/lib/types/archive";
 import { cn } from "@/lib/utils";
@@ -325,7 +326,9 @@ export function EditorialContent({
               width={1280}
               height={853}
               sizes="(max-width: 768px) 100vw, 672px"
-              unoptimized
+              // Our own uploads go through the optimiser; an external image
+              // URL can't (its host isn't allow-listed) and is shown as-is.
+              unoptimized={!isOwnStorageUrl(block.url)}
               className={cn(
                 "mx-auto h-auto max-h-[70vh] w-auto max-w-full object-contain",
                 article ? "rounded-sm" : "rounded-xl shadow-sm",

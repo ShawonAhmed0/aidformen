@@ -9,20 +9,97 @@ import {
   Settings2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import type { AdminLocale } from "@/lib/i18n/admin";
+import { getAdminLocale } from "@/lib/i18n/admin-server";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { buttonVariants } from "@/components/ui/button";
+
+const intlLocales = { bn: "bn-BD", en: "en-GB" } as const;
+
+const copy = {
+  bn: {
+    eyebrow: "অ্যাডমিনিস্ট্রেশন",
+    heading: "আপনার সংগঠনকে সঠিক পথে রাখুন",
+    intro:
+      "এক জায়গা থেকেই সাইটের কনটেন্ট দেখে নিন এবং সবচেয়ে জরুরি কাজগুলো সেরে ফেলুন।",
+    editHero: "হোমপেজের হিরো সম্পাদনা করুন",
+    glance: "এক নজরে",
+    glanceHint: "আপনার কনটেন্ট ডেটাবেস থেকে সরাসরি পাওয়া সংখ্যা।",
+    metrics: {
+      entries: "প্রকাশিত মিডিয়া এন্ট্রি",
+      hero: "হিরো কনটেন্ট",
+      carousel: "ক্যারোসেলের ছবি",
+    },
+    readiness: "সাইটের প্রস্তুতি",
+    readinessHint: "হোমপেজ যে কনটেন্টে চলে, তার একটি ঝটপট পরীক্ষা।",
+    checks: {
+      hero: { label: "হিরো সেকশন সাজানো আছে", action: "হিরো সম্পাদনা" },
+      carousel: {
+        label: "হোমপেজের ক্যারোসেলে ছবি আছে",
+        action: "হিরো পরিচালনা",
+      },
+      entries: {
+        label: "মিডিয়া সেন্টারে প্রকাশিত এন্ট্রি আছে",
+        action: "এন্ট্রি পরিচালনা",
+      },
+    },
+    complete: " — সম্পন্ন",
+    incomplete: " — মনোযোগ প্রয়োজন",
+    contentTitle: "কনটেন্ট ব্যবস্থাপনা",
+    contentBody:
+      "হোমপেজ নতুন করে সাজাতে চাইলে যেকোনো সময় হিরোর শিরোনাম, বিবরণ ও ছবি আপডেট করুন।",
+    openHero: "হিরো এডিটর খুলুন",
+  },
+  en: {
+    eyebrow: "Administration",
+    heading: "Keep your organisation on track",
+    intro:
+      "Review your site content and take care of the most important tasks from one place.",
+    editHero: "Edit homepage hero",
+    glance: "At a glance",
+    glanceHint: "Live counts from your content database.",
+    metrics: {
+      entries: "Published media entries",
+      hero: "Hero content",
+      carousel: "Carousel images",
+    },
+    readiness: "Site readiness",
+    readinessHint: "A quick check of the content powering your homepage.",
+    checks: {
+      hero: { label: "Hero section is configured", action: "Edit hero" },
+      carousel: {
+        label: "Homepage carousel has images",
+        action: "Manage hero",
+      },
+      entries: {
+        label: "Media Center has published entries",
+        action: "Manage entries",
+      },
+    },
+    complete: " — complete",
+    incomplete: " — needs attention",
+    contentTitle: "Content management",
+    contentBody:
+      "Update the hero heading, description, and artwork whenever you need to refresh the homepage.",
+    openHero: "Open hero editor",
+  },
+};
 
 type CountResult = {
   count: number | null;
   error: { message: string } | null;
 };
 
-function displayCount(result: CountResult) {
-  return result.error ? "—" : (result.count ?? 0).toLocaleString();
+function displayCount(result: CountResult, locale: AdminLocale) {
+  return result.error
+    ? "—"
+    : (result.count ?? 0).toLocaleString(intlLocales[locale]);
 }
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
+  const locale = await getAdminLocale();
+  const t = copy[locale];
 
   const [archiveEntries, heroContent, carouselImages] = await Promise.all([
     supabase
@@ -35,40 +112,37 @@ export default async function AdminDashboardPage() {
 
   const metrics = [
     {
-      title: "Published media entries",
-      value: displayCount(archiveEntries),
+      title: t.metrics.entries,
+      value: displayCount(archiveEntries, locale),
       icon: <Newspaper className="size-[18px]" />,
     },
     {
-      title: "Hero content",
-      value: displayCount(heroContent),
+      title: t.metrics.hero,
+      value: displayCount(heroContent, locale),
       icon: <LayoutPanelTop className="size-[18px]" />,
     },
     {
-      title: "Carousel images",
-      value: displayCount(carouselImages),
+      title: t.metrics.carousel,
+      value: displayCount(carouselImages, locale),
       icon: <ImageIcon className="size-[18px]" />,
     },
   ];
 
   const checks = [
     {
-      label: "Hero section is configured",
+      ...t.checks.hero,
       complete: !heroContent.error && (heroContent.count ?? 0) > 0,
       href: "/admin/hero",
-      action: "Edit hero",
     },
     {
-      label: "Homepage carousel has images",
+      ...t.checks.carousel,
       complete: !carouselImages.error && (carouselImages.count ?? 0) > 0,
       href: "/admin/hero",
-      action: "Manage hero",
     },
     {
-      label: "Media Center has published entries",
+      ...t.checks.entries,
       complete: !archiveEntries.error && (archiveEntries.count ?? 0) > 0,
       href: "/admin/archive",
-      action: "Manage entries",
     },
   ];
 
@@ -77,14 +151,13 @@ export default async function AdminDashboardPage() {
       <section className="flex flex-col justify-between gap-5 rounded-xl border border-ink-200 bg-surface p-6 shadow-xs sm:flex-row sm:items-center">
         <div>
           <p className="text-2xs font-semibold uppercase text-ochre-700">
-            Administration
+            {t.eyebrow}
           </p>
           <h1 className="mt-2 text-2xl tracking-tight text-ink-900">
-            Keep your organisation on track
+            {t.heading}
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-ink-500">
-            Review your site content and take care of the most important tasks
-            from one place.
+            {t.intro}
           </p>
         </div>
 
@@ -92,16 +165,16 @@ export default async function AdminDashboardPage() {
           href="/admin/hero"
           className={buttonVariants({ className: "shrink-0" })}
         >
-          Edit homepage hero
+          {t.editHero}
           <ArrowRight aria-hidden="true" />
         </Link>
       </section>
 
       <section>
         <div className="mb-4">
-          <h2 className="text-base font-semibold text-ink-900">At a glance</h2>
+          <h2 className="text-base font-semibold text-ink-900">{t.glance}</h2>
           <p className="mt-1 text-sm text-ink-500">
-            Live counts from your content database.
+            {t.glanceHint}
           </p>
         </div>
 
@@ -126,10 +199,10 @@ export default async function AdminDashboardPage() {
             </span>
             <div>
               <h2 className="text-base font-semibold text-ink-900">
-                Site readiness
+                {t.readiness}
               </h2>
               <p className="text-sm text-ink-500">
-                A quick check of the content powering your homepage.
+                {t.readinessHint}
               </p>
             </div>
           </div>
@@ -155,7 +228,7 @@ export default async function AdminDashboardPage() {
                 <p className="min-w-0 flex-1 text-sm font-medium text-ink-700">
                   {check.label}
                   <span className="sr-only">
-                    {check.complete ? " — complete" : " — needs attention"}
+                    {check.complete ? t.complete : t.incomplete}
                   </span>
                 </p>
 
@@ -173,18 +246,17 @@ export default async function AdminDashboardPage() {
         <div className="rounded-xl border border-transparent bg-brand-900 p-6 text-white lg:col-span-2">
           <Settings2 className="size-5 text-brand-300" aria-hidden="true" />
 
-          <h2 className="mt-4 text-base font-semibold">Content management</h2>
+          <h2 className="mt-4 text-base font-semibold">{t.contentTitle}</h2>
 
           <p className="mt-2 text-sm leading-relaxed text-brand-100">
-            Update the hero heading, description, and artwork whenever you need
-            to refresh the homepage.
+            {t.contentBody}
           </p>
 
           <Link
             href="/admin/hero"
             className="mt-6 inline-flex items-center gap-2 rounded-sm text-sm font-medium text-brand-300 transition-ui hover:text-white"
           >
-            Open hero editor
+            {t.openHero}
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </div>

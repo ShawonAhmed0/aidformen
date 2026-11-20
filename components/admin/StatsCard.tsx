@@ -5,6 +5,12 @@
 import { motion } from 'motion/react'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAdminLocale } from './AdminLocale'
+
+const copy = {
+  bn: { vsLastMonth: 'গত মাসের তুলনায়' },
+  en: { vsLastMonth: 'vs last month' },
+}
 
 interface StatsCardProps {
   title: string
@@ -15,6 +21,7 @@ interface StatsCardProps {
 }
 
 export function StatsCard({ title, value, change, icon, delay = 0 }: StatsCardProps) {
+  const t = copy[useAdminLocale()]
   const isPositive = change !== undefined && change >= 0
 
   return (
@@ -53,7 +60,7 @@ export function StatsCard({ title, value, change, icon, delay = 0 }: StatsCardPr
                 {isPositive ? '+' : ''}
                 {change}%
               </span>
-              <span className="text-2xs text-ink-400">vs last month</span>
+              <span className="text-2xs text-ink-400">{t.vsLastMonth}</span>
             </div>
           )}
         </div>

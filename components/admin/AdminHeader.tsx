@@ -1,16 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-    Bell,
-    Search,
-    LogOut,
-    Settings,
-    ShieldCheck,
-    ChevronDown,
-    Menu,
-} from 'lucide-react'
+import { LogOut, Settings, ShieldCheck, ChevronDown, Menu } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 
 import {
@@ -22,8 +13,31 @@ import {
     DropdownMenuTrigger,
     DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { AdminLocaleToggle, useAdminLocale } from './AdminLocale'
+
+const copy = {
+    bn: {
+        openNav: 'মেনু খুলুন',
+        welcome: (name: string) => `স্বাগতম, ${name}`,
+        org: 'এইড ফর মেন ফাউন্ডেশন',
+        admin: 'অ্যাডমিন',
+        administrator: 'অ্যাডমিনিস্ট্রেটর',
+        access: 'অ্যাডমিন অ্যাক্সেস',
+        settings: 'সেটিংস',
+        logout: 'লগআউট',
+    },
+    en: {
+        openNav: 'Open navigation',
+        welcome: (name: string) => `Welcome back, ${name}`,
+        org: 'Aid For Men Foundation',
+        admin: 'Admin',
+        administrator: 'Administrator',
+        access: 'Admin access',
+        settings: 'Settings',
+        logout: 'Logout',
+    },
+}
 
 interface AdminHeaderProps {
     user?: {
@@ -37,7 +51,7 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ user, onOpenMobile, canManageAdmins = false }: AdminHeaderProps) {
     const router = useRouter()
-    const [searchQuery, setSearchQuery] = useState('')
+    const t = copy[useAdminLocale()]
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,7 +64,7 @@ export function AdminHeader({ user, onOpenMobile, canManageAdmins = false }: Adm
         router.refresh()
     }
 
-    const displayName = user?.full_name || 'Admin'
+    const displayName = user?.full_name || t.admin
     const initials = displayName
         .split(' ')
         .map((n) => n[0])
@@ -67,51 +81,25 @@ export function AdminHeader({ user, onOpenMobile, canManageAdmins = false }: Adm
                     type="button"
                     onClick={onOpenMobile}
                     className="-ml-2 flex size-10 shrink-0 items-center justify-center rounded-lg text-ink-600 transition-ui hover:bg-ink-100 hover:text-ink-900 lg:hidden"
-                    aria-label="Open navigation"
+                    aria-label={t.openNav}
                 >
                     <Menu className="size-5" />
                 </button>
 
                 <div className="min-w-0">
                     <p className="truncate text-sm font-semibold tracking-tight text-ink-900">
-                        Welcome back, {displayName.split(' ')[0]}
+                        {t.welcome(displayName.split(' ')[0])}
                     </p>
                     <p className="mt-0.5 truncate text-xs text-ink-500">
-                        Aid For Men Foundation
+                        {t.org}
                     </p>
                 </div>
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
-                <div className="relative hidden md:block">
-                    <Search
-                        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-400"
-                        aria-hidden="true"
-                    />
-                    <label htmlFor="admin-search" className="sr-only">
-                        Search
-                    </label>
-                    <Input
-                        id="admin-search"
-                        type="search"
-                        placeholder="Search…"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="h-10 w-56 bg-surface-sunken pl-9 text-sm"
-                    />
-                </div>
-
-                <button
-                    type="button"
-                    className="relative flex size-10 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900"
-                    aria-label="Notifications"
-                >
-                    <Bell className="size-[18px]" />
-                    <span
-                        className="absolute right-2.5 top-2.5 size-1.5 rounded-full bg-brand-600"
-                        aria-hidden="true"
-                    />
-                </button>
+                {/* The search box and bell that sat here did nothing; the
+                    one header control an editor needs is the language. */}
+                <AdminLocaleToggle />
 
                 <DropdownMenu>
                     <DropdownMenuTrigger className="flex h-11 items-center gap-2.5 rounded-lg px-2 transition-ui hover:bg-ink-100 focus:outline-none">
@@ -130,7 +118,7 @@ export function AdminHeader({ user, onOpenMobile, canManageAdmins = false }: Adm
                                 {displayName}
                             </span>
                             <span className="mt-1 block text-xs text-ink-500">
-                                Administrator
+                                {t.administrator}
                             </span>
                         </span>
 
@@ -161,7 +149,7 @@ export function AdminHeader({ user, onOpenMobile, canManageAdmins = false }: Adm
                                     className="cursor-pointer rounded-lg text-sm"
                                 >
                                     <ShieldCheck className="mr-2 size-4" />
-                                    Admin access
+                                    {t.access}
                                 </DropdownMenuItem>
                             )}
                             <DropdownMenuItem
@@ -169,7 +157,7 @@ export function AdminHeader({ user, onOpenMobile, canManageAdmins = false }: Adm
                                 className="cursor-pointer rounded-lg text-sm"
                             >
                                 <Settings className="mr-2 size-4" />
-                                Settings
+                                {t.settings}
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
 
@@ -181,7 +169,7 @@ export function AdminHeader({ user, onOpenMobile, canManageAdmins = false }: Adm
                                 className="cursor-pointer rounded-lg text-sm text-danger focus:text-danger"
                             >
                                 <LogOut className="mr-2 size-4" />
-                                Logout
+                                {t.logout}
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                     </DropdownMenuContent>

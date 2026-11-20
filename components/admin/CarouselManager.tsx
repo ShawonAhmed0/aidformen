@@ -28,10 +28,86 @@ import { Badge } from "@/components/ui/badge";
 import { ImagePicker } from "./ImagePicker";
 import { FocalPointPicker } from "./FocalPointPicker";
 import { BilingualField } from "./BilingualField";
+import { useAdminLocale } from "./AdminLocale";
 import type { CarouselImage } from "@/lib/types/content";
 import { cn } from "@/lib/utils";
 
 const s = (v: string | null | undefined) => v ?? "";
+
+const copy = {
+    bn: {
+        genericError: "সমস্যা হয়েছে।",
+        reordered: "ক্রম পরিবর্তন হয়েছে।",
+        imageRequired: "স্লাইডের জন্য একটি ছবি আপলোড করুন।",
+        updated: "স্লাইড আপডেট হয়েছে।",
+        created: "নতুন স্লাইড যোগ হয়েছে।",
+        hidden: "স্লাইড লুকানো হয়েছে।",
+        published: "স্লাইড প্রকাশ করা হয়েছে।",
+        deleted: "স্লাইড মুছে ফেলা হয়েছে।",
+        heading: "হিরো ক্যারোজেল",
+        intro: "হোমপেজের হিরো সেকশনের পেছনে যে ছবিগুলো ঘুরে ঘুরে দেখায়।",
+        newSlide: "নতুন স্লাইড",
+        editSlide: "স্লাইড সম্পাদনা",
+        emptyTitle: "এখনো কোনো স্লাইড নেই।",
+        emptyHint: "অন্তত একটি ছবি যোগ করলে হিরো সেকশনে দেখাবে।",
+        untitled: "শিরোনামহীন স্লাইড",
+        unpublished: "অপ্রকাশিত",
+        moveUp: "উপরে সরান",
+        moveDown: "নিচে সরান",
+        hide: "লুকান",
+        publish: "প্রকাশ করুন",
+        edit: "সম্পাদনা করুন",
+        delete: "মুছে ফেলুন",
+        confirmDelete: "এই স্লাইড ও এর ছবি স্থায়ীভাবে মুছে যাবে।",
+        cancel: "বাতিল",
+        close: "বন্ধ করুন",
+        imageLabel: "স্লাইডের ছবি",
+        focalHelper:
+            "হিরো সেকশন পর্দার আকার অনুযায়ী ছবি কেটে নেয়। যে অংশটি সব সময় দেখাতে চান, সেখানে টেনে আনুন।",
+        titleLabel: "শিরোনাম",
+        subtitleLabel: "উপশিরোনাম",
+        altLabel: "ছবির বিকল্প বর্ণনা (alt)",
+        altHelper: "স্ক্রিন রিডার ও ছবি লোড না হলে এই লেখাটি ব্যবহার হয়।",
+        showOnSite: "ওয়েবসাইটে দেখান",
+        save: "সংরক্ষণ করুন",
+    },
+    en: {
+        genericError: "Something went wrong.",
+        reordered: "Order updated.",
+        imageRequired: "Upload an image for the slide.",
+        updated: "Slide updated.",
+        created: "New slide added.",
+        hidden: "Slide hidden.",
+        published: "Slide published.",
+        deleted: "Slide deleted.",
+        heading: "Hero carousel",
+        intro: "The images that rotate behind the homepage hero section.",
+        newSlide: "New slide",
+        editSlide: "Edit slide",
+        emptyTitle: "No slides yet.",
+        emptyHint: "Add at least one image and it will show in the hero section.",
+        untitled: "Untitled slide",
+        unpublished: "Unpublished",
+        moveUp: "Move up",
+        moveDown: "Move down",
+        hide: "Hide",
+        publish: "Publish",
+        edit: "Edit",
+        delete: "Delete",
+        confirmDelete: "This slide and its image will be permanently deleted.",
+        cancel: "Cancel",
+        close: "Close",
+        imageLabel: "Slide image",
+        focalHelper:
+            "The hero section crops the image to fit the screen. Drag to the part you always want visible.",
+        titleLabel: "Title",
+        subtitleLabel: "Subtitle",
+        altLabel: "Image alt text",
+        altHelper: "Used by screen readers and when the image fails to load.",
+        showOnSite: "Show on website",
+        save: "Save",
+    },
+};
 
 type Draft = {
     id: string | null;
@@ -78,6 +154,7 @@ const toDraft = (slide: CarouselImage): Draft => ({
 export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
     const router = useRouter();
     const [pending, startTransition] = useTransition();
+    const t = copy[useAdminLocale()];
     const [draft, setDraft] = useState<Draft | null>(null);
     const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
@@ -94,7 +171,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
         startTransition(async () => {
             const result = await fn();
             if (!result.ok) {
-                toast.error(result.error ?? "সমস্যা হয়েছে।");
+                toast.error(result.error ?? t.genericError);
                 router.refresh();
                 return;
             }
@@ -112,13 +189,13 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
 
         const body = new FormData();
         next.forEach((slide) => body.append("ids", slide.id));
-        run(() => reorderCarouselImages(body), "ক্রম পরিবর্তন হয়েছে।");
+        run(() => reorderCarouselImages(body), t.reordered);
     };
 
     const save = () => {
         if (!draft) return;
         if (!draft.image_url) {
-            toast.error("স্লাইডের জন্য একটি ছবি আপলোড করুন।");
+            toast.error(t.imageRequired);
             return;
         }
 
@@ -145,7 +222,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                 return;
             }
 
-            toast.success(draft.id ? "স্লাইড আপডেট হয়েছে।" : "নতুন স্লাইড যোগ হয়েছে।");
+            toast.success(draft.id ? t.updated : t.created);
             setDraft(null);
             router.refresh();
         });
@@ -156,10 +233,10 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <h2 className="text-base font-semibold text-ink-900">
-                        হিরো ক্যারোজেল
+                        {t.heading}
                     </h2>
                     <p className="mt-1 text-sm text-ink-500">
-                        হোমপেজের হিরো সেকশনের পেছনে যে ছবিগুলো ঘুরে ঘুরে দেখায়।
+                        {t.intro}
                     </p>
                 </div>
 
@@ -170,17 +247,17 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                     disabled={pending}
                 >
                     <Plus aria-hidden="true" />
-                    নতুন স্লাইড
+                    {t.newSlide}
                 </Button>
             </div>
 
             {order.length === 0 ? (
                 <div className="mt-6 rounded-xl border border-dashed border-ink-300 px-6 py-12 text-center">
                     <p className="text-sm font-medium text-ink-700">
-                        এখনো কোনো স্লাইড নেই।
+                        {t.emptyTitle}
                     </p>
                     <p className="mt-1 text-xs text-ink-500">
-                        অন্তত একটি ছবি যোগ করলে হিরো সেকশনে দেখাবে।
+                        {t.emptyHint}
                     </p>
                 </div>
             ) : (
@@ -209,7 +286,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
 
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-medium text-ink-900">
-                                    {slide.title || "শিরোনামহীন স্লাইড"}
+                                    {slide.title || t.untitled}
                                 </p>
                                 {slide.subtitle && (
                                     <p className="mt-0.5 truncate text-xs text-ink-500">
@@ -218,7 +295,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                 )}
                                 {!slide.is_published && (
                                     <Badge tone="neutral" size="sm" className="mt-1.5">
-                                        অপ্রকাশিত
+                                        {t.unpublished}
                                     </Badge>
                                 )}
                             </div>
@@ -229,7 +306,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                     onClick={() => move(index, -1)}
                                     disabled={pending || index === 0}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900 disabled:opacity-30"
-                                    aria-label="উপরে সরান"
+                                    aria-label={t.moveUp}
                                 >
                                     <ArrowUp className="size-4" />
                                 </button>
@@ -239,7 +316,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                     onClick={() => move(index, 1)}
                                     disabled={pending || index === order.length - 1}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900 disabled:opacity-30"
-                                    aria-label="নিচে সরান"
+                                    aria-label={t.moveDown}
                                 >
                                     <ArrowDown className="size-4" />
                                 </button>
@@ -256,14 +333,14 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                         run(
                                             () => toggleCarouselPublished(body),
                                             slide.is_published
-                                                ? "স্লাইড লুকানো হয়েছে।"
-                                                : "স্লাইড প্রকাশ করা হয়েছে।"
+                                                ? t.hidden
+                                                : t.published
                                         );
                                     }}
                                     disabled={pending}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900"
                                     aria-label={
-                                        slide.is_published ? "লুকান" : "প্রকাশ করুন"
+                                        slide.is_published ? t.hide : t.publish
                                     }
                                 >
                                     {slide.is_published ? (
@@ -278,7 +355,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                     onClick={() => setDraft(toDraft(slide))}
                                     disabled={pending}
                                     className="flex size-9 items-center justify-center rounded-lg text-ink-500 transition-ui hover:bg-ink-100 hover:text-ink-900"
-                                    aria-label="সম্পাদনা করুন"
+                                    aria-label={t.edit}
                                 >
                                     <Pencil className="size-4" />
                                 </button>
@@ -288,7 +365,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                     onClick={() => setConfirmingDelete(slide.id)}
                                     disabled={pending}
                                     className="flex size-9 items-center justify-center rounded-lg text-danger transition-ui hover:bg-danger-soft"
-                                    aria-label="মুছে ফেলুন"
+                                    aria-label={t.delete}
                                 >
                                     <Trash2 className="size-4" />
                                 </button>
@@ -298,7 +375,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                             {confirmingDelete === slide.id && (
                                 <div className="flex w-full flex-wrap items-center justify-between gap-3 rounded-lg border border-danger-line bg-danger-soft px-4 py-3">
                                     <p className="text-sm text-danger">
-                                        এই স্লাইড ও এর ছবি স্থায়ীভাবে মুছে যাবে।
+                                        {t.confirmDelete}
                                     </p>
                                     <div className="flex gap-2">
                                         <Button
@@ -307,7 +384,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                             variant="ghost"
                                             onClick={() => setConfirmingDelete(null)}
                                         >
-                                            বাতিল
+                                            {t.cancel}
                                         </Button>
                                         <Button
                                             type="button"
@@ -320,11 +397,11 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                                 setConfirmingDelete(null);
                                                 run(
                                                     () => deleteCarouselImage(body),
-                                                    "স্লাইড মুছে ফেলা হয়েছে।"
+                                                    t.deleted
                                                 );
                                             }}
                                         >
-                                            মুছে ফেলুন
+                                            {t.delete}
                                         </Button>
                                     </div>
                                 </div>
@@ -346,18 +423,18 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                     <div
                         role="dialog"
                         aria-modal="true"
-                        aria-label={draft.id ? "স্লাইড সম্পাদনা" : "নতুন স্লাইড"}
+                        aria-label={draft.id ? t.editSlide : t.newSlide}
                         className="my-8 w-full max-w-lg rounded-2xl bg-surface p-6 shadow-xl"
                     >
                         <div className="flex items-start justify-between gap-4">
                             <h3 className="text-lg text-ink-900">
-                                {draft.id ? "স্লাইড সম্পাদনা" : "নতুন স্লাইড"}
+                                {draft.id ? t.editSlide : t.newSlide}
                             </h3>
                             <button
                                 type="button"
                                 onClick={() => setDraft(null)}
                                 className="flex size-9 items-center justify-center rounded-full text-ink-500 transition-ui hover:bg-ink-100"
-                                aria-label="বন্ধ করুন"
+                                aria-label={t.close}
                             >
                                 <X className="size-5" />
                             </button>
@@ -365,7 +442,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
 
                         <div className="mt-5 space-y-5">
                             <ImagePicker
-                                label="স্লাইডের ছবি"
+                                label={t.imageLabel}
                                 folder="carousel"
                                 aspect="video"
                                 value={draft.image_url}
@@ -383,12 +460,12 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                     onChange={(focal_x, focal_y) =>
                                         setDraft((d) => (d ? { ...d, focal_x, focal_y } : d))
                                     }
-                                    helper="হিরো সেকশন পর্দার আকার অনুযায়ী ছবি কেটে নেয়। যে অংশটি সব সময় দেখাতে চান, সেখানে টেনে আনুন।"
+                                    helper={t.focalHelper}
                                 />
                             )}
 
                             <BilingualField
-                                label="শিরোনাম"
+                                label={t.titleLabel}
                                 value={draft.title}
                                 onChange={(v) =>
                                     setDraft((d) => (d ? { ...d, title: v } : d))
@@ -400,7 +477,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                             />
 
                             <BilingualField
-                                label="উপশিরোনাম"
+                                label={t.subtitleLabel}
                                 value={draft.subtitle}
                                 onChange={(v) =>
                                     setDraft((d) => (d ? { ...d, subtitle: v } : d))
@@ -412,7 +489,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                             />
 
                             <BilingualField
-                                label="ছবির বিকল্প বর্ণনা (alt)"
+                                label={t.altLabel}
                                 value={draft.alt_text}
                                 onChange={(v) =>
                                     setDraft((d) => (d ? { ...d, alt_text: v } : d))
@@ -421,7 +498,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                 onChangeEn={(v) =>
                                     setDraft((d) => (d ? { ...d, alt_text_en: v } : d))
                                 }
-                                helper="স্ক্রিন রিডার ও ছবি লোড না হলে এই লেখাটি ব্যবহার হয়।"
+                                helper={t.altHelper}
                             />
 
                             <label className="flex items-center gap-2.5 text-sm text-ink-700">
@@ -437,7 +514,7 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                     }
                                     className="size-4 rounded border-ink-300 accent-brand-800"
                                 />
-                                ওয়েবসাইটে দেখান
+                                {t.showOnSite}
                             </label>
                         </div>
 
@@ -447,13 +524,13 @@ export function CarouselManager({ slides }: { slides: CarouselImage[] }) {
                                 variant="outline"
                                 onClick={() => setDraft(null)}
                             >
-                                বাতিল
+                                {t.cancel}
                             </Button>
                             <Button type="button" onClick={save} disabled={pending}>
                                 {pending && (
                                     <Loader2 className="animate-spin" aria-hidden="true" />
                                 )}
-                                সংরক্ষণ করুন
+                                {t.save}
                             </Button>
                         </div>
                     </div>

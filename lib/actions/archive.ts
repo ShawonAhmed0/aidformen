@@ -603,31 +603,6 @@ export async function deleteArchiveEntry(formData: FormData) {
   });
 }
 
-export async function reorderArchiveEntries(formData: FormData) {
-  return guarded(async () => {
-    const auth = await requireAdmin();
-    if (!auth.ok) return fail(auth.error);
-
-    const ids = formData.getAll("ids").map(String).filter(Boolean);
-    if (!ids.length) return ok();
-
-    const results = await Promise.all(
-      ids.map((id, index) =>
-        auth.supabase
-          .from("archive_entries")
-          .update({ sort_order: (index + 1) * 10 })
-          .eq("id", id)
-      )
-    );
-
-    const firstError = results.find((r) => r.error)?.error;
-    if (firstError) return fail(firstError.message);
-
-    revalidatePath("/", "layout");
-    return ok();
-  });
-}
-
 /** Quick publish/unpublish from the list without opening the editor. */
 export async function toggleArchivePublished(formData: FormData) {
   return guarded(async () => {

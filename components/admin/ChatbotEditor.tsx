@@ -11,6 +11,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { BilingualField } from "./BilingualField";
+import { useAdminLocale } from "./AdminLocale";
 import {
     chatModelConfig,
     chatModels,
@@ -18,6 +19,103 @@ import {
     type ChatbotSettings,
 } from "@/lib/types/chatbot";
 import { cn } from "@/lib/utils";
+
+const copy = {
+    bn: {
+        briefRequired: "চ্যাট চালু করার আগে ব্রিফ লিখুন।",
+        saved: "চ্যাটবট সেটিংস সংরক্ষণ হয়েছে।",
+        keyMissingTitle: "ANTHROPIC_API_KEY সেট করা নেই",
+        keyMissingBody: (file: React.ReactNode, key: React.ReactNode) => (
+            <>
+                সার্ভারে {file} ফাইলে {key} যোগ করুন, তারপর সার্ভার রিস্টার্ট করুন। কী ছাড়া
+                চ্যাট উত্তর দিতে পারবে না।
+            </>
+        ),
+        toggleTitle: "চালু / বন্ধ",
+        toggleDescription: "ব্রিফ লেখা না থাকলে চ্যাট চালু করা যাবে না।",
+        showButton: "ওয়েবসাইটে চ্যাট বোতাম দেখান",
+        briefTitle: "ব্রিফ — চ্যাট যা জানে",
+        briefDescription:
+            "চ্যাট শুধু এখানে লেখা তথ্যের ভিত্তিতেই উত্তর দেবে। যা এখানে নেই, সে বিষয়ে বলবে যে সে জানে না এবং যোগাযোগ করতে বলবে।",
+        briefBn: "ব্রিফ (বাংলা)",
+        briefBnHelper:
+            "সংগঠনের পরিচয়, সেবা, কারা যোগাযোগ করবেন, অফিস সময়, কী কী করা হয় না — যত নির্দিষ্ট, উত্তর তত ভালো।",
+        briefPlaceholder:
+            "এইড ফর মেন ফাউন্ডেশন কী করে…\n\nসেবা:\n- আইনি পরামর্শের জন্য প্যানেল আইনজীবী\n- …\n\nযোগাযোগ: …\nঅফিস সময়: …",
+        briefEn: "ব্রিফ (English)",
+        briefEnHelper: "খালি রাখলে ইংরেজি সাইটেও উপরের বাংলা ব্রিফ ব্যবহার হবে।",
+        presentationTitle: "উপস্থাপনা",
+        presentationDescription: "চ্যাট উইন্ডোতে যা দেখা যাবে।",
+        botName: "চ্যাটের নাম",
+        greeting: "শুভেচ্ছা বার্তা",
+        disclaimer: "দাবিত্যাগ",
+        disclaimerHelper: "ইনপুট বক্সের নিচে দেখাবে, এবং চ্যাটকেও এটি মেনে চলতে বলা হয়।",
+        technicalTitle: "কারিগরি",
+        technicalDescription: "খরচ ও মডেল নিয়ন্ত্রণ।",
+        model: "মডেল",
+        modelCost: (price: string) =>
+            `খরচ: ${price} প্রতি ১০ লক্ষ টোকেন (ইনপুট / আউটপুট)।`,
+        modelUnknown: "তালিকার বাইরের মডেল। আইডি সঠিক না হলে চ্যাট উত্তর দিতে পারবে না।",
+        modelCustom: "অন্য মডেল (নিজে লিখুন)…",
+        modelId: "মডেল আইডি",
+        modelIdHelper: "Anthropic-এর ডকুমেন্টেশনে দেওয়া আইডি হুবহু লিখুন।",
+        maxTurns: "প্রতি আলোচনায় সর্বোচ্চ প্রশ্ন",
+        maxTurnsHelper: "১–৫০। খরচ সীমিত রাখে।",
+        retention: "চ্যাট হিস্ট্রি রাখার সময়",
+        retentionHelper:
+            "৭–৩৬৫ দিন। নতুন চ্যাট শুরু হলে মেয়াদ পেরোনো হিস্ট্রি স্বয়ংক্রিয়ভাবে মুছে যায়।",
+        days: "দিন",
+        saving: "সংরক্ষণ হচ্ছে…",
+        save: "পরিবর্তন সংরক্ষণ করুন",
+    },
+    en: {
+        briefRequired: "Write the brief before turning the chat on.",
+        saved: "Chatbot settings saved.",
+        keyMissingTitle: "ANTHROPIC_API_KEY is not set",
+        keyMissingBody: (file: React.ReactNode, key: React.ReactNode) => (
+            <>
+                Add {key} to the {file} file on the server, then restart the server. Without
+                the key the chat cannot answer.
+            </>
+        ),
+        toggleTitle: "On / off",
+        toggleDescription: "The chat cannot be turned on until a brief is written.",
+        showButton: "Show the chat button on the website",
+        briefTitle: "Brief — what the chat knows",
+        briefDescription:
+            "The chat answers only from what is written here. For anything not covered, it says it does not know and asks the visitor to get in touch.",
+        briefBn: "Brief (Bengali)",
+        briefBnHelper:
+            "Who the organisation is, its services, who should get in touch, office hours, what it does not do — the more specific, the better the answers.",
+        briefPlaceholder:
+            "What Aid For Men Foundation does…\n\nServices:\n- Panel lawyers for legal advice\n- …\n\nContact: …\nOffice hours: …",
+        briefEn: "Brief (English)",
+        briefEnHelper: "Leave empty to use the Bengali brief above on the English site too.",
+        presentationTitle: "Presentation",
+        presentationDescription: "What appears in the chat window.",
+        botName: "Chat name",
+        greeting: "Greeting message",
+        disclaimer: "Disclaimer",
+        disclaimerHelper: "Shown below the input box, and the chat is told to follow it too.",
+        technicalTitle: "Technical",
+        technicalDescription: "Cost and model controls.",
+        model: "Model",
+        modelCost: (price: string) =>
+            `Cost: ${price} per million tokens (input / output).`,
+        modelUnknown: "A model outside the list. The chat cannot answer if the id is wrong.",
+        modelCustom: "Another model (type your own)…",
+        modelId: "Model id",
+        modelIdHelper: "Enter the id exactly as given in Anthropic's documentation.",
+        maxTurns: "Maximum questions per conversation",
+        maxTurnsHelper: "1–50. Keeps the cost bounded.",
+        retention: "Chat history retention",
+        retentionHelper:
+            "7–365 days. Expired history is deleted automatically when a new chat starts.",
+        days: "days",
+        saving: "Saving…",
+        save: "Save changes",
+    },
+};
 
 const s = (v: string | null | undefined) => v ?? "";
 
@@ -51,6 +149,8 @@ export function ChatbotEditor({
     hasApiKey: boolean;
 }) {
     const router = useRouter();
+    const locale = useAdminLocale();
+    const t = copy[locale];
     const [pending, startTransition] = useTransition();
 
     const [enabled, setEnabled] = useState(settings?.is_enabled ?? false);
@@ -83,7 +183,7 @@ export function ChatbotEditor({
         event.preventDefault();
 
         if (enabled && !form.brief.trim()) {
-            toast.error("চ্যাট চালু করার আগে ব্রিফ লিখুন।");
+            toast.error(t.briefRequired);
             return;
         }
 
@@ -97,7 +197,7 @@ export function ChatbotEditor({
                 toast.error(result.error);
                 return;
             }
-            toast.success("চ্যাটবট সেটিংস সংরক্ষণ হয়েছে।");
+            toast.success(t.saved);
             router.refresh();
         });
     };
@@ -115,20 +215,21 @@ export function ChatbotEditor({
                     />
                     <div className="text-sm text-ink-700">
                         <p className="font-semibold text-ink-900">
-                            ANTHROPIC_API_KEY সেট করা নেই
+                            {t.keyMissingTitle}
                         </p>
                         <p className="mt-1">
-                            সার্ভারে <code className="text-xs">.env.local</code> ফাইলে{" "}
-                            <code className="text-xs">ANTHROPIC_API_KEY</code> যোগ করুন,
-                            তারপর সার্ভার রিস্টার্ট করুন। কী ছাড়া চ্যাট উত্তর দিতে পারবে না।
+                            {t.keyMissingBody(
+                                <code className="text-xs">.env.local</code>,
+                                <code className="text-xs">ANTHROPIC_API_KEY</code>
+                            )}
                         </p>
                     </div>
                 </div>
             )}
 
             <Panel
-                title="চালু / বন্ধ"
-                description="ব্রিফ লেখা না থাকলে চ্যাট চালু করা যাবে না।"
+                title={t.toggleTitle}
+                description={t.toggleDescription}
             >
                 <label className="flex items-center gap-2.5 text-sm text-ink-700">
                     <input
@@ -137,18 +238,18 @@ export function ChatbotEditor({
                         onChange={(e) => setEnabled(e.target.checked)}
                         className="size-4 rounded border-ink-300 accent-brand-800"
                     />
-                    ওয়েবসাইটে চ্যাট বোতাম দেখান
+                    {t.showButton}
                 </label>
             </Panel>
 
             <Panel
-                title="ব্রিফ — চ্যাট যা জানে"
-                description="চ্যাট শুধু এখানে লেখা তথ্যের ভিত্তিতেই উত্তর দেবে। যা এখানে নেই, সে বিষয়ে বলবে যে সে জানে না এবং যোগাযোগ করতে বলবে।"
+                title={t.briefTitle}
+                description={t.briefDescription}
             >
                 <Field
-                    label="ব্রিফ (বাংলা)"
+                    label={t.briefBn}
                     required
-                    helper="সংগঠনের পরিচয়, সেবা, কারা যোগাযোগ করবেন, অফিস সময়, কী কী করা হয় না — যত নির্দিষ্ট, উত্তর তত ভালো।"
+                    helper={t.briefBnHelper}
                 >
                     {(props) => (
                         <Textarea
@@ -157,16 +258,14 @@ export function ChatbotEditor({
                             onChange={(e) => set("brief")(e.target.value)}
                             rows={12}
                             className="resize-y font-mono text-sm"
-                            placeholder={
-                                "এইড ফর মেন ফাউন্ডেশন কী করে…\n\nসেবা:\n- আইনি পরামর্শের জন্য প্যানেল আইনজীবী\n- …\n\nযোগাযোগ: …\nঅফিস সময়: …"
-                            }
+                            placeholder={t.briefPlaceholder}
                         />
                     )}
                 </Field>
 
                 <Field
-                    label="ব্রিফ (English)"
-                    helper="খালি রাখলে ইংরেজি সাইটেও উপরের বাংলা ব্রিফ ব্যবহার হবে।"
+                    label={t.briefEn}
+                    helper={t.briefEnHelper}
                 >
                     {(props) => (
                         <Textarea
@@ -181,11 +280,11 @@ export function ChatbotEditor({
             </Panel>
 
             <Panel
-                title="উপস্থাপনা"
-                description="চ্যাট উইন্ডোতে যা দেখা যাবে।"
+                title={t.presentationTitle}
+                description={t.presentationDescription}
             >
                 <BilingualField
-                    label="চ্যাটের নাম"
+                    label={t.botName}
                     required
                     value={form.bot_name}
                     onChange={set("bot_name")}
@@ -194,7 +293,7 @@ export function ChatbotEditor({
                 />
 
                 <BilingualField
-                    label="শুভেচ্ছা বার্তা"
+                    label={t.greeting}
                     required
                     multiline
                     rows={2}
@@ -205,7 +304,7 @@ export function ChatbotEditor({
                 />
 
                 <BilingualField
-                    label="দাবিত্যাগ"
+                    label={t.disclaimer}
                     required
                     multiline
                     rows={2}
@@ -213,22 +312,18 @@ export function ChatbotEditor({
                     onChange={set("disclaimer")}
                     valueEn={form.disclaimer_en}
                     onChangeEn={set("disclaimer_en")}
-                    helper="ইনপুট বক্সের নিচে দেখাবে, এবং চ্যাটকেও এটি মেনে চলতে বলা হয়।"
+                    helper={t.disclaimerHelper}
                 />
             </Panel>
 
             <Panel
-                title="কারিগরি"
-                description="খরচ ও মডেল নিয়ন্ত্রণ।"
+                title={t.technicalTitle}
+                description={t.technicalDescription}
             >
                 <div className="grid gap-5 sm:grid-cols-2">
                     <Field
-                        label="মডেল"
-                        helper={
-                            known
-                                ? `খরচ: ${known.price} প্রতি ১০ লক্ষ টোকেন (ইনপুট / আউটপুট)।`
-                                : "তালিকার বাইরের মডেল। আইডি সঠিক না হলে চ্যাট উত্তর দিতে পারবে না।"
-                        }
+                        label={t.model}
+                        helper={known ? t.modelCost(known.price) : t.modelUnknown}
                     >
                         {(props) => (
                             <select
@@ -249,10 +344,10 @@ export function ChatbotEditor({
                             >
                                 {chatModels.map((m) => (
                                     <option key={m.id} value={m.id}>
-                                        {m.label}
+                                        {locale === "en" ? m.labelEn : m.label}
                                     </option>
                                 ))}
-                                <option value={CUSTOM}>অন্য মডেল (নিজে লিখুন)…</option>
+                                <option value={CUSTOM}>{t.modelCustom}</option>
                             </select>
                         )}
                     </Field>
@@ -262,8 +357,8 @@ export function ChatbotEditor({
                         one released after this was written. */}
                     {custom && (
                         <Field
-                            label="মডেল আইডি"
-                            helper="Anthropic-এর ডকুমেন্টেশনে দেওয়া আইডি হুবহু লিখুন।"
+                            label={t.modelId}
+                            helper={t.modelIdHelper}
                         >
                             {(props) => (
                                 <Input
@@ -277,8 +372,8 @@ export function ChatbotEditor({
                     )}
 
                     <Field
-                        label="প্রতি আলোচনায় সর্বোচ্চ প্রশ্ন"
-                        helper="১–৫০। খরচ সীমিত রাখে।"
+                        label={t.maxTurns}
+                        helper={t.maxTurnsHelper}
                     >
                         {(props) => (
                             <Input
@@ -293,8 +388,8 @@ export function ChatbotEditor({
                     </Field>
 
                     <Field
-                        label="চ্যাট হিস্ট্রি রাখার সময়"
-                        helper="৭–৩৬৫ দিন। নতুন চ্যাট শুরু হলে মেয়াদ পেরোনো হিস্ট্রি স্বয়ংক্রিয়ভাবে মুছে যায়।"
+                        label={t.retention}
+                        helper={t.retentionHelper}
                     >
                         {(props) => (
                             <div className="relative">
@@ -308,7 +403,7 @@ export function ChatbotEditor({
                                     className="pr-14"
                                 />
                                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-500">
-                                    দিন
+                                    {t.days}
                                 </span>
                             </div>
                         )}
@@ -321,12 +416,12 @@ export function ChatbotEditor({
                     {pending ? (
                         <>
                             <Loader2 className="animate-spin" aria-hidden="true" />
-                            সংরক্ষণ হচ্ছে…
+                            {t.saving}
                         </>
                     ) : (
                         <>
                             <Save aria-hidden="true" />
-                            পরিবর্তন সংরক্ষণ করুন
+                            {t.save}
                         </>
                     )}
                 </Button>

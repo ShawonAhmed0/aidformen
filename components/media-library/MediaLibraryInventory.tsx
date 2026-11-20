@@ -1,16 +1,63 @@
 import { ExternalLink, Film, FolderOpen, ImageIcon } from "lucide-react";
 
+import type { AdminLocale } from "@/lib/i18n/admin";
+import { getAdminLocale } from "@/lib/i18n/admin-server";
 import {
   formatMediaBytes,
   mediaAssetFileName,
   type MediaAsset,
 } from "@/lib/types/media-library";
 
-function formatAdminDate(value: string): string {
+const intlLocales = { bn: "bn-BD", en: "en-GB" } as const;
+
+const copy = {
+  bn: {
+    images: "ছবি",
+    videos: "ভিডিও",
+    folders: "স্টোরেজ ফোল্ডার",
+    emptyTitle: "মিডিয়া ইনভেন্টরি এখন খালি",
+    emptyBody:
+      "নতুন ছবি বা ভিডিও আপলোড হলে এখানে স্বয়ংক্রিয়ভাবে দেখা যাবে। নতুন মাইগ্রেশন এখনো চালু না হলেও এই পেজ নিরাপদে খালি থাকবে।",
+    title: "স্বয়ংক্রিয় মিডিয়া ইনভেন্টরি",
+    description:
+      "এটি শুধু দেখার জন্য। ফাইলের তথ্য স্টোরেজ আপলোড, পরিবর্তন ও মুছে ফেলার সঙ্গে স্বয়ংক্রিয়ভাবে সমন্বয় হয়।",
+    caption: "কেন্দ্রীয় ছবি ও ভিডিও ইনভেন্টরির স্টোরেজ মেটাডাটা",
+    file: "ফাইল",
+    kind: "ধরন",
+    location: "বাকেট / ফোল্ডার",
+    size: "আকার",
+    updated: "সর্বশেষ পরিবর্তন",
+    open: "ফাইল খুলুন",
+    openFile: (name: string) => `ফাইল খুলুন: ${name}`,
+    kinds: { image: "ছবি", video: "ভিডিও" },
+  },
+  en: {
+    images: "Images",
+    videos: "Videos",
+    folders: "Storage folders",
+    emptyTitle: "The media inventory is empty",
+    emptyBody:
+      "New images and videos will appear here automatically once they are uploaded. If the new migration has not been run yet, this page simply stays empty.",
+    title: "Automatic media inventory",
+    description:
+      "This is read-only. File details stay in sync automatically as storage files are uploaded, changed or deleted.",
+    caption: "Storage metadata for the central image and video inventory",
+    file: "File",
+    kind: "Type",
+    location: "Bucket / folder",
+    size: "Size",
+    updated: "Last modified",
+    open: "Open file",
+    openFile: (name: string) => `Open file: ${name}`,
+    kinds: { image: "Image", video: "Video" },
+  },
+};
+
+function formatAdminDate(value: string, locale: AdminLocale): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
 
-  return new Intl.DateTimeFormat("bn-BD", {
+  return new Intl.DateTimeFormat(intlLocales[locale], {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "Asia/Dhaka",
@@ -20,10 +67,12 @@ function formatAdminDate(value: string): string {
 function Stat({
   label,
   count,
+  locale,
   icon,
 }: {
   label: string;
   count: number;
+  locale: AdminLocale;
   icon: React.ReactNode;
 }) {
   return (
@@ -35,7 +84,7 @@ function Stat({
         <div>
           <p className="text-sm text-ink-500">{label}</p>
           <p className="mt-0.5 text-2xl font-semibold tabular-nums text-ink-900">
-            {count.toLocaleString("bn-BD")}
+            {count.toLocaleString(intlLocales[locale])}
           </p>
         </div>
       </div>
@@ -43,7 +92,13 @@ function Stat({
   );
 }
 
-export function MediaLibraryInventory({ assets }: { assets: MediaAsset[] }) {
+export async function MediaLibraryInventory({
+  assets,
+}: {
+  assets: MediaAsset[];
+}) {
+  const locale = await getAdminLocale();
+  const t = copy[locale];
   const imageCount = assets.filter((asset) => asset.kind === "image").length;
   const videoCount = assets.length - imageCount;
   const folderCount = new Set(
@@ -54,18 +109,21 @@ export function MediaLibraryInventory({ assets }: { assets: MediaAsset[] }) {
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
         <Stat
-          label="ছবি"
+          label={t.images}
           count={imageCount}
+          locale={locale}
           icon={<ImageIcon className="size-5" aria-hidden="true" />}
         />
         <Stat
-          label="ভিডিও"
+          label={t.videos}
           count={videoCount}
+          locale={locale}
           icon={<Film className="size-5" aria-hidden="true" />}
         />
         <Stat
-          label="স্টোরেজ ফোল্ডার"
+          label={t.folders}
           count={folderCount}
+          locale={locale}
           icon={<FolderOpen className="size-5" aria-hidden="true" />}
         />
       </div>
@@ -74,49 +132,47 @@ export function MediaLibraryInventory({ assets }: { assets: MediaAsset[] }) {
         <div className="rounded-xl border border-dashed border-ink-300 bg-surface px-6 py-14 text-center">
           <FolderOpen className="mx-auto size-10 text-ink-400" aria-hidden="true" />
           <h2 className="mt-4 text-lg font-semibold text-ink-800">
-            মিডিয়া ইনভেন্টরি এখন খালি
+            {t.emptyTitle}
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-sm text-ink-500">
-            নতুন ছবি বা ভিডিও আপলোড হলে এখানে স্বয়ংক্রিয়ভাবে দেখা যাবে। নতুন
-            মাইগ্রেশন এখনো চালু না হলেও এই পেজ নিরাপদে খালি থাকবে।
+            {t.emptyBody}
           </p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-ink-200 bg-surface shadow-xs">
           <div className="border-b border-ink-200 px-5 py-4">
             <h2 className="text-base font-semibold text-ink-900">
-              স্বয়ংক্রিয় মিডিয়া ইনভেন্টরি
+              {t.title}
             </h2>
             <p className="mt-1 text-sm text-ink-500">
-              এটি শুধু দেখার জন্য। ফাইলের তথ্য স্টোরেজ আপলোড, পরিবর্তন ও মুছে
-              ফেলার সঙ্গে স্বয়ংক্রিয়ভাবে সমন্বয় হয়।
+              {t.description}
             </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-4xl text-left text-sm">
               <caption className="sr-only">
-                কেন্দ্রীয় ছবি ও ভিডিও ইনভেন্টরির স্টোরেজ মেটাডাটা
+                {t.caption}
               </caption>
               <thead className="bg-surface-sunken text-xs font-semibold uppercase text-ink-500">
                 <tr>
                   <th scope="col" className="px-5 py-3">
-                    ফাইল
+                    {t.file}
                   </th>
                   <th scope="col" className="px-5 py-3">
-                    ধরন
+                    {t.kind}
                   </th>
                   <th scope="col" className="px-5 py-3">
-                    বাকেট / ফোল্ডার
+                    {t.location}
                   </th>
                   <th scope="col" className="px-5 py-3">
-                    আকার
+                    {t.size}
                   </th>
                   <th scope="col" className="px-5 py-3">
-                    সর্বশেষ পরিবর্তন
+                    {t.updated}
                   </th>
                   <th scope="col" className="px-5 py-3">
-                    <span className="sr-only">ফাইল খুলুন</span>
+                    <span className="sr-only">{t.open}</span>
                   </th>
                 </tr>
               </thead>
@@ -146,7 +202,9 @@ export function MediaLibraryInventory({ assets }: { assets: MediaAsset[] }) {
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="capitalize text-ink-700">{asset.kind}</span>
+                        <span className="capitalize text-ink-700">
+                          {t.kinds[asset.kind] ?? asset.kind}
+                        </span>
                         <span className="mt-1 block whitespace-nowrap font-mono text-xs text-ink-500">
                           {asset.mime_type}
                         </span>
@@ -162,7 +220,7 @@ export function MediaLibraryInventory({ assets }: { assets: MediaAsset[] }) {
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 text-ink-600">
                         <time dateTime={asset.updated_at}>
-                          {formatAdminDate(asset.updated_at)}
+                          {formatAdminDate(asset.updated_at, locale)}
                         </time>
                       </td>
                       <td className="px-5 py-4 text-right">
@@ -170,7 +228,7 @@ export function MediaLibraryInventory({ assets }: { assets: MediaAsset[] }) {
                           href={asset.public_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          aria-label={`ফাইল খুলুন: ${fileName}`}
+                          aria-label={t.openFile(fileName)}
                           className="inline-flex size-9 items-center justify-center rounded-lg text-brand-700 transition-ui hover:bg-brand-50 hover:text-brand-900"
                         >
                           <ExternalLink className="size-4" aria-hidden="true" />

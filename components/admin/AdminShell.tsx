@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
+import type { AdminLocale } from "@/lib/i18n/admin";
+import { AdminLocaleProvider } from "./AdminLocale";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminHeader } from "./AdminHeader";
 
@@ -15,6 +17,8 @@ type AdminShellProps = {
     /** Organisation name from site_settings, shown as the sidebar brand. */
     orgName: string;
     canManageAdmins: boolean;
+    /** Interface language, read from the cookie on the server. */
+    locale: AdminLocale;
     children: React.ReactNode;
 };
 
@@ -26,7 +30,13 @@ type AdminShellProps = {
  * collapsing the sidebar to 72px left a 188px gap, and on phones the fixed
  * 260px rail pushed all content off-screen with no way to reach it.
  */
-export function AdminShell({ user, orgName, canManageAdmins, children }: AdminShellProps) {
+export function AdminShell({
+    user,
+    orgName,
+    canManageAdmins,
+    locale,
+    children,
+}: AdminShellProps) {
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const pathname = usePathname();
@@ -57,6 +67,7 @@ export function AdminShell({ user, orgName, canManageAdmins, children }: AdminSh
     }, [mobileOpen]);
 
     return (
+        <AdminLocaleProvider locale={locale}>
         <div
             className="min-h-dvh bg-surface-sunken"
             style={
@@ -95,5 +106,6 @@ export function AdminShell({ user, orgName, canManageAdmins, children }: AdminSh
                 <main className="flex-1 p-5 sm:p-6 lg:p-8">{children}</main>
             </div>
         </div>
+        </AdminLocaleProvider>
     );
 }

@@ -3,17 +3,36 @@ import { FaYoutube } from "react-icons/fa6";
 
 import { getAllVideos } from "@/lib/content/queries";
 import { youtubeChannel } from "@/lib/content/youtube";
+import { getAdminLocale } from "@/lib/i18n/admin-server";
 import { VideosManager } from "@/components/admin/VideosManager";
 
+const copy = {
+    bn: {
+        title: "ভিডিও",
+        intro: "হোমপেজের মিডিয়া অংশের বিকল্প ভিডিও তালিকা।",
+        noticeTitle: "হোমপেজ এখন সরাসরি ইউটিউব চ্যানেল থেকে ভিডিও দেখায়",
+        noticeBody:
+            "চ্যানেলে নতুন ভিডিও আপলোড করলে এক ঘণ্টার মধ্যে হোমপেজে নিজে থেকেই চলে আসে — এখানে কিছু করতে হবে না। নিচের তালিকাটি শুধু তখনই দেখা যায়, যখন কোনো কারণে ইউটিউবের সঙ্গে যোগাযোগ করা যায় না।",
+    },
+    en: {
+        title: "Videos",
+        intro: "The fallback video list for the homepage media section.",
+        noticeTitle: "The homepage now shows videos straight from the YouTube channel",
+        noticeBody:
+            "A new upload to the channel appears on the homepage by itself within an hour — nothing needs doing here. The list below is shown only when YouTube cannot be reached for some reason.",
+    },
+};
+
 export default async function AdminVideosPage() {
-    const videos = await getAllVideos();
+    const [videos, locale] = await Promise.all([getAllVideos(), getAdminLocale()]);
+    const t = copy[locale];
 
     return (
         <div className="mx-auto max-w-5xl space-y-6">
             <div>
-                <h1 className="text-2xl tracking-tight text-ink-900">ভিডিও</h1>
+                <h1 className="text-2xl tracking-tight text-ink-900">{t.title}</h1>
                 <p className="mt-1.5 text-sm text-ink-500">
-                    হোমপেজের মিডিয়া অংশের বিকল্প ভিডিও তালিকা।
+                    {t.intro}
                 </p>
             </div>
 
@@ -25,13 +44,9 @@ export default async function AdminVideosPage() {
                 </span>
                 <div className="min-w-0 flex-1 text-sm text-ink-700">
                     <p className="font-semibold text-ink-900">
-                        হোমপেজ এখন সরাসরি ইউটিউব চ্যানেল থেকে ভিডিও দেখায়
+                        {t.noticeTitle}
                     </p>
-                    <p className="mt-1">
-                        চ্যানেলে নতুন ভিডিও আপলোড করলে এক ঘণ্টার মধ্যে হোমপেজে নিজে থেকেই চলে আসে —
-                        এখানে কিছু করতে হবে না। নিচের তালিকাটি শুধু তখনই দেখা যায়, যখন কোনো কারণে
-                        ইউটিউবের সঙ্গে যোগাযোগ করা যায় না।
-                    </p>
+                    <p className="mt-1">{t.noticeBody}</p>
                     <a
                         href={youtubeChannel.url}
                         target="_blank"

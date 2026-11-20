@@ -104,7 +104,9 @@ function ImageCollection({
                     src={asset.public_url}
                     alt={`${labels.imageAltPrefix}: ${fileName}`}
                     fill
-                    unoptimized
+                    // Optimised: these are originals of any size, and a grid of
+                    // them at full resolution cost visitors tens of megabytes.
+                    // The card itself still links to the original file.
                     sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                   />

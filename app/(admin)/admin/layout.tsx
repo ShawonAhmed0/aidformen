@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { getSiteSettings } from '@/lib/content/queries'
+import { getAdminLocale } from '@/lib/i18n/admin-server'
 
 export default async function AdminLayout({
     children,
@@ -23,7 +24,7 @@ export default async function AdminLayout({
 
     // Sidebar branding comes from site_settings so renaming the organisation in
     // /admin/settings updates the admin chrome too.
-    const settings = await getSiteSettings()
+    const [settings, locale] = await Promise.all([getSiteSettings(), getAdminLocale()])
 
     return (
         <AdminShell
@@ -34,6 +35,7 @@ export default async function AdminLayout({
             }}
             orgName={settings?.organisation_name?.trim() || 'এইড ফর মেন'}
             canManageAdmins={profile.can_manage_admins === true}
+            locale={locale}
         >
             {children}
         </AdminShell>

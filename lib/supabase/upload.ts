@@ -1,8 +1,9 @@
 import { createClient } from "./client";
+import { prepareImageForUpload } from "@/lib/images/prepare-upload";
 import { mediaFolders, type MediaFolder } from "@/lib/types/media";
 
 /**
- * Browser-to-storage upload, used by the archive editors.
+ * Browser-to-storage upload, used by every admin uploader.
  *
  * Deliberately NOT a server action like `uploadImage` in lib/actions/media.ts.
  * A Server Action request body is capped at 1MB by default, which a gallery of
@@ -40,6 +41,12 @@ export const ARCHIVE_DOCUMENT_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
+/**
+ * What may be picked. Photos are shrunk in the browser before upload
+ * (lib/images/prepare-upload.ts), so this only screens out files too big to
+ * decode comfortably on a phone; MAX_IMAGE_BYTES is what may be stored.
+ */
+export const MAX_SOURCE_IMAGE_BYTES = 40 * 1024 * 1024;
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 /** Supabase's free-tier per-file ceiling, so accepting more would only fail later. */
 export const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
@@ -86,8 +93,8 @@ export function describeArchiveFileError(file: File): string | null {
     return "শুধু ছবি, ভিডিও অথবা অডিও (MP3, M4A, OGG, WAV) দেওয়া যাবে।";
   }
 
-  if (isImage && file.size > MAX_IMAGE_BYTES) {
-    return "ছবির আকার ৮ মেগাবাইটের কম হতে হবে।";
+  if (isImage && file.size > MAX_SOURCE_IMAGE_BYTES) {
+    return "ছবির আকার ৪০ মেগাবাইটের কম হতে হবে।";
   }
 
   if (isVideo && file.size > MAX_VIDEO_BYTES) {
@@ -109,11 +116,22 @@ export function describeArchiveFileError(file: File): string | null {
  * reusing it risks one editor overwriting another's upload.
  */
 export async function uploadToMedia(
-  file: File,
+  picked: File,
   folder: MediaFolder
 ): Promise<UploadResult> {
-  const invalid = describeArchiveFileError(file);
+  const invalid = describeArchiveFileError(picked);
   if (invalid) return { ok: false, error: invalid };
+
+  // Every photo goes up resized and re-encoded, whichever editor sent it.
+  const file = ARCHIVE_IMAGE_TYPES.includes(picked.type)
+    ? await prepareImageForUpload(picked)
+    : picked;
+  if (ARCHIVE_IMAGE_TYPES.includes(file.type) && file.size > MAX_IMAGE_BYTES) {
+    return {
+      ok: false,
+      error: "ছবিটি যথেষ্ট ছোট করা যায়নি। JPG বা PNG হিসেবে আবার চেষ্টা করুন।",
+    };
+  }
 
   if (!(mediaFolders as readonly string[]).includes(folder)) {
     return { ok: false, error: "আপলোড ফোল্ডারটি অনুমোদিত নয়।" };

@@ -60,6 +60,7 @@ export const chatModels = [
   {
     id: "claude-haiku-4-5",
     label: "Haiku 4.5 — সবচেয়ে সাশ্রয়ী",
+    labelEn: "Haiku 4.5 — most economical",
     price: "$1 / $5",
     supportsEffort: false,
     // Omitted rather than "disabled": this generation has no thinking unless
@@ -70,6 +71,7 @@ export const chatModels = [
   {
     id: "claude-sonnet-5",
     label: "Sonnet 5 — ভারসাম্যপূর্ণ",
+    labelEn: "Sonnet 5 — balanced",
     price: "$3 / $15",
     supportsEffort: true,
     thinking: "disabled",
@@ -78,6 +80,7 @@ export const chatModels = [
   {
     id: "claude-opus-5",
     label: "Opus 5 — সবচেয়ে সক্ষম",
+    labelEn: "Opus 5 — most capable",
     price: "$5 / $25",
     supportsEffort: true,
     thinking: "disabled",

@@ -6,6 +6,7 @@ import { Languages } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useAdminLocale } from "./AdminLocale";
 
 type BilingualFieldProps = {
     label: string;
@@ -21,6 +22,19 @@ type BilingualFieldProps = {
     placeholder?: string;
     helper?: string;
     className?: string;
+};
+
+const copy = {
+    bn: {
+        languageTabs: (label: string) => `${label} — ভাষা`,
+        englishPlaceholder: "ইংরেজি অনুবাদ (ঐচ্ছিক)",
+        fallbackNote: "খালি রাখলে ইংরেজি সাইটে বাংলা লেখাটিই দেখাবে।",
+    },
+    en: {
+        languageTabs: (label: string) => `${label} — language`,
+        englishPlaceholder: "English translation (optional)",
+        fallbackNote: "If left empty, the English site shows the Bengali text.",
+    },
 };
 
 /**
@@ -44,6 +58,7 @@ export function BilingualField({
     helper,
     className,
 }: BilingualFieldProps) {
+    const t = copy[useAdminLocale()];
     const [lang, setLang] = useState<"bn" | "en">("bn");
     const id = useId();
     const fieldId = `${id}-${lang}`;
@@ -71,7 +86,7 @@ export function BilingualField({
 
                 <div
                     role="tablist"
-                    aria-label={`${label} — ভাষা`}
+                    aria-label={t.languageTabs(label)}
                     className="flex items-center gap-0.5 rounded-lg bg-ink-100 p-0.5"
                 >
                     {(
@@ -122,9 +137,7 @@ export function BilingualField({
                 onChange={(e: React.ChangeEvent<HTMLInputElement & HTMLTextAreaElement>) =>
                     setCurrent(e.target.value)
                 }
-                placeholder={
-                    isBn ? placeholder : "ইংরেজি অনুবাদ (ঐচ্ছিক)"
-                }
+                placeholder={isBn ? placeholder : t.englishPlaceholder}
                 className={multiline ? "resize-y" : undefined}
             />
 
@@ -133,7 +146,7 @@ export function BilingualField({
                 : !valueEn.trim() && (
                       <p className="flex items-center gap-1.5 text-xs text-ink-500">
                           <Languages className="size-3.5" aria-hidden="true" />
-                          খালি রাখলে ইংরেজি সাইটে বাংলা লেখাটিই দেখাবে।
+                          {t.fallbackNote}
                       </p>
                   )}
         </div>

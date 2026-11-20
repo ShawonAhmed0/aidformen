@@ -11,14 +11,81 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { BilingualField } from "./BilingualField";
 import { MediaField } from "./MediaField";
+import { useAdminLocale } from "./AdminLocale";
 import { heroPrimaryLabel } from "@/lib/content/hero-labels";
 import type { HeroContent } from "@/lib/types/content";
 
 const s = (v: string | null | undefined) => v ?? "";
 
+const copy = {
+    bn: {
+        saved: "হিরো সেকশন সংরক্ষণ হয়েছে।",
+        textHeading: "লেখা",
+        textIntro: "হোমপেজের একদম উপরের অংশে যা দেখা যায়।",
+        eyebrowLabel: "ছোট শিরোনাম (eyebrow)",
+        eyebrowPlaceholder: "যেমন: আমাদের লক্ষ্য",
+        eyebrowHelper: "ঐচ্ছিক। মূল শিরোনামের ঠিক উপরে ছোট করে দেখাবে।",
+        titleLabel: "মূল শিরোনাম",
+        titlePlaceholder: "হিরো সেকশনের শিরোনাম",
+        descriptionLabel: "বিবরণ",
+        descriptionPlaceholder: "সংক্ষেপে সংগঠনের পরিচয়",
+        buttonsHeading: "বোতাম",
+        linkHintBefore: "লিঙ্ক হিসেবে",
+        linkHintAfter: "এর মতো ভেতরের ঠিকানা অথবা সম্পূর্ণ URL দিন।",
+        primaryLabel: "প্রথম বোতামের লেখা",
+        primaryHref: "প্রথম বোতামের লিঙ্ক",
+        secondaryLabel: "দ্বিতীয় বোতামের লেখা",
+        secondaryHref: "দ্বিতীয় বোতামের লিঙ্ক",
+        audioHeading: "হোমপেজ পরিচিতি অডিও",
+        audioIntro:
+            "হিরোর পরের “আমাদের সম্পর্কে” অংশে দর্শনার্থীরা এই রেকর্ডিংটি শুনতে পারবেন।",
+        builtInLead: "এখন সাইটে নিজস্ব দুটি রেকর্ডিং বাজছে —",
+        builtInBengali: "বাংলা",
+        builtInAnd: "ও",
+        builtInEnglish: "ইংরেজি",
+        builtInTail: "। এখানে নতুন অডিও আপলোড করলে দুই ভাষার পাতাতেই সেটি বাজবে।",
+        audioLabel: "পরিচিতি অডিও",
+        audioHelper: "MP3, M4A, OGG বা WAV · সর্বোচ্চ ২৫ MB",
+        saving: "সংরক্ষণ হচ্ছে…",
+        save: "পরিবর্তন সংরক্ষণ করুন",
+    },
+    en: {
+        saved: "Hero section saved.",
+        textHeading: "Text",
+        textIntro: "What appears at the very top of the homepage.",
+        eyebrowLabel: "Eyebrow (small heading)",
+        eyebrowPlaceholder: "e.g. Our mission",
+        eyebrowHelper: "Optional. Shown small, just above the main heading.",
+        titleLabel: "Main heading",
+        titlePlaceholder: "Hero section heading",
+        descriptionLabel: "Description",
+        descriptionPlaceholder: "A short introduction to the organisation",
+        buttonsHeading: "Buttons",
+        linkHintBefore: "For a link, enter an internal path like",
+        linkHintAfter: "or a full URL.",
+        primaryLabel: "First button text",
+        primaryHref: "First button link",
+        secondaryLabel: "Second button text",
+        secondaryHref: "Second button link",
+        audioHeading: "Homepage introduction audio",
+        audioIntro:
+            "Visitors can listen to this recording in the “About us” section just after the hero.",
+        builtInLead: "The site is currently playing its two built-in recordings —",
+        builtInBengali: "Bengali",
+        builtInAnd: "and",
+        builtInEnglish: "English",
+        builtInTail: ". Uploading new audio here plays it on both language versions.",
+        audioLabel: "Introduction audio",
+        audioHelper: "MP3, M4A, OGG or WAV · up to 25 MB",
+        saving: "Saving…",
+        save: "Save changes",
+    },
+};
+
 export function HeroEditor({ hero }: { hero: HeroContent | null }) {
     const router = useRouter();
     const [pending, startTransition] = useTransition();
+    const t = copy[useAdminLocale()];
 
     const [form, setForm] = useState({
         about_audio_url: s(hero?.about_audio_url),
@@ -58,7 +125,7 @@ export function HeroEditor({ hero }: { hero: HeroContent | null }) {
                 return;
             }
 
-            toast.success("হিরো সেকশন সংরক্ষণ হয়েছে।");
+            toast.success(t.saved);
             router.refresh();
         });
     };
@@ -66,63 +133,63 @@ export function HeroEditor({ hero }: { hero: HeroContent | null }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-5">
             <div className="rounded-xl border border-ink-200 bg-surface p-6 shadow-xs">
-                <h2 className="text-base font-semibold text-ink-900">লেখা</h2>
+                <h2 className="text-base font-semibold text-ink-900">{t.textHeading}</h2>
                 <p className="mt-1 text-sm text-ink-500">
-                    হোমপেজের একদম উপরের অংশে যা দেখা যায়।
+                    {t.textIntro}
                 </p>
 
                 <div className="mt-6 space-y-5">
                     <BilingualField
-                        label="ছোট শিরোনাম (eyebrow)"
+                        label={t.eyebrowLabel}
                         value={form.eyebrow}
                         onChange={set("eyebrow")}
                         valueEn={form.eyebrow_en}
                         onChangeEn={set("eyebrow_en")}
-                        placeholder="যেমন: আমাদের লক্ষ্য"
-                        helper="ঐচ্ছিক। মূল শিরোনামের ঠিক উপরে ছোট করে দেখাবে।"
+                        placeholder={t.eyebrowPlaceholder}
+                        helper={t.eyebrowHelper}
                     />
 
                     <BilingualField
-                        label="মূল শিরোনাম"
+                        label={t.titleLabel}
                         required
                         value={form.title}
                         onChange={set("title")}
                         valueEn={form.title_en}
                         onChangeEn={set("title_en")}
-                        placeholder="হিরো সেকশনের শিরোনাম"
+                        placeholder={t.titlePlaceholder}
                     />
 
                     <BilingualField
-                        label="বিবরণ"
+                        label={t.descriptionLabel}
                         multiline
                         rows={4}
                         value={form.description}
                         onChange={set("description")}
                         valueEn={form.description_en}
                         onChangeEn={set("description_en")}
-                        placeholder="সংক্ষেপে সংগঠনের পরিচয়"
+                        placeholder={t.descriptionPlaceholder}
                     />
                 </div>
             </div>
 
             <div className="rounded-xl border border-ink-200 bg-surface p-6 shadow-xs">
-                <h2 className="text-base font-semibold text-ink-900">বোতাম</h2>
+                <h2 className="text-base font-semibold text-ink-900">{t.buttonsHeading}</h2>
                 <p className="mt-1 text-sm text-ink-500">
-                    লিঙ্ক হিসেবে <code className="text-xs">/about</code> এর মতো
-                    ভেতরের ঠিকানা অথবা সম্পূর্ণ URL দিন।
+                    {t.linkHintBefore} <code className="text-xs">/about</code>{" "}
+                    {t.linkHintAfter}
                 </p>
 
                 <div className="mt-6 grid gap-5 lg:grid-cols-2">
                     <div className="space-y-5">
                         <BilingualField
-                            label="প্রথম বোতামের লেখা"
+                            label={t.primaryLabel}
                             value={form.primary_cta_label}
                             onChange={set("primary_cta_label")}
                             valueEn={form.primary_cta_label_en}
                             onChangeEn={set("primary_cta_label_en")}
                         />
 
-                        <Field label="প্রথম বোতামের লিঙ্ক">
+                        <Field label={t.primaryHref}>
                             {(props) => (
                                 <Input
                                     {...props}
@@ -138,14 +205,14 @@ export function HeroEditor({ hero }: { hero: HeroContent | null }) {
 
                     <div className="space-y-5">
                         <BilingualField
-                            label="দ্বিতীয় বোতামের লেখা"
+                            label={t.secondaryLabel}
                             value={form.secondary_cta_label}
                             onChange={set("secondary_cta_label")}
                             valueEn={form.secondary_cta_label_en}
                             onChangeEn={set("secondary_cta_label_en")}
                         />
 
-                        <Field label="দ্বিতীয় বোতামের লিঙ্ক">
+                        <Field label={t.secondaryHref}>
                             {(props) => (
                                 <Input
                                     {...props}
@@ -163,42 +230,41 @@ export function HeroEditor({ hero }: { hero: HeroContent | null }) {
 
             <div className="rounded-xl border border-ink-200 bg-surface p-6 shadow-xs">
                 <h2 className="text-base font-semibold text-ink-900">
-                    হোমপেজ পরিচিতি অডিও
+                    {t.audioHeading}
                 </h2>
                 <p className="mt-1 text-sm text-ink-500">
-                    হিরোর পরের “আমাদের সম্পর্কে” অংশে দর্শনার্থীরা এই রেকর্ডিংটি
-                    শুনতে পারবেন।
+                    {t.audioIntro}
                 </p>
                 {/* The field below is empty by default, yet the homepage plays
                     audio: the two built-in recordings. Say so, or an editor
                     reasonably concludes the player is unlinked. */}
                 {!form.about_audio_url && (
                     <p className="mt-3 rounded-lg bg-surface-sunken px-3 py-2 text-sm text-ink-600">
-                        এখন সাইটে নিজস্ব দুটি রেকর্ডিং বাজছে —{" "}
+                        {t.builtInLead}{" "}
                         <a
                             href="/audio/about-bn.mp3"
                             target="_blank"
                             className="font-medium text-brand-700 underline underline-offset-2"
                         >
-                            বাংলা
+                            {t.builtInBengali}
                         </a>{" "}
-                        ও{" "}
+                        {t.builtInAnd}{" "}
                         <a
                             href="/audio/about-en.mp3"
                             target="_blank"
                             className="font-medium text-brand-700 underline underline-offset-2"
                         >
-                            ইংরেজি
+                            {t.builtInEnglish}
                         </a>
-                        । এখানে নতুন অডিও আপলোড করলে দুই ভাষার পাতাতেই সেটি বাজবে।
+                        {t.builtInTail}
                     </p>
                 )}
 
                 <MediaField
                     accept="audio"
                     folder="audio"
-                    label="পরিচিতি অডিও"
-                    helper="MP3, M4A, OGG বা WAV · সর্বোচ্চ ২৫ MB"
+                    label={t.audioLabel}
+                    helper={t.audioHelper}
                     className="mt-6"
                     value={form.about_audio_url || null}
                     onChange={(url) =>
@@ -216,12 +282,12 @@ export function HeroEditor({ hero }: { hero: HeroContent | null }) {
                     {pending ? (
                         <>
                             <Loader2 className="animate-spin" aria-hidden="true" />
-                            সংরক্ষণ হচ্ছে…
+                            {t.saving}
                         </>
                     ) : (
                         <>
                             <Save aria-hidden="true" />
-                            পরিবর্তন সংরক্ষণ করুন
+                            {t.save}
                         </>
                     )}
                 </Button>

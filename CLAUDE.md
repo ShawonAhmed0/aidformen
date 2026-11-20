@@ -130,6 +130,30 @@ the archive editors) uploads **browser-direct to Supabase Storage** via
 `lib/supabase/upload.ts`; the `media_admin_insert` storage policy is what
 authorises the write. Don't reintroduce a server-side upload action.
 
+Photos are **shrunk in the browser first** (`lib/images/prepare-upload.ts`,
+called inside `uploadToMedia`): long edge capped at 2560px, re-encoded as WebP
+(JPEG/PNG where Safari can't encode WebP), aspect ratio kept, EXIF — including
+GPS — dropped. Editors may pick up to 40 MB; what is stored stays under 8 MB.
+Public `next/image` tags only set `unoptimized` for URLs outside our storage
+(`isOwnStorageUrl`).
+
+## Admin interface language
+
+The admin has its own বাংলা / EN switch (header), separate from the public
+locale: cookie `ADMIN_LOCALE`, default `bn`.
+
+- Client editors: `const t = copy[useAdminLocale()]` (`components/admin/AdminLocale.tsx`)
+  with a module-level `copy = { bn: {…}, en: {…} }` beside the component — see
+  `AdminHeader.tsx`. Server pages: `await getAdminLocale()`
+  (`lib/i18n/admin-server.ts`).
+- Every admin string goes in both languages. Error strings returned by server
+  actions are still Bengali-only.
+
+`ArchiveManager` (Media Center / Research posts) is deliberately small: the
+slug, section and presentation kind are derived on save, and fields it no
+longer shows (event notices, press-release text) are carried through untouched
+so saving an older entry never erases them.
+
 ## Server actions
 
 Every mutation lives in `lib/actions/`, is gated, and returns one shape:

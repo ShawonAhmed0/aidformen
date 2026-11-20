@@ -7,25 +7,64 @@ import {
     UserRound,
 } from "lucide-react";
 
+import { getAdminLocale } from "@/lib/i18n/admin-server";
+import type { AdminLocale } from "@/lib/i18n/admin";
 import type { ChatConversation } from "@/lib/types/chatbot";
 import { cn } from "@/lib/utils";
 
-const dateTime = new Intl.DateTimeFormat("bn-BD", {
+const copy = {
+    bn: {
+        heading: "কথোপকথনের হিস্ট্রি",
+        intro: (count: number) =>
+            `সাম্প্রতিক ${count}টি সেশন। শুধু অ্যাডমিনরা এই তথ্য দেখতে পারেন।`,
+        sessions: (count: number) => `${count} সেশন`,
+        emptyTitle: "এখনো কোনো কথোপকথন সংরক্ষিত হয়নি",
+        emptyBody: "নতুন চ্যাট সম্পন্ন হলে সংক্ষিপ্তসার ও পুরো কথোপকথন এখানে দেখা যাবে।",
+        noSummary: "কথোপকথনের সংক্ষিপ্তসার পাওয়া যায়নি।",
+        messages: (count: number) => `${count} বার্তা`,
+        noMessages: "এই সেশনে এখনো সম্পূর্ণ বার্তা সংরক্ষিত হয়নি।",
+        visitor: "দর্শনার্থী",
+        assistant: "সহায়ক",
+    },
+    en: {
+        heading: "Conversation history",
+        intro: (count: number) =>
+            `The ${count} most recent ${count === 1 ? "session" : "sessions"}. Only admins can see this information.`,
+        sessions: (count: number) => `${count} ${count === 1 ? "session" : "sessions"}`,
+        emptyTitle: "No conversations have been saved yet",
+        emptyBody: "Once a new chat finishes, its summary and full conversation appear here.",
+        noSummary: "No summary is available for this conversation.",
+        messages: (count: number) => `${count} ${count === 1 ? "message" : "messages"}`,
+        noMessages: "No complete messages have been saved for this session yet.",
+        visitor: "Visitor",
+        assistant: "Assistant",
+    },
+};
+
+const dateTimeOptions: Intl.DateTimeFormatOptions = {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "Asia/Dhaka",
-});
+};
 
-function formatDate(value: string) {
+const dateTime: Record<AdminLocale, Intl.DateTimeFormat> = {
+    bn: new Intl.DateTimeFormat("bn-BD", dateTimeOptions),
+    en: new Intl.DateTimeFormat("en-GB", dateTimeOptions),
+};
+
+function formatDate(value: string, locale: AdminLocale) {
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : dateTime.format(date);
+    return Number.isNaN(date.getTime()) ? value : dateTime[locale].format(date);
 }
 
-export function ChatHistory({
+export async function ChatHistory({
     conversations,
 }: {
     conversations: ChatConversation[];
 }) {
+    const locale = await getAdminLocale();
+    const t = copy[locale];
+
     return (
         <section
             aria-labelledby="chat-history-heading"
@@ -38,15 +77,15 @@ export function ChatHistory({
                             <History className="size-4.5" aria-hidden="true" />
                         </span>
                         <h2 id="chat-history-heading" className="text-base font-semibold text-ink-900">
-                            কথোপকথনের হিস্ট্রি
+                            {t.heading}
                         </h2>
                     </div>
                     <p className="mt-2 text-sm text-ink-500">
-                        সাম্প্রতিক {conversations.length}টি সেশন। শুধু অ্যাডমিনরা এই তথ্য দেখতে পারেন।
+                        {t.intro(conversations.length)}
                     </p>
                 </div>
                 <span className="w-fit rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-800">
-                    {conversations.length} সেশন
+                    {t.sessions(conversations.length)}
                 </span>
             </div>
 
@@ -54,10 +93,10 @@ export function ChatHistory({
                 <div className="px-6 py-10 text-center">
                     <MessageSquareText className="mx-auto size-8 text-ink-300" aria-hidden="true" />
                     <p className="mt-3 text-sm font-medium text-ink-700">
-                        এখনো কোনো কথোপকথন সংরক্ষিত হয়নি
+                        {t.emptyTitle}
                     </p>
                     <p className="mt-1 text-xs text-ink-500">
-                        নতুন চ্যাট সম্পন্ন হলে সংক্ষিপ্তসার ও পুরো কথোপকথন এখানে দেখা যাবে।
+                        {t.emptyBody}
                     </p>
                 </div>
             ) : (
@@ -79,7 +118,7 @@ export function ChatHistory({
                                             </span>
                                         </div>
                                         <p className="mt-1 line-clamp-2 text-sm leading-5 text-ink-600">
-                                            {conversation.summary || "কথোপকথনের সংক্ষিপ্তসার পাওয়া যায়নি।"}
+                                            {conversation.summary || t.noSummary}
                                         </p>
                                         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-500">
                                             <span className="inline-flex items-center gap-1.5">
@@ -91,9 +130,9 @@ export function ChatHistory({
                                                 className="inline-flex items-center gap-1.5"
                                             >
                                                 <CalendarClock className="size-3.5" aria-hidden="true" />
-                                                {formatDate(conversation.updated_at)}
+                                                {formatDate(conversation.updated_at, locale)}
                                             </time>
-                                            <span>{conversation.message_count} বার্তা</span>
+                                            <span>{t.messages(conversation.message_count)}</span>
                                         </div>
                                     </div>
                                     <ChevronDown
@@ -107,7 +146,7 @@ export function ChatHistory({
                                 <div className="mx-auto max-w-2xl space-y-3">
                                     {conversation.messages.length === 0 ? (
                                         <p className="text-center text-sm text-ink-500">
-                                            এই সেশনে এখনো সম্পূর্ণ বার্তা সংরক্ষিত হয়নি।
+                                            {t.noMessages}
                                         </p>
                                     ) : (
                                         conversation.messages.map((message) => (
@@ -129,7 +168,7 @@ export function ChatHistory({
                                                     )}
                                                 >
                                                     <p className="mb-1 text-2xs font-semibold opacity-65">
-                                                        {message.role === "user" ? "দর্শনার্থী" : "সহায়ক"}
+                                                        {message.role === "user" ? t.visitor : t.assistant}
                                                     </p>
                                                     <p className="whitespace-pre-wrap break-words">
                                                         {message.content}
@@ -138,7 +177,7 @@ export function ChatHistory({
                                                         dateTime={message.created_at}
                                                         className="mt-1.5 block text-2xs opacity-55"
                                                     >
-                                                        {formatDate(message.created_at)}
+                                                        {formatDate(message.created_at, locale)}
                                                     </time>
                                                 </div>
                                             </div>
