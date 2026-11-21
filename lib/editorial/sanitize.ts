@@ -2,6 +2,7 @@ import "server-only";
 
 import sanitizeHtml from "sanitize-html";
 
+import { breakableSpaces } from "./spaces";
 import { safeEditorialUrl, safeVideoEmbedUrl } from "./urls";
 
 const COLOR = /^(?:#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%]+\)|[a-z]{3,20})$/i;
@@ -50,7 +51,8 @@ function cleanDimensions(
  * public HTML is mounted.
  */
 export function sanitizeEditorialHtml(source: string): string {
-  return sanitizeHtml(source, {
+  // breakableSpaces also repairs rows saved before the editor did it itself.
+  return breakableSpaces(sanitizeHtml(source, {
     allowedTags: [
       "p",
       "br",
@@ -296,7 +298,7 @@ export function sanitizeEditorialHtml(source: string): string {
     },
     exclusiveFilter: (frame) =>
       frame.tag === "iframe" && !frame.attribs.src,
-  }).trim();
+  })).trim();
 }
 
 export function sanitizeOptionalEditorialHtml(source: string | null): string | null {

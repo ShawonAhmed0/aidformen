@@ -23,6 +23,7 @@ import {
 
 import { Textarea } from "@/components/ui/textarea";
 import { legacyMarkdownToHtml } from "@/lib/editorial/legacy";
+import { breakableSpaces } from "@/lib/editorial/spaces";
 import { safeEditorialUrl, safeVideoEmbedUrl } from "@/lib/editorial/urls";
 import {
   ARCHIVE_IMAGE_TYPES,
@@ -176,7 +177,8 @@ function editorHtml(quill: QuillType): string {
   // Quill 2 turns its internal list representation into semantic UL/OL here,
   // and table-better supplies semantic HTML for its custom table blots.
   const template = document.createElement("template");
-  template.innerHTML = quill.getSemanticHTML();
+  // getSemanticHTML() writes every space as &nbsp; (see breakableSpaces).
+  template.innerHTML = breakableSpaces(quill.getSemanticHTML());
   template.content
     .querySelectorAll(".ql-table-temporary")
     .forEach((node) => node.remove());
