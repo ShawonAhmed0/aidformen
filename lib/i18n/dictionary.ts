@@ -263,7 +263,7 @@ const bn = {
     nameError: "২–১০০ অক্ষরের মধ্যে আপনার নাম লিখুন।",
     phoneError: "সঠিক ১১ সংখ্যার বাংলাদেশি মোবাইল নম্বর লিখুন।",
     privacyNotice:
-      "সহায়তার মান যাচাইয়ের জন্য আপনার নাম, নম্বর ও কথোপকথন শুধু অনুমোদিত অ্যাডমিন দেখতে পারবেন।",
+      "আপনাকে সহায়তা দিতে এবং কোন সমস্যা বেশি আসছে তা বুঝতে আপনার নাম, নম্বর ও কথোপকথন শুধু অনুমোদিত অ্যাডমিন দেখতে পারবেন।",
     privateLabel: "নিরাপদ সহায়তা চ্যাট",
     conversationReady: "চ্যাট প্রস্তুত",
     retentionPrefix: "তথ্য রাখা হবে সর্বোচ্চ",
@@ -531,7 +531,7 @@ const en = {
     nameError: "Enter your name using 2–100 characters.",
     phoneError: "Enter a valid 11-digit Bangladesh mobile number.",
     privacyNotice:
-      "Only authorised administrators can review your name, number and conversation for support quality.",
+      "Only authorised administrators can see your name, number and conversation — to support you, and to understand which problems come up most.",
     privateLabel: "Secure support chat",
     conversationReady: "Chat is ready",
     retentionPrefix: "Data is retained for up to",

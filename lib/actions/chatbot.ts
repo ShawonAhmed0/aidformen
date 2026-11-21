@@ -55,3 +55,32 @@ export async function updateChatbotSettings(formData: FormData) {
     return ok();
   });
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * An admin's verdict on whether a chat is genuine. `null` hands the decision
+ * back to Claude's flag. Only this column is writable (migration 0020).
+ */
+export async function reviewChatCase(id: string, suspicious: boolean | null) {
+  return guarded(async () => {
+    const auth = await requireAdmin();
+    if (!auth.ok) return fail(auth.error);
+    if (typeof id !== "string" || !UUID.test(id)) return fail("কথোপকথনটি পাওয়া যায়নি।");
+    if (suspicious !== null && typeof suspicious !== "boolean") {
+      return fail("সিদ্ধান্তটি বোঝা যায়নি।");
+    }
+
+    const { data, error } = await auth.supabase
+      .from("chat_conversations")
+      .update({ suspicious_override: suspicious })
+      .eq("id", id)
+      .select("id");
+
+    if (error) return fail(error.message);
+    if (!data?.length) return fail("কথোপকথনটি পাওয়া যায়নি — হয়তো মুছে ফেলা হয়েছে।");
+
+    revalidatePath("/admin/cases");
+    return ok();
+  });
+}

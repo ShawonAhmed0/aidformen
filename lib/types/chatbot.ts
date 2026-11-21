@@ -131,3 +131,107 @@ export function normalizeBangladeshPhone(value: string): string {
 export function isValidBangladeshPhone(value: string): boolean {
   return /^01[3-9][0-9]{8}$/.test(normalizeBangladeshPhone(value));
 }
+
+// ---------------------------------------------------------------------------
+// Intake: what each conversation is about, as Claude reads it
+// ---------------------------------------------------------------------------
+
+/**
+ * Problem categories the tagger sorts conversations into (lib/chat/tagging.ts),
+ * in the order the admin lists them. The ids are stored, so never rename one;
+ * they must match public.chat_category_ids() in migration 0020 — add a new
+ * one to both, and describe it in the tagger's prompt.
+ */
+export const chatCategories = [
+  { id: "dowry_case", bn: "যৌতুক মামলা", en: "Dowry case" },
+  {
+    id: "women_repression_case",
+    bn: "নারী ও শিশু নির্যাতন মামলা",
+    en: "Women and children repression case",
+  },
+  { id: "domestic_violence", bn: "পারিবারিক সহিংসতা", en: "Domestic violence" },
+  {
+    id: "marriage_promise_case",
+    bn: "বিয়ের প্রলোভনে ধর্ষণ বা প্রতারণার মামলা",
+    en: "Rape or fraud case over a promise of marriage",
+  },
+  { id: "false_case", bn: "মিথ্যা মামলা", en: "False case" },
+  {
+    id: "family_dispute",
+    bn: "পারিবারিক বা দাম্পত্য বিরোধ",
+    en: "Family or marital dispute",
+  },
+  { id: "other_issue", bn: "পুরুষদের অন্য কোনো সমস্যা", en: "Another men's issue" },
+  // Kept apart so questions about donating or volunteering don't inflate a
+  // problem count.
+  {
+    id: "general_info",
+    bn: "ফাউন্ডেশন সম্পর্কে জানতে চাই",
+    en: "A question about the foundation",
+  },
+] as const;
+
+export type ChatCategoryId = (typeof chatCategories)[number]["id"];
+
+export function isChatCategory(value: unknown): value is ChatCategoryId {
+  return chatCategories.some((category) => category.id === value);
+}
+
+export function chatCategoryLabel(id: string | null, locale: "bn" | "en") {
+  const category = chatCategories.find((c) => c.id === id);
+  return category ? category[locale] : null;
+}
+
+/**
+ * Occupation buckets the tagger sorts free-text answers into, so "ব্যবসা",
+ * "ব্যবসায়ী" and "business" count as one. Must match
+ * public.chat_occupation_group_ids() in migration 0020.
+ */
+export const occupationGroups = [
+  { id: "student", bn: "শিক্ষার্থী", en: "Student" },
+  { id: "private_job", bn: "বেসরকারি চাকরি", en: "Private job" },
+  { id: "government_job", bn: "সরকারি চাকরি", en: "Government job" },
+  { id: "business", bn: "ব্যবসা", en: "Business" },
+  { id: "farmer", bn: "কৃষি", en: "Farming" },
+  { id: "worker", bn: "শ্রমিক বা দিনমজুর", en: "Worker or day labourer" },
+  { id: "expatriate", bn: "প্রবাসী", en: "Working abroad" },
+  { id: "unemployed", bn: "বেকার", en: "Unemployed" },
+  { id: "other", bn: "অন্যান্য", en: "Other" },
+  { id: "unknown", bn: "জানা নেই", en: "Not stated" },
+] as const;
+
+export type OccupationGroupId = (typeof occupationGroups)[number]["id"];
+
+export function occupationGroupLabel(id: string | null, locale: "bn" | "en") {
+  const group = occupationGroups.find((g) => g.id === id);
+  return group ? group[locale] : null;
+}
+
+/** One conversation as the admin Problem feed sees it (migration 0020). */
+export type ChatCase = {
+  id: string;
+  visitor_name: string;
+  phone: string;
+  locale: "bn" | "en";
+  /** Claude's reading. Null until the visitor has said what the problem is. */
+  category: ChatCategoryId | null;
+  age: number | null;
+  occupation: string | null;
+  occupation_group: OccupationGroupId | null;
+  ai_summary: string | null;
+  ai_summary_en: string | null;
+  /** The old deterministic summary: the visitor's latest questions. */
+  summary: string | null;
+  is_suspicious: boolean;
+  suspicious_reason: string | null;
+  suspicious_override: boolean | null;
+  tagged_at: string | null;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+/** The admin's verdict wins over Claude's flag. */
+export function isFlagged(c: Pick<ChatCase, "is_suspicious" | "suspicious_override">) {
+  return c.suspicious_override ?? c.is_suspicious;
+}

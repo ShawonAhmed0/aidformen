@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { after } from "next/server";
 
+import { tagConversation } from "@/lib/chat/tagging";
 import { getChatbotSettings } from "@/lib/content/chatbot";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { createClient } from "@/lib/supabase/server";
@@ -266,9 +268,14 @@ export async function POST(request: Request) {
 
   const encoder = new TextEncoder();
 
+  // Read by the tagger once the reply has been stored.
+  let assistantText = "";
+  let stored = false;
+  let settle!: () => void;
+  const settled = new Promise<void>((resolve) => (settle = resolve));
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      let assistantText = "";
       const push = (text: string) => {
         assistantText += text;
         controller.enqueue(encoder.encode(text));
@@ -351,28 +358,45 @@ export async function POST(request: Request) {
             : "\n\nদুঃখিত, সমস্যা হয়েছে। আবার চেষ্টা করুন।"
         );
       } finally {
-        if (assistantText.trim()) {
-          const { data: stored, error } = await supabase.rpc(
-            "append_chat_exchange",
-            {
-              p_conversation_id: conversation.id,
-              p_conversation_token: conversation.token,
-              p_user_message: lastUserMessage,
-              p_assistant_message: assistantText.trim(),
-            }
-          );
-
-          if (error || stored !== true) {
-            console.error(
-              "[chat] could not store conversation exchange",
-              error?.message ?? "session rejected"
+        try {
+          if (assistantText.trim()) {
+            const { data, error } = await supabase.rpc(
+              "append_chat_exchange",
+              {
+                p_conversation_id: conversation.id,
+                p_conversation_token: conversation.token,
+                p_user_message: lastUserMessage,
+                p_assistant_message: assistantText.trim(),
+              }
             );
+
+            stored = !error && data === true;
+            if (!stored) {
+              console.error(
+                "[chat] could not store conversation exchange",
+                error?.message ?? "session rejected"
+              );
+            }
           }
+        } finally {
+          settle();
         }
 
         controller.close();
       }
     },
+  });
+
+  // After the response, so the visitor never waits on it. Only a stored
+  // exchange is tagged: an unsaved one has no row to label.
+  after(async () => {
+    await settled;
+    if (!stored) return;
+    await tagConversation({
+      supabase,
+      conversation,
+      messages: [...messages, { role: "assistant", content: assistantText.trim() }],
+    });
   });
 
   return new Response(stream, {

@@ -1,4 +1,5 @@
 import { cache } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/server";
 import type {
@@ -52,7 +53,32 @@ export async function getChatHistory(
 
   if (!rows?.length) return [];
 
-  const ids = rows.map((row) => row.id);
+  const messagesByConversation = await getChatMessages(
+    supabase,
+    rows.map((row) => row.id)
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    visitor_name: row.visitor_name,
+    phone: row.phone,
+    locale: row.locale as ChatConversation["locale"],
+    summary: row.summary,
+    message_count: row.message_count,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    messages: messagesByConversation.get(row.id) ?? [],
+  }));
+}
+
+/** Every message of the given conversations, oldest first, grouped by id. */
+export async function getChatMessages(
+  supabase: SupabaseClient,
+  ids: string[]
+): Promise<Map<string, ChatHistoryMessage[]>> {
+  const messagesByConversation = new Map<string, ChatHistoryMessage[]>();
+  if (!ids.length) return messagesByConversation;
+
   const messageRows: {
     id: number;
     conversation_id: string;
@@ -81,8 +107,7 @@ export async function getChatHistory(
     if (!page || page.length < pageSize) break;
   }
 
-  const messagesByConversation = new Map<string, ChatHistoryMessage[]>();
-  for (const message of messageRows ?? []) {
+  for (const message of messageRows) {
     const list = messagesByConversation.get(message.conversation_id) ?? [];
     list.push({
       id: message.id,
@@ -93,15 +118,5 @@ export async function getChatHistory(
     messagesByConversation.set(message.conversation_id, list);
   }
 
-  return rows.map((row) => ({
-    id: row.id,
-    visitor_name: row.visitor_name,
-    phone: row.phone,
-    locale: row.locale as ChatConversation["locale"],
-    summary: row.summary,
-    message_count: row.message_count,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    messages: messagesByConversation.get(row.id) ?? [],
-  }));
+  return messagesByConversation;
 }

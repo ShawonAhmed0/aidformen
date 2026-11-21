@@ -16,6 +16,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Building2,
+    Inbox,
     PanelsTopLeft,
     X,
     type LucideIcon,
@@ -37,6 +38,7 @@ const copy = {
         },
         items: {
             dashboard: 'ড্যাশবোর্ড',
+            cases: 'সমস্যার তালিকা',
             hero: 'হিরো ও ক্যারোসেল',
             team: 'আমাদের দল',
             archive: 'মিডিয়া সেন্টার',
@@ -62,6 +64,7 @@ const copy = {
         },
         items: {
             dashboard: 'Dashboard',
+            cases: 'Problem feed',
             hero: 'Hero & Carousel',
             team: 'Our Team',
             archive: 'Media Center',
@@ -91,7 +94,10 @@ type NavGroup = {
 const navGroups: NavGroup[] = [
     {
         id: 'overview',
-        items: [{ id: 'dashboard', href: '/admin', icon: LayoutDashboard }],
+        items: [
+            { id: 'dashboard', href: '/admin', icon: LayoutDashboard },
+            { id: 'cases', href: '/admin/cases', icon: Inbox },
+        ],
     },
     {
         id: 'content',

@@ -8,9 +8,8 @@ import {
 } from "lucide-react";
 
 import { getAdminLocale } from "@/lib/i18n/admin-server";
-import type { AdminLocale } from "@/lib/i18n/admin";
 import type { ChatConversation } from "@/lib/types/chatbot";
-import { cn } from "@/lib/utils";
+import { ChatTranscript, formatAdminDateTime } from "./ChatTranscript";
 
 const copy = {
     bn: {
@@ -22,9 +21,6 @@ const copy = {
         emptyBody: "নতুন চ্যাট সম্পন্ন হলে সংক্ষিপ্তসার ও পুরো কথোপকথন এখানে দেখা যাবে।",
         noSummary: "কথোপকথনের সংক্ষিপ্তসার পাওয়া যায়নি।",
         messages: (count: number) => `${count} বার্তা`,
-        noMessages: "এই সেশনে এখনো সম্পূর্ণ বার্তা সংরক্ষিত হয়নি।",
-        visitor: "দর্শনার্থী",
-        assistant: "সহায়ক",
     },
     en: {
         heading: "Conversation history",
@@ -35,27 +31,8 @@ const copy = {
         emptyBody: "Once a new chat finishes, its summary and full conversation appear here.",
         noSummary: "No summary is available for this conversation.",
         messages: (count: number) => `${count} ${count === 1 ? "message" : "messages"}`,
-        noMessages: "No complete messages have been saved for this session yet.",
-        visitor: "Visitor",
-        assistant: "Assistant",
     },
 };
-
-const dateTimeOptions: Intl.DateTimeFormatOptions = {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Dhaka",
-};
-
-const dateTime: Record<AdminLocale, Intl.DateTimeFormat> = {
-    bn: new Intl.DateTimeFormat("bn-BD", dateTimeOptions),
-    en: new Intl.DateTimeFormat("en-GB", dateTimeOptions),
-};
-
-function formatDate(value: string, locale: AdminLocale) {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : dateTime[locale].format(date);
-}
 
 export async function ChatHistory({
     conversations,
@@ -130,7 +107,7 @@ export async function ChatHistory({
                                                 className="inline-flex items-center gap-1.5"
                                             >
                                                 <CalendarClock className="size-3.5" aria-hidden="true" />
-                                                {formatDate(conversation.updated_at, locale)}
+                                                {formatAdminDateTime(conversation.updated_at, locale)}
                                             </time>
                                             <span>{t.messages(conversation.message_count)}</span>
                                         </div>
@@ -143,46 +120,8 @@ export async function ChatHistory({
                             </summary>
 
                             <div className="border-t border-ink-100 bg-surface-sunken px-4 py-5 sm:px-6">
-                                <div className="mx-auto max-w-2xl space-y-3">
-                                    {conversation.messages.length === 0 ? (
-                                        <p className="text-center text-sm text-ink-500">
-                                            {t.noMessages}
-                                        </p>
-                                    ) : (
-                                        conversation.messages.map((message) => (
-                                            <div
-                                                key={message.id}
-                                                className={cn(
-                                                    "flex",
-                                                    message.role === "user"
-                                                        ? "justify-end"
-                                                        : "justify-start"
-                                                )}
-                                            >
-                                                <div
-                                                    className={cn(
-                                                        "max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-6",
-                                                        message.role === "user"
-                                                            ? "rounded-tr-sm bg-brand-800 text-white"
-                                                            : "rounded-tl-sm border border-ink-200 bg-surface text-ink-700"
-                                                    )}
-                                                >
-                                                    <p className="mb-1 text-2xs font-semibold opacity-65">
-                                                        {message.role === "user" ? t.visitor : t.assistant}
-                                                    </p>
-                                                    <p className="whitespace-pre-wrap break-words">
-                                                        {message.content}
-                                                    </p>
-                                                    <time
-                                                        dateTime={message.created_at}
-                                                        className="mt-1.5 block text-2xs opacity-55"
-                                                    >
-                                                        {formatDate(message.created_at, locale)}
-                                                    </time>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
+                                <div className="mx-auto max-w-2xl">
+                                    <ChatTranscript messages={conversation.messages} locale={locale} />
                                 </div>
                             </div>
                         </details>

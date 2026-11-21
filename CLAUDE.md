@@ -239,6 +239,23 @@ parsing those components as sRGB gives a confidently wrong answer.
   for the subset the model emits. React nodes only, never
   `dangerouslySetInnerHTML`.
 
+### Intake and the Problem feed
+
+- Visitors give only name and phone. The **problem category is Claude's
+  reading**, never asked: ids live in `chatCategories` (`lib/types/chatbot.ts`)
+  and `public.chat_category_ids()` (migration 0020) — add a new one to both
+  and describe it in the tagger's prompt. "unclear" is stored as null.
+- After each stored exchange, `/api/chat` runs `tagConversation()`
+  (`lib/chat/tagging.ts`) inside `after()`: `claude-haiku-5-5` with a JSON
+  schema reads the chat and writes the category, age, occupation, a bn/en
+  summary and a "looks fake" flag through the token-gated
+  `tag_chat_conversation` RPC. It never delays or breaks the reply.
+- `/admin/cases` is the Problem feed: Dhaka days, flagged chats left out of
+  every count, an admin's `suspicious_override` beats the AI flag, CSV at
+  `/admin/cases/export` with the same filters.
+- The tags sit on `chat_conversations`, so they expire with the transcript
+  after `history_retention_days`. Yearly reporting needs its own table.
+
 ## Verifying UI work
 
 Run the dev server through the preview tool and **measure in the browser rather
