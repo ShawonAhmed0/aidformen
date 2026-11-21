@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
     ArrowRight,
     Loader2,
-    MessageCircle,
     Phone,
     RotateCcw,
     Send,
     ShieldCheck,
-    Sparkles,
     UserRound,
     X,
 } from "lucide-react";
@@ -24,6 +23,24 @@ import {
 } from "@/lib/types/chatbot";
 import type { Locale } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
+
+/**
+ * The assistant's face: the client's mascot, centred in a round badge with a
+ * light fill (public/chatbot/mascot.webp). Decorative wherever the bot's name
+ * sits beside it, so the alt text stays empty.
+ */
+function BotAvatar({ size, className }: { size: number; className?: string }) {
+    return (
+        <Image
+            src="/chatbot/mascot.webp"
+            alt=""
+            width={size}
+            height={size}
+            className={cn("shrink-0 rounded-full", className)}
+            style={{ width: size, height: size }}
+        />
+    );
+}
 
 type VisitorProfile = {
     name: string;
@@ -230,21 +247,22 @@ export function ChatWidget({
                 aria-label={open ? labels.close : labels.open}
                 className={cn(
                     "group fixed bottom-5 left-4 z-70 flex h-14 items-center gap-3 rounded-full border border-white/20",
-                    "bg-brand-800 px-3.5 text-white shadow-xl shadow-brand-950/20 transition-ui",
+                    "bg-brand-800 text-white shadow-xl shadow-brand-950/20 transition-ui",
                     "hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-700",
-                    open && "w-14 justify-center px-0"
+                    open ? "w-14 justify-center" : "ps-1.5 pe-3.5"
                 )}
             >
-                <span className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-white/12">
-                    {open ? (
+                {open ? (
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/12">
                         <X className="size-5" aria-hidden="true" />
-                    ) : (
-                        <>
-                            <MessageCircle className="size-5" aria-hidden="true" />
-                            <span className="absolute right-0 top-0 size-2.5 rounded-full border-2 border-brand-800 bg-brand-200" />
-                        </>
-                    )}
-                </span>
+                    </span>
+                ) : (
+                    <span className="relative shrink-0">
+                        <BotAvatar size={42} className="ring-2 ring-white/25" />
+                        {/* "Online" dot: the assistant answers at any hour. */}
+                        <span className="absolute -right-0.5 top-0 size-3 rounded-full border-2 border-brand-800 bg-success" />
+                    </span>
+                )}
                 {!open && (
                     <span className="pr-1 text-left leading-tight">
                         <span className="block text-sm font-semibold">{labels.openPrompt}</span>
@@ -270,9 +288,7 @@ export function ChatWidget({
                 >
                     <header className="flex shrink-0 items-center justify-between gap-3 bg-brand-800 px-4 py-3.5 text-white">
                         <div className="flex min-w-0 items-center gap-3">
-                            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/12">
-                                <Sparkles className="size-5 text-brand-100" aria-hidden="true" />
-                            </span>
+                            <BotAvatar size={40} className="ring-2 ring-white/20" />
                             <div className="min-w-0">
                                 <h2 id="chat-title" className="truncate text-sm font-semibold">
                                     {botName}
@@ -309,9 +325,7 @@ export function ChatWidget({
 
                     {!profile ? (
                         <div className="flex flex-1 flex-col overflow-y-auto p-5">
-                            <div className="flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-800">
-                                <MessageCircle className="size-6" aria-hidden="true" />
-                            </div>
+                            <BotAvatar size={64} className="ring-1 ring-brand-100" />
                             <h3 className="mt-4 text-lg font-semibold text-ink-900">
                                 {labels.introTitle}
                             </h3>
@@ -418,8 +432,9 @@ export function ChatWidget({
                                     {labels.conversationReady}
                                 </p>
 
-                                <div className="flex justify-start">
-                                    <p className="max-w-[88%] rounded-2xl rounded-tl-sm bg-surface-sunken px-3.5 py-2.5 text-sm leading-6 text-ink-700">
+                                <div className="flex items-start justify-start gap-2">
+                                    <BotAvatar size={28} className="mt-0.5 ring-1 ring-brand-100" />
+                                    <p className="max-w-[85%] rounded-2xl rounded-tl-sm bg-surface-sunken px-3.5 py-2.5 text-sm leading-6 text-ink-700">
                                         {greeting}
                                     </p>
                                 </div>
@@ -429,12 +444,18 @@ export function ChatWidget({
                                         key={index}
                                         className={cn(
                                             "flex",
-                                            message.role === "user" ? "justify-end" : "justify-start"
+                                            message.role === "user"
+                                                ? "justify-end"
+                                                : "items-start justify-start gap-2"
                                         )}
                                     >
+                                        {message.role === "assistant" && (
+                                            <BotAvatar size={28} className="mt-0.5 ring-1 ring-brand-100" />
+                                        )}
                                         <div
                                             className={cn(
-                                                "max-w-[88%] px-3.5 py-2.5 text-sm leading-6",
+                                                "px-3.5 py-2.5 text-sm leading-6",
+                                                message.role === "user" ? "max-w-[88%]" : "max-w-[85%]",
                                                 message.role === "user"
                                                     ? "whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-brand-800 text-white"
                                                     : "rounded-2xl rounded-tl-sm bg-surface-sunken text-ink-700"
