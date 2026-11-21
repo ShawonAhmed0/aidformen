@@ -213,11 +213,11 @@ export default async function NewsDetailPage({ params }: Props) {
                   {item.heading}
                 </h1>
 
-                {/* The share bar never wraps internally; when it doesn't fit
-                    beside the date and place it drops below them as one row.
-                    Wrapping inside it stranded "Print" on a line of its own. */}
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 rounded-2xl border border-ink-200 bg-surface-sunken px-4 py-1.5">
-                  <div className="flex flex-wrap gap-x-5 gap-y-1 py-2 text-sm text-ink-600">
+                {/* Date and place on the left, share icons on the right, in one
+                    row. Phones have no room for both: there the icons get a
+                    row of their own under a hairline instead of wrapping. */}
+                <div className="mt-6 flex flex-col rounded-2xl border border-ink-200 bg-surface-sunken px-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-1">
+                  <div className="flex min-w-0 flex-wrap gap-x-5 gap-y-1 py-3 text-sm text-ink-600 sm:py-2">
                     {item.date && (
                       <span className="inline-flex items-center gap-1.5">
                         <CalendarDays className="size-4" aria-hidden="true" />
@@ -232,7 +232,12 @@ export default async function NewsDetailPage({ params }: Props) {
                     )}
                   </div>
 
-                  <ShareActions title={item.heading} locale={lang} className="-mx-2" />
+                  <ShareActions
+                    title={item.heading}
+                    locale={lang}
+                    compact
+                    className="max-sm:-mx-3.5 max-sm:max-w-none max-sm:justify-between max-sm:border-t max-sm:border-ink-200 max-sm:py-1 sm:-me-3"
+                  />
                 </div>
               </header>
 

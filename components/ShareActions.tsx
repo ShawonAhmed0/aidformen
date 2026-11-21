@@ -19,6 +19,12 @@ type ShareActionsProps = {
    * duration of the print, where globals.css hides everything outside it.
    */
   printScope?: string;
+  /**
+   * Icons only, in round buttons — for a bar that shares its row with other
+   * details (a post's date and place) and would otherwise wrap under them.
+   * Every button keeps its name for screen readers and as a tooltip.
+   */
+  compact?: boolean;
   className?: string;
 };
 
@@ -38,6 +44,7 @@ export function ShareActions({
   locale,
   url,
   printScope,
+  compact = false,
   className,
 }: ShareActionsProps) {
   const [copied, setCopied] = useState(false);
@@ -125,8 +132,11 @@ export function ShareActions({
     openShare(destinations[network]);
   };
 
-  const buttonClass =
-    "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-sm px-2 text-sm font-semibold text-ink-700 transition-ui hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 sm:px-2.5";
+  const buttonClass = compact
+    ? "inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink-600 transition-ui hover:bg-surface hover:text-brand-800 hover:shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+    : "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-sm px-2 text-sm font-semibold text-ink-700 transition-ui hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 sm:px-2.5";
+  // Visible text beside the icon, except in the compact bar.
+  const textClass = compact ? "sr-only" : "sr-only sm:not-sr-only";
 
   return (
     <div
@@ -143,9 +153,10 @@ export function ShareActions({
         type="button"
         onClick={() => void nativeShare()}
         className={buttonClass}
+        title={compact ? labels.native : undefined}
       >
         <Share2 className="size-4" aria-hidden="true" />
-        <span className="sr-only sm:not-sr-only">{labels.share}</span>
+        <span className={textClass}>{labels.share}</span>
       </button>
 
       <button
@@ -190,7 +201,7 @@ export function ShareActions({
         ) : (
           <Copy className="size-4" aria-hidden="true" />
         )}
-        <span className="sr-only sm:not-sr-only">
+        <span className={textClass}>
           {copied ? labels.copied : labels.copy}
         </span>
       </button>
@@ -203,7 +214,7 @@ export function ShareActions({
         title={labels.print}
       >
         <Printer className="size-4" aria-hidden="true" />
-        <span className="sr-only sm:not-sr-only">{labels.print}</span>
+        <span className={textClass}>{labels.print}</span>
       </button>
     </div>
   );
