@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import {
+    Crop,
     Film,
     ImagePlus,
     Loader2,
@@ -21,6 +22,7 @@ import {
 import type { MediaFolder } from "@/lib/types/media";
 import { cn } from "@/lib/utils";
 import { useAdminLocale } from "./AdminLocale";
+import { ImageCropDialog, type AspectId } from "./ImageCropDialog";
 
 type MediaFieldProps = {
     value: string | null;
@@ -31,6 +33,11 @@ type MediaFieldProps = {
     label: string;
     helper?: string;
     className?: string;
+    /**
+     * Images only: open the crop dialog on this frame shape when a photo is
+     * picked, and offer "Adjust" on the current one.
+     */
+    crop?: AspectId;
 };
 
 const copy = {
@@ -42,6 +49,7 @@ const copy = {
         },
         noAudioSupport: "আপনার ব্রাউজার অডিও চালাতে পারছে না।",
         change: "পরিবর্তন",
+        adjust: "ঠিক করুন",
         remove: "সরান",
         drop: {
             video: "ভিডিও টেনে আনুন বা ক্লিক করুন",
@@ -63,6 +71,7 @@ const copy = {
         },
         noAudioSupport: "Your browser cannot play this audio.",
         change: "Change",
+        adjust: "Adjust",
         remove: "Remove",
         drop: {
             video: "Drag a video here or click",
@@ -93,12 +102,16 @@ export function MediaField({
     label,
     helper,
     className,
+    crop,
 }: MediaFieldProps) {
     const t = copy[useAdminLocale()];
     const inputRef = useRef<HTMLInputElement>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [dragging, setDragging] = useState(false);
+    // A picked photo (or the current one) waiting in the crop dialog.
+    const [cropping, setCropping] = useState<File | string | null>(null);
+    const [pickedFile, setPickedFile] = useState<File | null>(null);
 
     const isVideo = accept === "video";
     const isAudio = accept === "audio";
@@ -126,6 +139,15 @@ export function MediaField({
             return;
         }
 
+        if (crop && accept === "image") {
+            setPickedFile(file);
+            setCropping(file);
+            return;
+        }
+        await upload(file);
+    };
+
+    const upload = async (file: File) => {
         setBusy(true);
         const result = await uploadToMedia(file, folder);
         setBusy(false);
@@ -194,6 +216,20 @@ export function MediaField({
                         )}
 
                         <div className="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-ink-950/80 to-transparent p-3">
+                            {crop && accept === "image" && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setPickedFile(null);
+                                        setCropping(value);
+                                    }}
+                                    disabled={busy}
+                                    className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white/95 px-3 text-sm font-medium text-ink-900 transition-ui hover:bg-white disabled:opacity-60"
+                                >
+                                    <Crop className="size-4" aria-hidden="true" />
+                                    {t.adjust}
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => inputRef.current?.click()}
@@ -265,6 +301,17 @@ export function MediaField({
             />
 
             {helper && !error && <p className="text-xs text-ink-500">{helper}</p>}
+
+            {crop && accept === "image" && (
+                <ImageCropDialog
+                    source={cropping}
+                    aspect={crop}
+                    onClose={() => setCropping(null)}
+                    onApply={(file) => void upload(file)}
+                    // Only a fresh pick has an untouched original to fall back to.
+                    onUseOriginal={pickedFile ? () => void upload(pickedFile) : undefined}
+                />
+            )}
 
             {error && (
                 <p role="alert" className="text-xs font-medium text-danger">

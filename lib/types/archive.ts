@@ -338,6 +338,11 @@ export type ArchiveEntry = {
   source_name: string | null;
   source_name_en: string | null;
   source_url: string | null;
+  /**
+   * Every outlet that carried the story, in order (migration 0022). The
+   * single-source columns above mirror the first one.
+   */
+  sources: ArchiveSource[];
   sort_order: number;
   is_published: boolean;
   /** Upload time — orders posts that share a date, or have none. */
@@ -409,6 +414,8 @@ export type ArchiveItem = {
   audioUrl: string | null;
   sourceName: string;
   sourceUrl: string | null;
+  /** Outlets with a name, a safe link, or both, in the editor's order. */
+  sources: { name: string; url: string | null }[];
   photoCount: number;
   photos: { id: string; url: string; caption: string }[];
   attachments: {
@@ -480,6 +487,39 @@ export function sortArchiveItemsNewestFirst<T extends Pick<ArchiveItem, "dateIso
 }
 
 /** External editorial links are HTTPS-only to prevent mixed-content warnings. */
+export type ArchiveSource = {
+  name: string | null;
+  name_en: string | null;
+  url: string | null;
+};
+
+/** Most sources one post can list; matches the 0022 check constraint. */
+export const MAX_ARCHIVE_SOURCES = 20;
+
+/**
+ * The stored source list, made safe to read: anything that is not a list of
+ * objects with string fields is dropped. Posts saved before 0022 have only
+ * the single-source columns, which become a one-item list.
+ */
+export function readArchiveSources(
+  raw: unknown,
+  legacy: { source_name: string | null; source_name_en: string | null; source_url: string | null }
+): ArchiveSource[] {
+  const text = (value: unknown) =>
+    typeof value === "string" && value.trim() ? value.trim() : null;
+  const list = Array.isArray(raw)
+    ? raw
+        .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+        .map((item) => ({ name: text(item.name), name_en: text(item.name_en), url: text(item.url) }))
+        .filter((item) => item.name || item.url)
+        .slice(0, MAX_ARCHIVE_SOURCES)
+    : [];
+  if (list.length) return list;
+  return legacy.source_name || legacy.source_url
+    ? [{ name: legacy.source_name, name_en: legacy.source_name_en, url: legacy.source_url }]
+    : [];
+}
+
 export function safeHttpsUrl(value: string | null | undefined): string | null {
   if (!value) return null;
   try {
@@ -534,6 +574,12 @@ export function resolveArchiveEntry(
     audioUrl: safeHttpsUrl(entry.audio_url),
     sourceName: pick(locale, entry.source_name, entry.source_name_en),
     sourceUrl: safeHttpsUrl(entry.source_url),
+    sources: entry.sources
+      .map((source) => ({
+        name: pick(locale, source.name ?? "", source.name_en),
+        url: safeHttpsUrl(source.url),
+      }))
+      .filter((source) => source.name || source.url),
     photoCount: entry.photos.length,
     photos: entry.photos.flatMap((photo) => {
       const url = safeMediaUrl(photo.image_url);

@@ -544,7 +544,7 @@ export default async function NewsDetailPage({ params }: Props) {
                 </section>
               )}
 
-              {item.sourceUrl && (
+              {item.sources.some((source) => source.url) && (
                 <section
                   aria-labelledby="source-heading"
                   className="rounded-2xl border border-ink-200 bg-surface-sunken p-5 sm:p-6"
@@ -554,20 +554,36 @@ export default async function NewsDetailPage({ params }: Props) {
                     id="source-heading"
                     icon={<Newspaper className="size-5" aria-hidden="true" />}
                   >
-                    {t.archive.originalSource}
+                    {item.sources.length > 1
+                      ? t.archive.originalSources
+                      : t.archive.originalSource}
                   </SectionTitle>
-                  <a
-                    href={item.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer external"
-                    className={buttonVariants({
-                      variant: "outline",
-                      className: "mt-4",
-                    })}
-                  >
-                    <ExternalLink className="size-4" aria-hidden="true" />
-                    {item.sourceName || t.archive.openOriginalSource}
-                  </a>
+                  {/* One button per outlet; an outlet named without a link has
+                      nowhere to send the reader, so it is listed as text. */}
+                  <ul className="mt-4 flex flex-wrap gap-2.5">
+                    {item.sources.map((source, index) =>
+                      source.url ? (
+                        <li key={`${source.url}-${index}`}>
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer external"
+                            className={buttonVariants({ variant: "outline" })}
+                          >
+                            <ExternalLink className="size-4" aria-hidden="true" />
+                            {source.name || t.archive.openOriginalSource}
+                          </a>
+                        </li>
+                      ) : (
+                        <li
+                          key={`${source.name}-${index}`}
+                          className="inline-flex h-11 items-center rounded-lg border border-ink-200 px-4 text-sm text-ink-700"
+                        >
+                          {source.name}
+                        </li>
+                      )
+                    )}
+                  </ul>
                 </section>
               )}
             </div>

@@ -15,6 +15,7 @@ import {
   MAX_ARCHIVE_ATTACHMENTS,
   MAX_ARCHIVE_PHOTOS,
   MAX_ARCHIVE_REFERENCE_PHOTOS,
+  MAX_ARCHIVE_SOURCES,
   postKinds,
   sectionForContentType,
 } from "@/lib/types/archive";
@@ -73,8 +74,10 @@ function secureMediaHref(formData: FormData, key: string, label: string) {
 }
 
 function fieldsFrom(formData: FormData) {
-  const heading = requiredText(formData, "heading", "শিরোনাম", 200);
-  const headingEn = optionalText(formData, "heading_en", 200);
+  // Generous on purpose: a media-coverage headline is often a long lede, and
+  // the slug is cut short on its own (archiveSlugFromTitle).
+  const heading = requiredText(formData, "heading", "শিরোনাম", 1000);
+  const headingEn = optionalText(formData, "heading_en", 1000, "ইংরেজি শিরোনাম");
   const contentType = enumField(
     formData,
     "content_type",
@@ -98,10 +101,10 @@ function fieldsFrom(formData: FormData) {
     heading_en: headingEn,
     body: editorialField(formData, "body", 120000, "বিবরণ"),
     body_en: editorialField(formData, "body_en", 120000, "ইংরেজি বিবরণ"),
-    category: optionalText(formData, "category", 80),
-    category_en: optionalText(formData, "category_en", 80),
-    location: optionalText(formData, "location", 160),
-    location_en: optionalText(formData, "location_en", 160),
+    category: optionalText(formData, "category", 200, "বিভাগ"),
+    category_en: optionalText(formData, "category_en", 200, "ইংরেজি বিভাগ"),
+    location: optionalText(formData, "location", 500, "স্থান"),
+    location_en: optionalText(formData, "location_en", 500, "ইংরেজি স্থান"),
     event_date: dateField(formData, "event_date"),
     // hrefField rather than urlField: an entry migrated from `activities` can
     // still point at a file in /public, which is a path and not a URL.
@@ -147,10 +150,59 @@ function fieldsFrom(formData: FormData) {
     hd_photos_url: httpsUrlField(formData, "hd_photos_url", "HD ছবির ফোল্ডার"),
     raw_video_url: httpsUrlField(formData, "raw_video_url", "Raw ভিডিও ফোল্ডার"),
     audio_url: httpsUrlField(formData, "audio_url", "অডিও"),
-    source_name: optionalText(formData, "source_name", 160),
-    source_name_en: optionalText(formData, "source_name_en", 160),
-    source_url: httpsUrlField(formData, "source_url", "মূল সংবাদ/উৎস"),
+    ...sourcesFrom(formData),
     is_published: boolField(formData, "is_published"),
+  };
+}
+
+/**
+ * The outlets that carried the story, sent as parallel `source_item_name` /
+ * `source_item_name_en` / `source_item_url` fields. Rows with neither a name
+ * nor a link are dropped. The single-source columns get the first one, so
+ * anything still reading them keeps working (migration 0022).
+ */
+function sourcesFrom(formData: FormData) {
+  const names = formData.getAll("source_item_name").map(String);
+  const namesEn = formData.getAll("source_item_name_en").map(String);
+  const urls = formData.getAll("source_item_url").map(String);
+
+  const sources: { name: string | null; name_en: string | null; url: string | null }[] = [];
+  for (let i = 0; i < Math.max(names.length, urls.length); i += 1) {
+    const name = names[i]?.trim() || null;
+    const nameEn = namesEn[i]?.trim() || null;
+    const rawUrl = urls[i]?.trim() || "";
+    if (!name && !rawUrl) continue;
+
+    if ((name?.length ?? 0) > 300 || (nameEn?.length ?? 0) > 300) {
+      throw new FieldError("সংবাদমাধ্যমের নাম সর্বোচ্চ ৩০০ অক্ষরের হতে পারে।");
+    }
+    let url: string | null = null;
+    if (rawUrl) {
+      try {
+        const parsed = new URL(rawUrl);
+        if (parsed.protocol === "https:") url = parsed.toString();
+      } catch {
+        /* reported below */
+      }
+      if (!url) {
+        throw new FieldError(
+          `উৎস ${i + 1}-এর লিঙ্ক অবশ্যই https:// দিয়ে শুরু হওয়া সম্পূর্ণ লিঙ্ক হতে হবে।`
+        );
+      }
+    }
+    sources.push({ name, name_en: nameEn, url });
+  }
+
+  if (sources.length > MAX_ARCHIVE_SOURCES) {
+    throw new FieldError(`একটি পোস্টে সর্বোচ্চ ${MAX_ARCHIVE_SOURCES}টি উৎস দেওয়া যাবে।`);
+  }
+
+  const first = sources[0];
+  return {
+    sources,
+    source_name: first?.name ?? null,
+    source_name_en: first?.name_en ?? null,
+    source_url: first?.url ?? null,
   };
 }
 

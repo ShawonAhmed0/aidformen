@@ -6,6 +6,7 @@ import {
   type ArchiveAttachment,
   type ArchiveEntry,
   type ArchivePhoto,
+  readArchiveSources,
 } from "@/lib/types/archive";
 
 /**
@@ -53,6 +54,11 @@ function normalizeEntryRow(row: EntryRow): EntryRow {
     source_name: row.source_name ?? null,
     source_name_en: row.source_name_en ?? null,
     source_url: row.source_url ?? null,
+    sources: readArchiveSources(row.sources, {
+      source_name: row.source_name ?? null,
+      source_name_en: row.source_name_en ?? null,
+      source_url: row.source_url ?? null,
+    }),
   };
 }
 

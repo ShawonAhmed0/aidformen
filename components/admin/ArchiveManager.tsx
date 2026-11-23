@@ -36,6 +36,7 @@ import {
     MAX_ARCHIVE_ATTACHMENTS,
     MAX_ARCHIVE_PHOTOS,
     MAX_ARCHIVE_REFERENCE_PHOTOS,
+    MAX_ARCHIVE_SOURCES,
     sectionForContentType,
     subsectionForContentType,
     subsectionsBySection,
@@ -123,10 +124,13 @@ const copy = {
         audioUploadHelp: "MP3, M4A, OGG বা WAV · সর্বোচ্চ ২৫ MB",
         audioLink: "অথবা অডিওর লিঙ্ক",
         source: "মূল সংবাদের উৎস",
-        sourceHint: "কোন সংবাদমাধ্যমে প্রকাশিত হয়েছে এবং তার লিঙ্ক।",
+        sourceHint: "কোন কোন সংবাদমাধ্যমে প্রকাশিত হয়েছে এবং তাদের লিঙ্ক। একাধিক হলে প্রতিটি আলাদা করে যোগ করুন।",
         sourceName: "সংবাদমাধ্যমের নাম",
         sourceNamePlaceholder: "যেমন: প্রথম আলো",
         sourceUrl: "মূল সংবাদের লিঙ্ক",
+        sourceNumber: (n: number) => `উৎস ${n.toLocaleString("bn-BD")}`,
+        addSource: "আরেকটি উৎস যোগ করুন",
+        removeSource: "সরান",
         more: "আরও অপশন",
         moreHint: "ক্যাটাগরি, সংযুক্ত নথি ও সাংবাদিকদের জন্য ফাইল",
         category: "ক্যাটাগরি (ঐচ্ছিক)",
@@ -216,11 +220,14 @@ const copy = {
         audioUpload: "Audio file",
         audioUploadHelp: "MP3, M4A, OGG or WAV · up to 25 MB",
         audioLink: "Or a link to the audio",
-        source: "Original source",
-        sourceHint: "Which outlet published it, and the link.",
+        source: "Original sources",
+        sourceHint: "Which outlets published it, and the links. Add each outlet separately.",
         sourceName: "Outlet name",
         sourceNamePlaceholder: "e.g. Prothom Alo",
         sourceUrl: "Link to the original story",
+        sourceNumber: (n: number) => `Source ${n}`,
+        addSource: "Add another source",
+        removeSource: "Remove",
         more: "More options",
         moreHint: "Category, attached documents and files for journalists",
         category: "Category (optional)",
@@ -299,13 +306,15 @@ type Draft = {
     hd_photos_url: string;
     raw_video_url: string;
     audio_url: string;
-    source_name: string;
-    source_name_en: string;
-    source_url: string;
+    sources: SourceDraft[];
     is_published: boolean;
     photos: GalleryPhoto[];
     attachments: AttachmentDraft[];
 };
+
+type SourceDraft = { name: string; name_en: string; url: string };
+
+const emptySource = (): SourceDraft => ({ name: "", name_en: "", url: "" });
 
 const emptyDraft = (section: ArchiveSection): Draft => ({
     id: null,
@@ -335,9 +344,7 @@ const emptyDraft = (section: ArchiveSection): Draft => ({
     hd_photos_url: "",
     raw_video_url: "",
     audio_url: "",
-    source_name: "",
-    source_name_en: "",
-    source_url: "",
+    sources: [emptySource()],
     is_published: false,
     photos: [],
     attachments: [],
@@ -370,9 +377,13 @@ const toDraft = (entry: ArchiveEntry): Draft => ({
     hd_photos_url: s(entry.hd_photos_url),
     raw_video_url: s(entry.raw_video_url),
     audio_url: s(entry.audio_url),
-    source_name: s(entry.source_name),
-    source_name_en: s(entry.source_name_en),
-    source_url: s(entry.source_url),
+    sources: entry.sources.length
+        ? entry.sources.map((source) => ({
+              name: s(source.name),
+              name_en: s(source.name_en),
+              url: s(source.url),
+          }))
+        : [emptySource()],
     is_published: entry.is_published,
     photos: entry.photos.map((photo) => ({
         url: photo.image_url,
@@ -431,7 +442,7 @@ function englishGaps(draft: Draft): Record<string, string> {
     add("location", draft.location, draft.location_en);
     add("body", draft.body, draft.body_en);
     add("category", draft.category, draft.category_en);
-    add("source_name", draft.source_name, draft.source_name_en);
+    draft.sources.forEach((source, i) => add(`source.${i}`, source.name, source.name_en));
     draft.photos.forEach((photo, i) => add(`photo.${i}`, photo.caption, photo.caption_en));
     draft.attachments.forEach((item, i) => add(`attachment.${i}`, item.label, item.label_en));
     return gaps;
@@ -447,7 +458,10 @@ function withEnglish(draft: Draft, en: Record<string, string>): Draft {
         location_en: fill(draft.location_en, "location"),
         body_en: fill(draft.body_en, "body"),
         category_en: fill(draft.category_en, "category"),
-        source_name_en: fill(draft.source_name_en, "source_name"),
+        sources: draft.sources.map((source, i) => ({
+            ...source,
+            name_en: fill(source.name_en, `source.${i}`),
+        })),
         photos: draft.photos.map((photo, i) => ({
             ...photo,
             caption_en: fill(photo.caption_en, `photo.${i}`),
@@ -489,9 +503,11 @@ function toFormData(d: Draft, slug: string, publish: boolean): FormData {
     body.append("hd_photos_url", d.hd_photos_url);
     body.append("raw_video_url", d.raw_video_url);
     body.append("audio_url", d.audio_url);
-    body.append("source_name", d.source_name);
-    body.append("source_name_en", d.source_name_en);
-    body.append("source_url", d.source_url);
+    d.sources.forEach((source) => {
+        body.append("source_item_name", source.name);
+        body.append("source_item_name_en", source.name_en);
+        body.append("source_item_url", source.url);
+    });
 
     d.photos.forEach((photo) => {
         body.append("photo_url", photo.url);
@@ -949,26 +965,68 @@ function PostForm({
             draft.press_release_url ||
             draft.hd_photos_url ||
             draft.raw_video_url ||
-            (!isCoverage && (draft.source_name || draft.source_url))
+            (!isCoverage && draft.sources.some((source) => source.name || source.url))
     );
 
+    const setSource = (index: number, changes: Partial<SourceDraft>) =>
+        patch({
+            sources: draft.sources.map((source, i) => (i === index ? { ...source, ...changes } : source)),
+        });
+
     const sourceFields = (
-        <>
-            <BilingualField
-                label={t.sourceName}
-                value={draft.source_name}
-                onChange={(v) => patch({ source_name: v })}
-                valueEn={draft.source_name_en}
-                onChangeEn={(v) => patch({ source_name_en: v })}
-                placeholder={t.sourceNamePlaceholder}
-            />
-            <LinkField
-                label={t.sourceUrl}
-                value={draft.source_url}
-                onChange={(value) => patch({ source_url: value })}
-                placeholder="https://…"
-            />
-        </>
+        <div className="space-y-4">
+            {draft.sources.map((source, index) => (
+                <div
+                    key={index}
+                    className={cn(
+                        "space-y-4",
+                        draft.sources.length > 1 && "rounded-xl border border-ink-200 p-4"
+                    )}
+                >
+                    {draft.sources.length > 1 && (
+                        <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm font-semibold text-ink-800">
+                                {t.sourceNumber(index + 1)}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    patch({ sources: draft.sources.filter((_, i) => i !== index) })
+                                }
+                                className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-danger transition-ui hover:bg-danger-soft"
+                            >
+                                <Trash2 className="size-4" aria-hidden="true" />
+                                {t.removeSource}
+                            </button>
+                        </div>
+                    )}
+                    <BilingualField
+                        label={t.sourceName}
+                        value={source.name}
+                        onChange={(v) => setSource(index, { name: v })}
+                        valueEn={source.name_en}
+                        onChangeEn={(v) => setSource(index, { name_en: v })}
+                        placeholder={t.sourceNamePlaceholder}
+                    />
+                    <LinkField
+                        label={t.sourceUrl}
+                        value={source.url}
+                        onChange={(value) => setSource(index, { url: value })}
+                        placeholder="https://…"
+                    />
+                </div>
+            ))}
+            {draft.sources.length < MAX_ARCHIVE_SOURCES && (
+                <button
+                    type="button"
+                    onClick={() => patch({ sources: [...draft.sources, emptySource()] })}
+                    className="inline-flex h-11 items-center gap-2 rounded-lg border border-dashed border-ink-300 px-4 text-sm font-medium text-ink-700 transition-ui hover:border-brand-400 hover:bg-brand-50 hover:text-brand-800"
+                >
+                    <Plus className="size-4" aria-hidden="true" />
+                    {t.addSource}
+                </button>
+            )}
+        </div>
     );
 
     return (
@@ -1057,6 +1115,7 @@ function PostForm({
                     value={draft.cover_image_url}
                     onChange={(url) => patch({ cover_image_url: url })}
                     helper={t.coverHelp}
+                    crop="wide"
                     // The drop area is 16:9 at full width — half a screen of
                     // empty box in a form meant to be short.
                     className="sm:max-w-md"

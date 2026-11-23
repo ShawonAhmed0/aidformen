@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowDown, ArrowUp, ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Crop, ImagePlus, Loader2, Trash2 } from "lucide-react";
 
 import {
     ARCHIVE_IMAGE_TYPES,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/supabase/upload";
 import { useAdminLocale } from "./AdminLocale";
 import { BilingualField } from "./BilingualField";
+import { ImageCropDialog } from "./ImageCropDialog";
 import { cn } from "@/lib/utils";
 
 export type GalleryPhoto = {
@@ -42,6 +43,9 @@ const copy = {
         caption: "ক্যাপশন",
         referenceCaptionPlaceholder: "ঐচ্ছিক — ছবিটির প্রাসঙ্গিকতা",
         galleryCaptionPlaceholder: "ঐচ্ছিক — ছবিটি কী দেখাচ্ছে",
+        adjust: "ঠিক করুন",
+        adjustLabel: (n: number) => `${n} নম্বর ছবি ঠিক করুন`,
+        cropHint: "একটি ছবি যোগ করলে সঙ্গে সঙ্গে ঠিক করার সুযোগ পাবেন; অনেকগুলো একসঙ্গে দিলে পরে প্রতিটির \"ঠিক করুন\" ব্যবহার করুন।",
         moveUp: "উপরে সরান",
         moveDown: "নিচে সরান",
         remove: "ছবি সরান",
@@ -68,6 +72,9 @@ const copy = {
         caption: "Caption",
         referenceCaptionPlaceholder: "Optional — why this image is relevant",
         galleryCaptionPlaceholder: "Optional — what the image shows",
+        adjust: "Adjust",
+        adjustLabel: (n: number) => `Adjust image ${n}`,
+        cropHint: "Add one image to adjust it straight away; after adding several, use \"Adjust\" on each.",
         moveUp: "Move up",
         moveDown: "Move down",
         remove: "Remove image",
@@ -99,6 +106,24 @@ export function ArchiveGalleryEditor({
         null
     );
     const [error, setError] = useState<string | null>(null);
+    // The image in the crop dialog: a new single pick, or an existing photo.
+    const [cropping, setCropping] = useState<
+        { source: File; index: null } | { source: string; index: number } | null
+    >(null);
+
+    /** Uploads one adjusted (or untouched) photo: appended, or replacing `index`. */
+    const uploadOne = async (file: File, index: number | null) => {
+        setError(null);
+        setProgress({ done: 0, total: 1 });
+        const result = await uploadToMedia(file, "archive");
+        setProgress(null);
+        if (!result.ok) {
+            setError(t.failed(file.name));
+            return;
+        }
+        if (index === null) onChange([...photos, { url: result.url, caption: "", caption_en: "" }]);
+        else onChange(photos.map((p, i) => (i === index ? { ...p, url: result.url } : p)));
+    };
 
     const addFiles = async (files: FileList | null) => {
         setError(null);
@@ -113,6 +138,17 @@ export function ArchiveGalleryEditor({
         const chosen = Array.from(files).slice(0, room);
         if (chosen.length < files.length) {
             setError(t.limitTrimmed(max));
+        }
+
+        // One photo: frame it before it goes up. A batch goes up as is, so a
+        // dozen pictures don't mean a dozen dialogs in a row.
+        if (
+            chosen.length === 1 &&
+            ARCHIVE_IMAGE_TYPES.includes(chosen[0].type) &&
+            !describeArchiveFileError(chosen[0])
+        ) {
+            setCropping({ source: chosen[0], index: null });
+            return;
         }
 
         setProgress({ done: 0, total: chosen.length });
@@ -183,7 +219,7 @@ export function ArchiveGalleryEditor({
                         {isReferenceGallery ? t.referenceTitle : t.galleryTitle}
                     </span>
                     <p className="mt-0.5 text-xs text-ink-500">
-                        {isReferenceGallery ? t.referenceHint(max) : t.galleryHint}
+                        {isReferenceGallery ? t.referenceHint(max) : t.galleryHint} {t.cropHint}
                     </p>
                 </div>
 
@@ -232,6 +268,20 @@ export function ArchiveGalleryEditor({
                 </p>
             )}
 
+            <ImageCropDialog
+                source={cropping?.source ?? null}
+                aspect="standard"
+                onClose={() => setCropping(null)}
+                onApply={(file) => {
+                    if (cropping) void uploadOne(file, cropping.index);
+                }}
+                onUseOriginal={
+                    cropping && cropping.index === null
+                        ? () => void uploadOne(cropping.source as File, null)
+                        : undefined
+                }
+            />
+
             {photos.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-ink-300 px-6 py-8 text-center text-sm text-ink-500">
                     {isReferenceGallery ? t.referenceEmpty : t.galleryEmpty}
@@ -270,6 +320,16 @@ export function ArchiveGalleryEditor({
                             </div>
 
                             <div className="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setCropping({ source: photo.url, index })}
+                                    disabled={busy}
+                                    className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-ink-700 transition-ui hover:bg-brand-50 hover:text-brand-800 disabled:opacity-40"
+                                    aria-label={t.adjustLabel(index + 1)}
+                                >
+                                    <Crop className="size-4" aria-hidden="true" />
+                                    <span className="hidden sm:inline">{t.adjust}</span>
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => move(index, -1)}
