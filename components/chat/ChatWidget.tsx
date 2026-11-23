@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
     ArrowRight,
+    FileText,
     Loader2,
+    Paperclip,
     Phone,
     RotateCcw,
     Send,
@@ -14,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
+import { sendPickedFiles, type DocumentError } from "@/lib/chat/documents";
 import {
     isValidBangladeshPhone,
     MAX_MESSAGE_CHARS,
@@ -52,7 +55,8 @@ type ChatWidgetProps = {
     botName: string;
     greeting: string;
     disclaimer: string;
-    historyRetentionDays: number;
+    /** Null when chats are never deleted: then no time limit is promised. */
+    historyRetentionDays: number | null;
     labels: {
         open: string;
         openPrompt: string;
@@ -77,6 +81,16 @@ type ChatWidgetProps = {
         conversationReady: string;
         retentionPrefix: string;
         retentionSuffix: string;
+        attach: string;
+        attachFirst: string;
+        uploading: string;
+        /** "{n}" is replaced with the page count. */
+        docSent: string;
+        docReceived: string;
+        docTooBig: string;
+        docLimit: string;
+        docUnreadable: string;
+        docError: string;
     };
 };
 
@@ -100,6 +114,10 @@ export function ChatWidget({
     const [draft, setDraft] = useState("");
     const [streaming, setStreaming] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // Documents sent, placed after the message count at the time they went.
+    const [docs, setDocs] = useState<{ after: number; pages: number }[]>([]);
+    const [uploading, setUploading] = useState(false);
+    const fileRef = useRef<HTMLInputElement>(null);
 
     const listRef = useRef<HTMLDivElement>(null);
     const nameRef = useRef<HTMLInputElement>(null);
@@ -223,10 +241,57 @@ export function ChatWidget({
         }
     };
 
+    const docErrors: Record<DocumentError, string> = {
+        too_big: labels.docTooBig,
+        limit: labels.docLimit,
+        unreadable: labels.docUnreadable,
+        failed: labels.docError,
+    };
+
+    const attach = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(event.target.files ?? []);
+        event.target.value = "";
+        if (!files.length || !conversation) return;
+
+        setUploading(true);
+        setError(null);
+        const result = await sendPickedFiles(conversation, files).catch(() => ({
+            sent: 0,
+            pages: 0,
+            error: "failed" as const,
+        }));
+        setUploading(false);
+        if (result.sent > 0) {
+            setDocs((current) => [...current, { after: messages.length, pages: result.pages }]);
+        }
+        if (result.error) setError(docErrors[result.error]);
+    };
+
+    const pageCount = (n: number) =>
+        labels.docSent.replace("{n}", new Intl.NumberFormat(locale === "en" ? "en-GB" : "bn-BD").format(n));
+
+    const docNote = (key: string, pages: number) => (
+        <Fragment key={key}>
+            <div className="flex justify-end">
+                <p className="inline-flex max-w-[88%] items-center gap-2 rounded-2xl rounded-tr-sm border border-brand-200 bg-brand-50 px-3.5 py-2.5 text-sm text-brand-900">
+                    <FileText className="size-4 shrink-0" aria-hidden="true" />
+                    {pageCount(pages)}
+                </p>
+            </div>
+            <div className="flex items-start justify-start gap-2">
+                <BotAvatar size={28} className="mt-0.5 ring-1 ring-brand-100" />
+                <p className="max-w-[85%] rounded-2xl rounded-tl-sm bg-surface-sunken px-3.5 py-2.5 text-sm leading-6 text-ink-700">
+                    {labels.docReceived}
+                </p>
+            </div>
+        </Fragment>
+    );
+
     const restart = () => {
         abortRef.current?.abort();
         setProfile(null);
         setConversation(null);
+        setDocs([]);
         setMessages([]);
         setError(null);
         setDraft("");
@@ -405,8 +470,9 @@ export function ChatWidget({
                                     <p className="flex gap-2">
                                         <ShieldCheck className="mt-0.5 size-4 shrink-0 text-brand-700" aria-hidden="true" />
                                         <span>
-                                            {labels.privacyNotice} {labels.retentionPrefix}{" "}
-                                            {historyRetentionDays} {labels.retentionSuffix}
+                                            {labels.privacyNotice}
+                                            {historyRetentionDays !== null &&
+                                                ` ${labels.retentionPrefix} ${historyRetentionDays} ${labels.retentionSuffix}`}
                                         </span>
                                     </p>
                                 </div>
@@ -440,8 +506,8 @@ export function ChatWidget({
                                 </div>
 
                                 {messages.map((message, index) => (
+                                    <Fragment key={index}>
                                     <div
-                                        key={index}
                                         className={cn(
                                             "flex",
                                             message.role === "user"
@@ -477,7 +543,18 @@ export function ChatWidget({
                                                 )}
                                         </div>
                                     </div>
+                                    {docs
+                                        .filter((doc) => doc.after === index + 1)
+                                        .map((doc, i) => docNote(`doc-${index}-${i}`, doc.pages))}
+                                    </Fragment>
                                 ))}
+
+                                {uploading && (
+                                    <p className="flex items-center justify-end gap-1.5 text-xs text-ink-500">
+                                        <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                                        {labels.uploading}
+                                    </p>
+                                )}
 
                                 {error && (
                                     <p
@@ -491,6 +568,29 @@ export function ChatWidget({
 
                             <div className="shrink-0 border-t border-ink-200 bg-surface p-3">
                                 <div className="flex items-end gap-2">
+                                    {/* Needs a saved chat to attach to, so it wakes up after the first reply. */}
+                                    <input
+                                        ref={fileRef}
+                                        type="file"
+                                        accept="image/*,application/pdf"
+                                        multiple
+                                        hidden
+                                        onChange={attach}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => fileRef.current?.click()}
+                                        disabled={!conversation || uploading || streaming}
+                                        aria-label={labels.attach}
+                                        title={conversation ? labels.attach : labels.attachFirst}
+                                        className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-input text-ink-600 transition-ui hover:border-ink-400 hover:bg-ink-50 hover:text-brand-800 disabled:opacity-40 disabled:hover:bg-transparent"
+                                    >
+                                        {uploading ? (
+                                            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                                        ) : (
+                                            <Paperclip className="size-4" aria-hidden="true" />
+                                        )}
+                                    </button>
                                     <textarea
                                         ref={inputRef}
                                         value={draft}

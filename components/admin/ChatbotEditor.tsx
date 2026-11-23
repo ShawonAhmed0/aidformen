@@ -63,7 +63,8 @@ const copy = {
         maxTurnsHelper: "১–৫০। খরচ সীমিত রাখে।",
         retention: "চ্যাট হিস্ট্রি রাখার সময়",
         retentionHelper:
-            "৭–৩৬৫ দিন। নতুন চ্যাট শুরু হলে মেয়াদ পেরোনো হিস্ট্রি স্বয়ংক্রিয়ভাবে মুছে যায়।",
+            "৭–৩৬৫০ দিন। নতুন চ্যাট শুরু হলে মেয়াদ পেরোনো হিস্ট্রি স্বয়ংক্রিয়ভাবে মুছে যায়।",
+        keepForever: "চ্যাট কখনো মুছবেন না (বার্ষিক রিপোর্টের জন্য প্রয়োজন)",
         days: "দিন",
         saving: "সংরক্ষণ হচ্ছে…",
         save: "পরিবর্তন সংরক্ষণ করুন",
@@ -110,7 +111,8 @@ const copy = {
         maxTurnsHelper: "1–50. Keeps the cost bounded.",
         retention: "Chat history retention",
         retentionHelper:
-            "7–365 days. Expired history is deleted automatically when a new chat starts.",
+            "7–3650 days. Expired history is deleted automatically when a new chat starts.",
+        keepForever: "Never delete chats (needed for yearly reports)",
         days: "days",
         saving: "Saving…",
         save: "Save changes",
@@ -171,8 +173,12 @@ export function ChatbotEditor({
         disclaimer_en: s(settings?.disclaimer_en),
         model: settings?.model ?? DEFAULT_CHAT_MODEL,
         max_turns: String(settings?.max_turns ?? 12),
-        history_retention_days: String(settings?.history_retention_days ?? 90),
+        history_retention_days: String(settings?.history_retention_days ?? 365),
     });
+    // Null in the database means chats are never deleted.
+    const [keepForever, setKeepForever] = useState(
+        settings ? settings.history_retention_days == null : true
+    );
 
     const known = chatModelConfig(form.model);
 
@@ -190,6 +196,7 @@ export function ChatbotEditor({
         const body = new FormData();
         for (const [key, value] of Object.entries(form)) body.append(key, value);
         body.append("is_enabled", String(enabled));
+        body.append("keep_forever", String(keepForever));
 
         startTransition(async () => {
             const result = await updateChatbotSettings(body);
@@ -392,19 +399,31 @@ export function ChatbotEditor({
                         helper={t.retentionHelper}
                     >
                         {(props) => (
-                            <div className="relative">
-                                <Input
-                                    {...props}
-                                    type="number"
-                                    min={7}
-                                    max={365}
-                                    value={form.history_retention_days}
-                                    onChange={(e) => set("history_retention_days")(e.target.value)}
-                                    className="pr-14"
-                                />
-                                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-500">
-                                    {t.days}
-                                </span>
+                            <div className="space-y-2.5">
+                                <label className="flex items-center gap-2.5 text-sm text-ink-700">
+                                    <input
+                                        type="checkbox"
+                                        checked={keepForever}
+                                        onChange={(e) => setKeepForever(e.target.checked)}
+                                        className="size-4 rounded border-ink-300 accent-brand-800"
+                                    />
+                                    {t.keepForever}
+                                </label>
+                                <div className="relative">
+                                    <Input
+                                        {...props}
+                                        type="number"
+                                        min={7}
+                                        max={3650}
+                                        disabled={keepForever}
+                                        value={form.history_retention_days}
+                                        onChange={(e) => set("history_retention_days")(e.target.value)}
+                                        className="pr-14"
+                                    />
+                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-500">
+                                        {t.days}
+                                    </span>
+                                </div>
                             </div>
                         )}
                     </Field>

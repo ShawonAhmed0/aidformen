@@ -107,7 +107,7 @@ export default async function PublicLayout({
             })}
             greeting={pick(lang, chatbot.greeting, chatbot.greeting_en)}
             disclaimer={pick(lang, chatbot.disclaimer, chatbot.disclaimer_en)}
-            historyRetentionDays={chatbot.history_retention_days ?? 90}
+            historyRetentionDays={chatbot.history_retention_days ?? null}
             labels={t.chat}
           />
         )}

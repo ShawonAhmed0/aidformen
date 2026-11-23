@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { after } from "next/server";
 
+import { isBot, withinSharedLimit } from "@/lib/chat/guard";
 import { tagConversation } from "@/lib/chat/tagging";
 import { getChatbotSettings } from "@/lib/content/chatbot";
 import { isLocale, type Locale } from "@/lib/i18n/config";
@@ -113,6 +114,10 @@ export async function POST(request: Request) {
     return bad("অনেকগুলো বার্তা পাঠানো হয়েছে। একটু পরে আবার চেষ্টা করুন।", 429);
   }
 
+  if (await isBot()) {
+    return bad("এই অনুরোধটি স্বয়ংক্রিয় মনে হচ্ছে। পেজটি আবার লোড করে চেষ্টা করুন।", 403);
+  }
+
   const settings = await getChatbotSettings();
   if (!settings?.is_enabled) return bad("চ্যাট এই মুহূর্তে বন্ধ আছে।", 503);
 
@@ -212,6 +217,12 @@ export async function POST(request: Request) {
     (locale === "en" ? settings.disclaimer_en?.trim() : null) || settings.disclaimer;
 
   const supabase = await createClient();
+
+  // Counted across every server: 15 messages a minute per visitor IP.
+  if (!(await withinSharedLimit(supabase, request, "chat", 15, 60))) {
+    return bad("অনেকগুলো বার্তা পাঠানো হয়েছে। একটু পরে আবার চেষ্টা করুন।", 429);
+  }
+
   let conversation: ChatSessionCredentials;
   const supplied = body.conversation as
     | { id?: unknown; token?: unknown }

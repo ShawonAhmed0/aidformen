@@ -5,7 +5,10 @@ import {
     ChevronDown,
     Download,
     Inbox,
+    ExternalLink,
+    FileText,
     MessagesSquare,
+    Paperclip,
     Phone,
     ShieldAlert,
     Sparkles,
@@ -14,7 +17,10 @@ import {
     X,
 } from "lucide-react";
 
+import type { ChatDocument } from "@/lib/content/chat-documents";
+import type { RangeSummary as CachedSummary } from "@/lib/content/chat-reports";
 import { CaseReviewButton } from "./CaseReviewButton";
+import { RangeSummary } from "./RangeSummary";
 import { ChatTranscript } from "./ChatTranscript";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -46,6 +52,7 @@ const copy = {
         intro:
             "চ্যাটে কে, কোন সমস্যা নিয়ে এসেছেন এবং প্রতিটি কথোপকথন থেকে AI কী বুঝেছে। সন্দেহজনক চ্যাট হিসাবের বাইরে রাখা হয়।",
         export: "CSV ডাউনলোড",
+        exportExcel: "Excel ডাউনলোড",
         presets: { today: "আজ", yesterday: "গতকাল", week: "গত ৭ দিন", month: "গত ৩০ দিন" },
         from: "শুরু",
         to: "শেষ",
@@ -79,6 +86,10 @@ const copy = {
         notTagged: "AI এখনো এই কথোপকথনটি পড়েনি।",
         age: (n: string) => `বয়স ${n}`,
         messages: (n: string) => `${n} বার্তা`,
+        documents: (n: string) => `${n}টি নথি`,
+        documentsHeading: "পাঠানো নথি",
+        pages: (n: string) => `${n} পৃষ্ঠা`,
+        linkExpiry: "নিরাপত্তার জন্য লিংক এক ঘণ্টা কাজ করে; পরে পেজটি আবার লোড করুন।",
         flagReason: "AI কেন সন্দেহ করছে",
         migrationTitle: "ডেটাবেস আপডেট প্রয়োজন",
         migrationBody:
@@ -90,6 +101,7 @@ const copy = {
         intro:
             "Who came to the chat, about what, and what the AI made of each conversation. Suspicious chats are left out of the figures.",
         export: "Download CSV",
+        exportExcel: "Download Excel",
         presets: { today: "Today", yesterday: "Yesterday", week: "Last 7 days", month: "Last 30 days" },
         from: "From",
         to: "To",
@@ -123,6 +135,10 @@ const copy = {
         notTagged: "The AI hasn't read this conversation yet.",
         age: (n: string) => `Age ${n}`,
         messages: (n: string) => `${n} messages`,
+        documents: (n: string) => `${n} ${n === "1" ? "document" : "documents"}`,
+        documentsHeading: "Documents sent",
+        pages: (n: string) => `${n} ${n === "1" ? "page" : "pages"}`,
+        linkExpiry: "For safety, links work for an hour; reload the page after that.",
         flagReason: "Why the AI is suspicious",
         migrationTitle: "Database update needed",
         migrationBody:
@@ -165,12 +181,18 @@ export function CaseFeed({
     filters,
     result,
     transcripts,
+    summary,
+    documents,
     locale,
 }: {
     filters: CaseFilters;
     result: CaseResult;
     /** Messages for the chats on show, by conversation id. */
     transcripts: Record<string, ChatHistoryMessage[]>;
+    /** The cached AI summary of exactly this date range, if any. */
+    summary: CachedSummary | null;
+    /** Documents attached to the chats on show, by conversation id. */
+    documents: Record<string, ChatDocument[]>;
     locale: AdminLocale;
 }) {
     const t = copy[locale];
@@ -195,13 +217,22 @@ export function CaseFeed({
                     <p className="mt-1.5 max-w-2xl text-sm text-ink-500">{t.intro}</p>
                 </div>
                 {result.ok && (
-                    <a
-                        href={`/admin/cases/export?${caseQuery(filters)}`}
-                        className={buttonVariants({ variant: "outline", className: "w-fit" })}
-                    >
-                        <Download aria-hidden="true" />
-                        {t.export}
-                    </a>
+                    <div className="flex flex-wrap gap-2">
+                        <a
+                            href={`/admin/cases/export?${caseQuery(filters)}`}
+                            className={buttonVariants({ variant: "outline" })}
+                        >
+                            <Download aria-hidden="true" />
+                            {t.export}
+                        </a>
+                        <a
+                            href={`/admin/cases/export?format=xlsx&${caseQuery(filters)}`}
+                            className={buttonVariants({ variant: "outline" })}
+                        >
+                            <Download aria-hidden="true" />
+                            {t.exportExcel}
+                        </a>
+                    </div>
                 )}
             </div>
 
@@ -227,6 +258,8 @@ export function CaseFeed({
                     singleDay={singleDay}
                     locale={locale}
                     transcripts={transcripts}
+                    summary={summary}
+                    documents={documents}
                 />
             )}
         </div>
@@ -318,6 +351,8 @@ function Results({
     singleDay,
     locale,
     transcripts,
+    summary,
+    documents,
 }: {
     cases: ChatCase[];
     truncated: boolean;
@@ -326,6 +361,8 @@ function Results({
     singleDay: boolean;
     locale: AdminLocale;
     transcripts: Record<string, ChatHistoryMessage[]>;
+    summary: CachedSummary | null;
+    documents: Record<string, ChatDocument[]>;
 }) {
     const t = copy[locale];
     const f = formatters(locale);
@@ -361,6 +398,18 @@ function Results({
                     <p className="mb-3 rounded-lg bg-warning-soft px-4 py-2.5 text-sm text-warning-strong">
                         {t.truncated}
                     </p>
+                )}
+                {stats.total > 0 && (
+                    // Keyed by range so a new date range starts its own summary.
+                    <div className="mb-4">
+                        <RangeSummary
+                            key={`${filters.from}:${filters.to}`}
+                            from={filters.from}
+                            to={filters.to}
+                            initial={summary}
+                            count={stats.total}
+                        />
+                    </div>
                 )}
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
                     {tiles.map((tile) => {
@@ -486,6 +535,7 @@ function Results({
                                     singleDay={singleDay}
                                     locale={locale}
                                     transcript={transcripts[c.id] ?? []}
+                                    documents={documents[c.id] ?? []}
                                 />
                             ))}
                         </ul>
@@ -506,11 +556,13 @@ function CaseItem({
     singleDay,
     locale,
     transcript,
+    documents,
 }: {
     item: ChatCase;
     singleDay: boolean;
     locale: AdminLocale;
     transcript: ChatHistoryMessage[];
+    documents: ChatDocument[];
 }) {
     const t = copy[locale];
     const f = formatters(locale);
@@ -584,6 +636,12 @@ function CaseItem({
                                     </span>
                                 )}
                                 <span>{t.messages(f.number.format(item.message_count))}</span>
+                                {documents.length > 0 && (
+                                    <span className="inline-flex items-center gap-1.5 font-medium text-brand-800">
+                                        <Paperclip className="size-3.5" aria-hidden="true" />
+                                        {t.documents(f.number.format(documents.length))}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
@@ -599,6 +657,42 @@ function CaseItem({
                         <p className="mx-auto max-w-2xl rounded-lg border border-warning-line bg-warning-soft px-4 py-3 text-sm text-warning-strong">
                             <span className="font-semibold">{t.flagReason}:</span> {item.suspicious_reason}
                         </p>
+                    )}
+                    {documents.length > 0 && (
+                        <div className="mx-auto max-w-2xl">
+                            <h3 className="text-sm font-semibold text-ink-800">{t.documentsHeading}</h3>
+                            <ul className="mt-2 space-y-2">
+                                {documents.map((doc) => (
+                                    <li key={doc.id}>
+                                        <a
+                                            href={doc.url ?? undefined}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-disabled={!doc.url}
+                                            className="flex min-h-11 items-center gap-3 rounded-lg border border-ink-200 bg-surface px-3.5 py-2 text-sm transition-ui hover:border-brand-300 hover:bg-brand-50"
+                                        >
+                                            <FileText className="size-5 shrink-0 text-brand-700" aria-hidden="true" />
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block truncate font-medium text-ink-900">
+                                                    {doc.file_name || "document.pdf"}
+                                                </span>
+                                                <span className="block text-xs text-ink-500">
+                                                    {[
+                                                        doc.pages ? t.pages(f.number.format(doc.pages)) : null,
+                                                        doc.bytes ? `${f.number.format(Math.max(0.1, Math.round(doc.bytes / 104857.6) / 10))} MB` : null,
+                                                        f.dateTime.format(new Date(doc.created_at)),
+                                                    ]
+                                                        .filter(Boolean)
+                                                        .join(" · ")}
+                                                </span>
+                                            </span>
+                                            <ExternalLink className="size-4 shrink-0 text-ink-400" aria-hidden="true" />
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className="mt-1.5 text-xs text-ink-500">{t.linkExpiry}</p>
+                        </div>
                     )}
                     <div className="mx-auto max-w-2xl">
                         <CaseReviewButton

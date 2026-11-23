@@ -83,9 +83,13 @@ proxy.ts                locale detection/redirect + admin auth gate
   exception to "public read published rows": it has no `is_published` of its own
   and tests its parent entry's instead.
 - **Schema changes ship as a new numbered `.sql` file** in
-  `supabase/migrations/` for the user to paste into the SQL editor. Only the
-  anon key exists locally, so DDL cannot run from code. Write them to be safe
-  to re-run. `0017_retire_forum.sql` drops the old forum tables and must be run
+  `supabase/migrations/`. App code has only the anon key, so DDL never runs
+  from the app. Apply one by pasting it into the SQL editor, or — with the
+  user's go-ahead, when the Supabase CLI is logged in — with
+  `npx supabase db query --remote=<project ref> --file supabase/migrations/<file>.sql --yes`.
+  **Never `supabase db push`**: the remote migration history is empty (all
+  applied by hand), so it would re-run every migration, including the
+  destructive ones. Write them to be safe to re-run. `0017_retire_forum.sql` drops the old forum tables and must be run
   by hand; until it is, those tables just sit unused.
 
 ## Archive (Media Center + Research & Case Studies)
@@ -148,6 +152,15 @@ locale: cookie `ADMIN_LOCALE`, default `bn`.
   (`lib/i18n/admin-server.ts`).
 - Every admin string goes in both languages. Error strings returned by server
   actions are still Bengali-only.
+
+- A post lists **several original sources** (`archive_entries.sources`, jsonb
+  `[{name, name_en, url}]`, migration 0022). The old `source_name` /
+  `source_url` columns are still written from the first one.
+- **Image adjuster** (`ImageCropDialog`): drag to position, zoom (slider,
+  wheel, pinch, keys), pick 16:9 / 3:2 / 4:3 / 1:1 / original. It produces a
+  new cropped file that uploads like any photo, so cropping is destructive —
+  re-upload the original to undo. Opens on picking a cover or a single
+  gallery photo; every saved image has "Adjust".
 
 `ArchiveManager` (Media Center / Research posts) is deliberately small: the
 slug, section and presentation kind are derived on save, and fields it no
@@ -253,8 +266,27 @@ parsing those components as sRGB gives a confidently wrong answer.
 - `/admin/cases` is the Problem feed: Dhaka days, flagged chats left out of
   every count, an admin's `suspicious_override` beats the AI flag, CSV at
   `/admin/cases/export` with the same filters.
-- The tags sit on `chat_conversations`, so they expire with the transcript
-  after `history_retention_days`. Yearly reporting needs its own table.
+- Chats are **kept indefinitely** (`history_retention_days` null, migration
+  0021); a number in the Chatbot settings brings automatic deletion back.
+- `/admin/reports` is the yearly view: totals, monthly columns, a growth line
+  of different numbers, and heat tables of problem type × month / age band /
+  occupation (`components/admin/ReportCharts.tsx`, plain SVG/CSS, no library).
+- AI summaries of any date range: `summarizeRange()` (`lib/actions/chat-summaries.ts`)
+  writes from the figures plus each chat's one-line summary, cached in
+  `chat_range_summaries` until the count of chats in the range changes.
+  `RangeSummary` writes one automatically when the card mounts.
+- Exports: `/admin/cases/export` (CSV, or `?format=xlsx` with breakdown sheets)
+  and `/admin/cases/research` (anonymous: per-file IDs, month, age band, no
+  summaries, counts under 5 hidden). PDF is the browser's print of the Reports
+  page — server PDF libraries don't shape Bengali.
+- Chat endpoints run `isBot()` (Vercel BotID, `instrumentation-client.ts`) and
+  `withinSharedLimit()` (`lib/chat/guard.ts`, counted in the database across
+  servers). `proxy.ts` must keep excluding BotID's `/149e9513-…/` paths.
+- Case documents: visitors attach photos (turned into one PDF in the browser)
+  or PDFs; they upload browser-direct to the private `case-documents` bucket
+  into `<conversation id>/<token>/`, which the storage policy checks, then
+  `/api/chat/document` records them. Admins get one-hour signed links in the
+  feed. Deleting a conversation row does not delete its files.
 
 ## Verifying UI work
 

@@ -75,7 +75,7 @@ export function AdminHeader({ user, onOpenMobile, canManageAdmins = false }: Adm
     return (
         // No margin offset here — the shell wrapper positions this header, so
         // the two can no longer disagree about the sidebar width.
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-ink-200 bg-surface/85 px-4 backdrop-blur-md sm:px-6">
+        <header data-print-hide className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-ink-200 bg-surface/85 px-4 backdrop-blur-md sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
                 <button
                     type="button"

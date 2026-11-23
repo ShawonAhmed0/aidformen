@@ -96,14 +96,14 @@ export function AdminShell({
 
             {/* The offset is driven by the same variable the sidebar sizes from,
                 and only applies from lg up where the rail is actually docked. */}
-            <div className="flex min-h-dvh flex-col transition-[padding] duration-250 ease-standard lg:pl-(--admin-sidebar-w)">
+            <div className="flex min-h-dvh flex-col transition-[padding] duration-250 ease-standard lg:pl-(--admin-sidebar-w) print:pl-0!">
                 <AdminHeader
                     user={user}
                     canManageAdmins={canManageAdmins}
                     onOpenMobile={() => setMobileOpen(true)}
                 />
 
-                <main className="flex-1 p-5 sm:p-6 lg:p-8">{children}</main>
+                <main className="flex-1 p-5 sm:p-6 lg:p-8 print:p-0">{children}</main>
             </div>
         </div>
         </AdminLocaleProvider>

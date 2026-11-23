@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withBotId } from "botid/next/config";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
@@ -98,4 +99,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// withBotId adds the rewrites that proxy BotID's challenge script through this
+// site's own domain (see instrumentation-client.ts).
+export default withBotId(nextConfig);

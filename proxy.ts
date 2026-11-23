@@ -126,8 +126,9 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Everything except Next internals, the API, and any path with a file
-    // extension (favicon.ico, images, fonts, robots.txt …).
-    "/((?!_next/static|_next/image|api/|.*\\..*).*)",
+    // Everything except Next internals, the API, any path with a file
+    // extension (favicon.ico, images, fonts, robots.txt …), and Vercel BotID's
+    // proxied paths, which must reach its rewrites without a locale redirect.
+    "/((?!_next/static|_next/image|api/|149e9513-01fa-4fb0-aad4-566afd725d1b/|.*\\..*).*)",
   ],
 };

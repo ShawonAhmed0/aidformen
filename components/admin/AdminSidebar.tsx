@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
+    BarChart3,
     Bot,
     LayoutDashboard,
     Users,
@@ -39,6 +40,7 @@ const copy = {
         items: {
             dashboard: 'ড্যাশবোর্ড',
             cases: 'সমস্যার তালিকা',
+            reports: 'রিপোর্ট',
             hero: 'হিরো ও ক্যারোসেল',
             team: 'আমাদের দল',
             archive: 'মিডিয়া সেন্টার',
@@ -65,6 +67,7 @@ const copy = {
         items: {
             dashboard: 'Dashboard',
             cases: 'Problem feed',
+            reports: 'Reports',
             hero: 'Hero & Carousel',
             team: 'Our Team',
             archive: 'Media Center',
@@ -97,6 +100,7 @@ const navGroups: NavGroup[] = [
         items: [
             { id: 'dashboard', href: '/admin', icon: LayoutDashboard },
             { id: 'cases', href: '/admin/cases', icon: Inbox },
+            { id: 'reports', href: '/admin/reports', icon: BarChart3 },
         ],
     },
     {
@@ -151,6 +155,7 @@ export function AdminSidebar({
 
     return (
         <aside
+            data-print-hide
             className={cn(
                 'fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar text-sidebar-foreground',
                 'border-r border-sidebar-border',

@@ -187,6 +187,7 @@ const bn = {
     mediaUsageNotice:
       "নিচের মিডিয়া সম্পদ সাংবাদিক, সংবাদমাধ্যম ও প্রকাশকদের ব্যবহারের জন্য রয়্যালটি ও কপিরাইটমুক্ত।",
     originalSource: "মূল সংবাদ ও উৎস",
+    originalSources: "মূল সংবাদ ও উৎসগুলো",
     openOriginalSource: "মূল উৎস খুলুন",
     relatedNews: "আরও পড়ুন",
     viewAllNews: "মিডিয়া সেন্টারের সব দেখুন",
@@ -263,11 +264,21 @@ const bn = {
     nameError: "২–১০০ অক্ষরের মধ্যে আপনার নাম লিখুন।",
     phoneError: "সঠিক ১১ সংখ্যার বাংলাদেশি মোবাইল নম্বর লিখুন।",
     privacyNotice:
-      "আপনাকে সহায়তা দিতে এবং কোন সমস্যা বেশি আসছে তা বুঝতে আপনার নাম, নম্বর ও কথোপকথন শুধু অনুমোদিত অ্যাডমিন দেখতে পারবেন।",
+      "আপনাকে সহায়তা দিতে এবং কোন সমস্যা বেশি আসছে তা বুঝতে আপনার নাম, নম্বর, কথোপকথন ও পাঠানো নথি শুধু অনুমোদিত অ্যাডমিন দেখতে পারবেন।",
     privateLabel: "নিরাপদ সহায়তা চ্যাট",
     conversationReady: "চ্যাট প্রস্তুত",
     retentionPrefix: "তথ্য রাখা হবে সর্বোচ্চ",
     retentionSuffix: "দিন।",
+    attach: "নথি বা ছবি পাঠান",
+    attachFirst: "নথি পাঠাতে আগে একটি বার্তা লিখুন",
+    uploading: "নথি পাঠানো হচ্ছে…",
+    docSent: "নথি পাঠানো হয়েছে · {n} পৃষ্ঠা",
+    docReceived:
+      "আপনার নথি নিরাপদে জমা হয়েছে — শুধু অনুমোদিত অ্যাডমিন এটি দেখতে পারবেন। চাইলে নথিটি সম্পর্কে এখানে লিখুন।",
+    docTooBig: "ফাইলটি ১৫ MB-এর বেশি বড়।",
+    docLimit: "এই চ্যাটে সর্বোচ্চ ১০টি নথি পাঠানো যায়।",
+    docUnreadable: "শুধু ছবি বা PDF ফাইল পাঠানো যায়।",
+    docError: "নথি পাঠানো যায়নি। আবার চেষ্টা করুন।",
   },
   common: {
     required: "(আবশ্যক)",
@@ -455,6 +466,7 @@ const en = {
     mediaUsageNotice:
       "The media assets below are royalty-free and copyright-free for journalists, media and publishers to use.",
     originalSource: "Original story and source",
+    originalSources: "Original stories and sources",
     openOriginalSource: "Open original source",
     relatedNews: "Read more",
     viewAllNews: "View all in the Media Center",
@@ -531,11 +543,21 @@ const en = {
     nameError: "Enter your name using 2–100 characters.",
     phoneError: "Enter a valid 11-digit Bangladesh mobile number.",
     privacyNotice:
-      "Only authorised administrators can see your name, number and conversation — to support you, and to understand which problems come up most.",
+      "Only authorised administrators can see your name, number, conversation and any documents you send — to support you, and to understand which problems come up most.",
     privateLabel: "Secure support chat",
     conversationReady: "Chat is ready",
     retentionPrefix: "Data is retained for up to",
     retentionSuffix: "days.",
+    attach: "Send a document or photo",
+    attachFirst: "Send a message first to attach documents",
+    uploading: "Sending the document…",
+    docSent: "Document sent · {n} pages",
+    docReceived:
+      "Your document is safely stored — only authorised administrators can see it. Feel free to tell us about it here.",
+    docTooBig: "The file is larger than 15 MB.",
+    docLimit: "A chat can hold up to 10 documents.",
+    docUnreadable: "Only photos or PDF files can be sent.",
+    docError: "Couldn't send the document. Please try again.",
   },
   common: {
     required: "(required)",

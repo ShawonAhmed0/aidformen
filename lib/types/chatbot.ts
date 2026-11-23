@@ -12,7 +12,8 @@ export type ChatbotSettings = {
   disclaimer_en: string | null;
   model: string;
   max_turns: number;
-  history_retention_days: number;
+  /** Days before a chat is deleted; null keeps chats indefinitely. */
+  history_retention_days: number | null;
 };
 
 /** Private admin-only history row. The per-session token never leaves the API. */
