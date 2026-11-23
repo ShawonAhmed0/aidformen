@@ -10,6 +10,9 @@ import { pick, pickBrand, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { SiteSettings } from "@/lib/types/content";
 
+/** The foundation's page; settings may override it, but the icon never disappears. */
+const FACEBOOK_PAGE = "https://www.facebook.com/aidformen";
+
 // 44px rows on touch screens; the list tightens up once there's a pointer.
 const linkClass =
     "inline-flex min-h-11 items-center rounded-sm text-brand-100/80 transition-ui hover:text-white sm:min-h-9";
@@ -41,6 +44,7 @@ export default function Footer({
     // The homepage already plays this channel; the footer shouldn't need the
     // same link typed into /admin/settings before it shows the YouTube icon.
     const youtubeUrl = settings?.youtube_url?.trim() || youtubeChannel.url;
+    const facebookUrl = settings?.facebook_url?.trim() || FACEBOOK_PAGE;
     const email = settings?.contact_email?.trim();
 
     const quickLinks = [
@@ -92,9 +96,9 @@ export default function Footer({
                                     <Globe className="size-[18px]" aria-hidden="true" />
                                 </a>
                             )}
-                            {settings?.facebook_url && (
+                            {facebookUrl && (
                                 <a
-                                    href={settings.facebook_url}
+                                    href={facebookUrl}
                                     className={socialClass}
                                     aria-label="Facebook"
                                     target="_blank"
