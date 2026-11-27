@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { Pause, Play } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 
@@ -17,9 +16,9 @@ export default function HeroSlider({
   locale: Locale;
 }) {
   const [index, setIndex] = useState(0);
-  const [pauseOverride, setPauseOverride] = useState<boolean | null>(null);
   const reduceMotion = useReducedMotion();
-  const paused = pauseOverride ?? Boolean(reduceMotion);
+  // No pause control on the page; reduced-motion visitors get a still photo.
+  const paused = Boolean(reduceMotion);
 
   useEffect(() => {
     if (images.length < 2 || paused) return;
@@ -64,9 +63,7 @@ export default function HeroSlider({
       </AnimatePresence>
 
       {/* Photo caption in the bottom-left corner, aligned with the hero
-          panel's left edge and bottom-aligned with the pause button. Up to two
-          lines each for title and subtitle; max-w keeps it clear of the pause
-          button on tablets. The fill is opaque enough for 13px white text over
+          panel's left edge. Up to two lines each for title and subtitle. The fill is opaque enough for 13px white text over
           a blown-out sky. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-6 z-30 hidden sm:block">
         <Container>
@@ -98,29 +95,6 @@ export default function HeroSlider({
         </Container>
       </div>
 
-      {images.length > 1 && (
-        <button
-          type="button"
-          onClick={() => setPauseOverride(!paused)}
-          aria-label={
-            paused
-              ? locale === "en"
-                ? "Play hero slideshow"
-                : "হিরো স্লাইডশো চালু করুন"
-              : locale === "en"
-                ? "Pause hero slideshow"
-                : "হিরো স্লাইডশো বিরতি দিন"
-          }
-          aria-pressed={paused}
-          className="absolute right-4 bottom-4 z-30 flex size-11 items-center justify-center rounded-full border border-white/30 bg-brand-950/80 text-white shadow-lg backdrop-blur-md transition-ui hover:bg-brand-900 focus-visible:outline-white sm:right-6 sm:bottom-6"
-        >
-          {paused ? (
-            <Play className="size-4 fill-current" aria-hidden="true" />
-          ) : (
-            <Pause className="size-4 fill-current" aria-hidden="true" />
-          )}
-        </button>
-      )}
     </>
   );
 }
